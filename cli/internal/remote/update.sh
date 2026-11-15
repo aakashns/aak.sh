@@ -76,19 +76,20 @@ install_packages() {
   fi
 }
 
-# The tools for development every server gets, from apt. fzf and zoxide come
-# from their own releases instead (see install_release), as the distros' are
-# too old: Debian 12 has fzf 0.38 and zoxide 0.4.
+# The tools for development every server gets, from apt. fzf, zoxide and
+# Zellij come from their own releases instead (see install_release), as the
+# distros' are too old (Debian 12 has fzf 0.38 and zoxide 0.4) or lack them
+# (Zellij).
 BASIC_PACKAGES=(
-  build-essential git gh curl wget zip unzip jq ripgrep fd-find htop tmux zsh
+  build-essential git gh curl wget zip unzip jq ripgrep fd-find htop zsh
   nano man-db dnsutils ufw
 )
 
 # install_basics: installs BASIC_PACKAGES, the ones that aren't installed yet,
-# then fzf and zoxide. Debian names fd's command fdfind, as another package has
+# then fzf, zoxide and Zellij. Debian names fd's command fdfind, as another package has
 # fd, so it adds fd too, unless there's one already.
 install_basics() {
-  step "Install tools for development: ${BASIC_PACKAGES[*]} fzf zoxide"
+  step "Install tools for development: ${BASIC_PACKAGES[*]} fzf zoxide zellij"
   install_packages "${BASIC_PACKAGES[@]}"
   if ! command -v fd >/dev/null && [[ -x /usr/bin/fdfind ]]; then
     run ln -s /usr/bin/fdfind /usr/local/bin/fd
@@ -98,6 +99,7 @@ install_basics() {
   [[ $arch == arm64 ]] && target=aarch64
   install_release fzf junegunn/fzf "fzf-VERSION-linux_$arch.tar.gz"
   install_release zoxide ajeetdsouza/zoxide "zoxide-VERSION-$target-unknown-linux-musl.tar.gz"
+  install_release zellij zellij-org/zellij "zellij-$target-unknown-linux-musl.tar.gz"
   ok "The tools for development are installed."
 }
 

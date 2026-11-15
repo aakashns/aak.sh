@@ -21,9 +21,10 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
 - [x] ufw: block every incoming connection but ssh
 - [x] Restart the server, if an update needs it
 - [x] Base dev packages (`BASIC_PACKAGES` in `update.sh`): build-essential, git, gh, curl, wget,
-      zip, unzip, jq, ripgrep, fd-find (plus an `fd` link to `fdfind`), htop, tmux, zsh, nano,
-      man-db, dnsutils, ufw. fzf and zoxide come from their latest GitHub releases instead
-      (`install_release`), as apt's are old. These install in `start`, as `home` needs zsh and git.
+      zip, unzip, jq, ripgrep, fd-find (plus an `fd` link to `fdfind`), htop, zsh, nano,
+      man-db, dnsutils, ufw. fzf, zoxide and Zellij come from their latest GitHub releases
+      (`install_release`), as apt's are old or missing. These install in `start`, as `home`
+      needs zsh and git.
 - [x] Swap file as big as memory, up to 4 GiB, unless there's swap already; swappiness 10
       (`swap.sh`). Skipped in containers.
 - [x] Generate the locales your Mac sends over ssh (LANG, LC_*), so programs don't warn
@@ -50,20 +51,20 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
     that happens only once `home` has set it up.
   - zinit and its plugins download during `home` (`zsh -i -c exit`), unless they're there.
     Re-runs don't update them; `zinit update` does.
-  - Later, maybe: Zellij auto-attach (section 7) and Neovim + LazyVim (section 8).
+  - Zellij instead of tmux: ssh logins attach to the session `main` (top of rembox's zshrc).
+  - Later, maybe: Neovim + LazyVim (section 8).
+- [x] Git and GitHub (`git.sh`): gh from GitHub's apt repo. In `home`: `gh auth login` (device
+      code) and `gh auth setup-git`, then git's name and email, unless set, from GitHub (public
+      email, else noreply), else this Mac's, without asking.
 
 ## Next
 
-1. [ ] **Git and GitHub.** `gh` comes from the distro now, which lags (2.23 on Debian 12, 2.45
-   on Ubuntu 24.04); consider GitHub's apt repo instead. Ask for your git name and email
-   (offer `git config --global user.name/email` from this Mac as defaults), set them for your
-   user, run `gh auth login` (device code) and `gh auth setup-git`, in the `home` session.
-2. [ ] **Toolchains, as your user, each optional:** bun; Node via Vite+ (`vp`, with
+1. [ ] **Toolchains, as your user, each optional:** bun; Node via Vite+ (`vp`, with
    `VP_BUN_MANAGER=no`); Python via uv; Rust via rustup (minimal + clippy + rustfmt).
-3. [ ] **Coding agents, each optional:** Codex, Claude Code, Pi, with their logins. A shared
+2. [ ] **Coding agents, each optional:** Codex, Claude Code, Pi, with their logins. A shared
    `~/.config/rembox/AGENTS.md` (or similar), symlinked to `~/.codex/AGENTS.md`,
    `~/.claude/CLAUDE.md` and `~/.pi/agent/AGENTS.md`; never overwrite real files.
-4. [ ] **HTTPS and T3 Code.** Ask for a domain, check its A record points at the server, install
+3. [ ] **HTTPS and T3 Code.** Ask for a domain, check its A record points at the server, install
    Caddy, reverse-proxy to T3 on 127.0.0.1:3773, enable linger so T3's systemd user service runs
    without a login, add its PATH drop-in, and pair a device (QR code). See SETUP.md's gotchas.
    - ufw: open 80/tcp, 443/tcp and 443/udp. `setup_firewall` in `firewall.sh` asks "Keep the ufw
@@ -74,11 +75,11 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
 
 - Should `rembox setup` stay about hardening the server, with toolchains, agents and T3 as
   separate commands (like `rembox install claude`)? That keeps setup's questions and the site's
-  list short. Decide before step 2.
+  list short. Decide before step 1.
 
 ## Testing on real machines
 
 See **Development** in README.md: `scripts/e2e.sh` runs `rembox setup` twice on a fresh OrbStack
 machine. Run it on `debian:bookworm` too for changes to the server scripts.
-To try zsh on a machine without a terminal, `tmux new-session -d 'zsh -l'` on it, then
-`tmux send-keys` and `tmux capture-pane -p`.
+To try a login without a terminal, run `ssh -t` in a tmux session on this Mac
+(`tmux new-session -d 'ssh -t …'`), then `tmux send-keys` and `tmux capture-pane -p`.

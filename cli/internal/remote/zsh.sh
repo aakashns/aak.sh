@@ -1,4 +1,5 @@
-# zsh.sh: makes zsh your shell, with plugins, fzf, zoxide and a git prompt.
+# zsh.sh: makes zsh your shell, with plugins, fzf, zoxide, a git prompt, and
+# Zellij on ssh logins.
 
 # rembox's zsh config is in files of its own, which ~/.zshenv, ~/.zprofile and
 # ~/.zshrc each source from a line at their top. Running setup again rewrites
@@ -100,6 +101,15 @@ rembox_zshrc() {
 # Your terminal's name, as ssh passes it on, unless the server doesn't know it.
 if [[ -n $TERM ]] && ! infocmp "$TERM" &>/dev/null; then
   export TERM=xterm-256color
+fi
+
+# Zellij: logging in over ssh attaches to the Zellij session called main, or
+# starts it, and logs out once you detach from it or quit it. If Zellij fails,
+# you get this shell instead. Shells in Zellij, in VS Code's terminal, or from
+# zsh -c or ssh with a command don't start it. It comes before the plugins,
+# which only the shells in Zellij need.
+if [[ -o login && -n $SSH_TTY && -z $ZELLIJ && $TERM_PROGRAM != vscode ]] && (($+commands[zellij])); then
+  zellij attach --create main && exit
 fi
 
 # Plugins, with zinit, which downloads what it doesn't have yet. zinit's
