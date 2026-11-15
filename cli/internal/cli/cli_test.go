@@ -42,11 +42,12 @@ func scriptIn(args []string) string {
 	return ""
 }
 
-// tellUser is what setup.sh start does once you've answered its question:
-// tells rembox your user, as if you took the default, DEFAULT_USER.
+// tellUser is what setup.sh start does once you've answered its questions:
+// tells rembox your user and ssh's port, as if you took the defaults,
+// DEFAULT_USER and DEFAULT_PORT.
 func tellUser(args []string, stdout io.Writer) error {
 	if sa := scriptArgs(args); sa[0] == "start" {
-		fmt.Fprintf(stdout, "%suser=%s\a\r\n", marker, sa[1])
+		fmt.Fprintf(stdout, "%suser=%s\a\r\n%sport=%s\a\r\n", marker, sa[1], marker, sa[2])
 	}
 	return nil
 }

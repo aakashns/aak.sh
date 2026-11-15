@@ -2,6 +2,21 @@
 
 SSHD_CONFIG=/etc/ssh/sshd_config.d/00-rembox.conf
 
+# ask_port VAR DEFAULT: asks for the port to move ssh to, DEFAULT if you don't
+# give one, sets VAR to it, and tells rembox, as add_user tells it your user.
+ask_port() {
+  local answer
+  step "Pick ssh's port: one other than 22 counters automated attacks"
+  while true; do
+    ask answer "New SSH port" "$2" || fail "Cancelled."
+    [[ $answer =~ ^[0-9]{1,5}$ ]] && ((10#$answer >= 1 && 10#$answer <= 65535)) && break
+    warn "$answer isn't a port; enter a number from 1 to 65535."
+  done
+  printf -v "$1" '%s' "$((10#$answer))"
+  # See marker in setup.go.
+  printf '\e]rembox;port=%s\a\n' "${!1}"
+}
+
 # setup_sshd ROOT_LOGIN PORT...: sets sshd to listen on the PORTs and no others, and
 # to let in only keys, and root as ROOT_LOGIN says: no, or prohibit-password
 # (with a key).
