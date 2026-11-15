@@ -9,10 +9,12 @@ set_hostname() {
   step "Name the server $name"
   if systemd-detect-virt --quiet --container; then
     ok "The server is a container, whose hostname its host sets, so it keeps $(hostname)."
+    checklist ok "Kept the container's hostname, $(hostname)"
     return
   fi
   if ((${#name} > 64)) || [[ ! $name =~ ^$label(\.$label)*$ || $name =~ ^[0-9.]+$ ]]; then
     warn "$name can't be a hostname, so the server stays $(hostname). A hostname has lowercase letters, digits, - and ., up to 64."
+    checklist warn "Kept the hostname $(hostname), as $name can't be one"
     return
   fi
 
@@ -36,4 +38,5 @@ manage_etc_hosts: false"
     same "$cfg" "$content" || put "$cfg" 644 "$content"
   fi
   ok "The server is $name."
+  checklist ok "Named the server $name"
 }

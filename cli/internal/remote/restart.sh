@@ -10,7 +10,9 @@ restart() {
     # server shuts down.
     run systemd-run --on-active=5 systemctl reboot
     ok "The server is restarting, and is back in a minute or so."
+    checklist ok "Restarting the server, for an update"
   else
     warn "Not restarted. To restart it later: sudo systemctl reboot"
+    checklist warn "Not restarted, but an update needs it: sudo systemctl reboot"
   fi
 }

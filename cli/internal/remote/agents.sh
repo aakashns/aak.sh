@@ -9,11 +9,19 @@ setup_agents() {
   # As in your login shell: the installers put their commands in ~/.local/bin,
   # and Pi's needs Node, from Vite+.
   export PATH=$HOME/.local/bin:$HOME/.local/share/vite-plus/bin:$PATH
-  setup_claude
-  setup_codex
-  setup_opencode
-  setup_pi
+  local name
+  for name in claude codex opencode pi; do
+    "setup_$name"
+    checklist_send
+  done
+  if ((${#SKIPPED_AGENTS[@]} > 0)); then
+    checklist skip "$(joined "${SKIPPED_AGENTS[@]}"): skipped"
+    checklist_send
+  fi
 }
+
+# The agents you chose not to install, for the checklist.
+SKIPPED_AGENTS=()
 
 # setup_claude: installs Claude Code, in ~/.local/bin, and logs it in, with a
 # link, to your Claude subscription or, if you say so, an Anthropic Console
@@ -23,13 +31,21 @@ setup_claude() {
   local claude=$HOME/.local/bin/claude logged_in=no
   install_agent "Claude Code" "Anthropic's coding agent" "$claude" https://claude.ai/install.sh bash || return 0
   "$claude" auth status >/dev/null 2>&1 && logged_in=yes
-  wants_login "Claude Code" $logged_in \
-    "claude auth login, or for an Anthropic Console account: claude auth login --console" || return 0
-  local console=()
-  confirm "Log in with a Claude subscription? Say no for an Anthropic Console account, billed by API usage." yes ||
-    console=(--console)
-  info "Claude Code logs in with a link: open it on any device, sign in, and paste the code it shows back here."
-  log_in "$(quoted claude auth login "${console[@]}")" "$claude" auth login "${console[@]}"
+  local how='' tried=no
+  if wants_login "Claude Code" $logged_in \
+    "claude auth login, or for an Anthropic Console account: claude auth login --console"; then
+    local console=()
+    how=" to your subscription"
+    if ! confirm "Log in with a Claude subscription? Say no for an Anthropic Console account, billed by API usage." yes; then
+      console=(--console) how=" with API billing"
+    fi
+    info "Claude Code logs in with a link: open it on any device, sign in, and paste the code it shows back here."
+    log_in "$(quoted claude auth login "${console[@]}")" "$claude" auth login "${console[@]}"
+    tried=yes
+  fi
+  logged_in=no
+  "$claude" auth status >/dev/null 2>&1 && logged_in=yes
+  checklist_login $logged_in $tried "$how"
 }
 
 # setup_codex: installs Codex, in ~/.local/bin, and logs it in, with a code, to
@@ -40,19 +56,27 @@ setup_codex() {
   install_agent Codex "OpenAI's coding agent" "$codex" https://chatgpt.com/codex/install.sh sh || return 0
   "$codex" login status >/dev/null 2>&1 && logged_in=yes
   local api_hint="printenv OPENAI_API_KEY | codex login --with-api-key"
-  wants_login Codex $logged_in "codex login --device-auth, or with an API key: $api_hint" || return 0
-  if confirm "Log in with a ChatGPT account? Say no for an OpenAI API key, billed by API usage." yes; then
-    info "Codex logs in with a code: open the link it shows on any device, and enter the code."
-    log_in "codex login --device-auth" "$codex" login --device-auth
-    return 0
+  local how='' tried=no
+  if wants_login Codex $logged_in "codex login --device-auth, or with an API key: $api_hint"; then
+    if confirm "Log in with a ChatGPT account? Say no for an OpenAI API key, billed by API usage." yes; then
+      info "Codex logs in with a code: open the link it shows on any device, and enter the code."
+      log_in "codex login --device-auth" "$codex" login --device-auth
+      how=" to your ChatGPT account" tried=yes
+    else
+      local key=''
+      ask_secret key "OpenAI API key (from https://platform.openai.com/api-keys)" || true
+      if [[ -z $key ]]; then
+        ok "Codex isn't logged in. To log in later: $api_hint"
+      else
+        run "$codex" login --with-api-key <<<"$key" ||
+          warn "That didn't log in, as it says above. To try again later: $api_hint"
+        how=" with API billing" tried=yes
+      fi
+    fi
   fi
-  local key=''
-  ask_secret key "OpenAI API key (from https://platform.openai.com/api-keys)" || true
-  if [[ -z $key ]]; then
-    ok "Codex isn't logged in. To log in later: $api_hint"
-  elif ! run "$codex" login --with-api-key <<<"$key"; then
-    warn "That didn't log in, as it says above. To try again later: $api_hint"
-  fi
+  logged_in=no
+  "$codex" login status >/dev/null 2>&1 && logged_in=yes
+  checklist_login $logged_in $tried "$how"
 }
 
 # setup_opencode: installs OpenCode, in ~/.opencode/bin, and logs it in to the
@@ -63,8 +87,15 @@ setup_opencode() {
   install_agent OpenCode "an open-source coding agent that works with many model providers" \
     "$opencode" https://opencode.ai/v2/install bash || return 0
   "$opencode" auth list --format json 2>/dev/null | jq -e 'length > 0' >/dev/null && logged_in=yes
-  offer_login OpenCode $logged_in "OpenCode asks which model provider to log in to, then shows a link, or asks for an API key." \
-    "opencode auth login" "$opencode" auth login
+  local tried=no
+  if wants_login OpenCode $logged_in "opencode auth login"; then
+    info "OpenCode asks which model provider to log in to, then shows a link, or asks for an API key."
+    log_in "opencode auth login" "$opencode" auth login
+    tried=yes
+  fi
+  logged_in=no
+  "$opencode" auth list --format json 2>/dev/null | jq -e 'length > 0' >/dev/null && logged_in=yes
+  checklist_login $logged_in $tried ""
 }
 
 # setup_pi: installs Pi, in ~/.pi/agent, with pi in ~/.local/bin. You log it in
@@ -73,6 +104,7 @@ setup_pi() {
   step "Install Pi"
   install_agent Pi "a small coding agent you can extend" "$HOME/.local/bin/pi" https://pi.dev/install.sh sh || return 0
   ok "To log Pi in to a model provider: run pi, then type /login."
+  checklist ok ", which logs in with /login"
 }
 
 # install_agent NAME WHAT COMMAND URL SHELL: unless COMMAND is there, asks
@@ -83,26 +115,32 @@ install_agent() {
   if [[ ! -x $command ]]; then
     if ! confirm "Install $name, $what?" yes; then
       ok "$name isn't installed. To install it later, run rembox setup again."
+      SKIPPED_AGENTS+=("$name")
       return 1
     fi
     # setsid runs the script without a terminal, as in a script, so it takes
     # its defaults instead of asking, like whether to start the agent now.
     if ! run_installer "$url" setsid -w "$shell" SCRIPT || [[ ! -x $command ]]; then
       warn "$name couldn't install, as it says above. Run rembox setup again later."
+      checklist warn "$name didn't install"
       return 1
     fi
   fi
   ok "$name $(version_of "$command") is installed."
+  checklist ok "$name $(version_of "$command")"
 }
 
-# offer_login NAME LOGGED_IN HOW HINT COMMAND...: if wants_login, says HOW
-# NAME logs in and runs COMMAND, its login command, with log_in.
-offer_login() {
-  local name=$1 logged_in=$2 how=$3 hint=$4
-  shift 4
-  wants_login "$name" "$logged_in" "$hint" || return 0
-  info "$how"
-  log_in "$hint" "$@"
+# checklist_login LOGGED_IN TRIED HOW: adds whether an agent is logged in
+# (LOGGED_IN is yes), HOW it just did, if it did, to the checklist line. It
+# warns if setup tried to log it in (TRIED is yes), and it didn't.
+checklist_login() {
+  if [[ $1 == yes ]]; then
+    checklist ok ", logged in$3"
+  elif [[ $2 == yes ]]; then
+    checklist warn ", not logged in"
+  else
+    checklist skip ", not logged in"
+  fi
 }
 
 # wants_login NAME LOGGED_IN HINT: asks whether to log NAME in, or if it's

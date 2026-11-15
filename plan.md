@@ -19,6 +19,8 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
 - [x] Tab completes the key's path; the default key is the first of id_ecdsa, id_ed25519, id_rsa.
 - [x] Before moving ssh's port, asks if a firewall outside the server needs it opened, and stops if it isn't.
 - [x] `rembox delete NAME` removes a server from rembox. Setup ends by listing the commands for it.
+- [x] Before those commands, a checklist of what setup did, skipped or couldn't do; steps add to
+      its lines with `checklist` (`lib.sh`), which rembox reads from hidden markers.
 - [x] The server's name is its hostname (`hostname.sh`), and the prompt shows it in full: `user@devbox.example.com`.
 - [x] Move ssh to the port you give (a random one by default), with keys only and no root login; fail2ban
 - [x] ufw: block every incoming connection but ssh
@@ -32,7 +34,7 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
       (`swap.sh`). Skipped in containers.
 - [x] Generate the locales your Mac sends over ssh (LANG, LC_*), so programs don't warn
       (`locale.sh`). The CLI works them out from its environment and passes them to
-      `setup.sh finish`. Not on the site, since it's a small thing.
+      `setup.sh home`, for `finish`. Not on the site, since it's a small thing.
 - [x] zsh as your login shell (`zsh.sh`), based on section 6 of
       https://swiftace.org/posts/remote-development-environment-setup: zinit with
       zsh-syntax-highlighting, zsh-completions, zsh-autosuggestions and OMZ's git aliases
@@ -46,8 +48,9 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
     below it, as do the toolchain installers'. Re-runs rewrite only rembox's files. zshenv sets
     `skip_global_compinit` (Debian and Ubuntu's /etc/zsh/zshrc runs compinit too early) and adds
     Go to PATH; zprofile sources `~/.profile` (for `~/.local/bin`).
-  - **Running as your user:** a third ssh session, `setup.sh home`, as your user on the new port,
-    without sudo, between `start` and `finish` (finish may restart the server, so it stays last).
+  - **Running as your user:** a second ssh session, `setup.sh home`, as your user on the new port,
+    without sudo, after `start`. It then carries on as root with `finish`, through `as_root`, so
+    ssh logs in once after `start` (finish may restart the server, so it stays last).
     It's a real login (PAM, systemd user bus) at a terminal (`ssh -t`), for device-code logins.
     Later user steps (git/gh, toolchains, agents) go in it. `add_user` makes zsh the login shell,
     so `home` runs in zsh, and installers set up zsh's files.

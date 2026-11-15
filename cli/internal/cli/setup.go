@@ -109,10 +109,10 @@ func runSetup(a *App, args []string) error {
 		}
 	}
 
-	// Each session does all it can, so ssh and sudo ask for a password at
-	// most once each. The first asks for your user's name, just before adding
-	// it, and tells rembox.
-	out := &userWriter{w: a.Stdout}
+	// Two sessions, each doing all it can, so ssh and sudo ask for a password
+	// at most once each in each. The first asks for your user's name, just
+	// before adding it, and tells rembox. Both tell it the checklist's lines.
+	out := &markerWriter{w: a.Stdout}
 	a.heading(fmt.Sprintf("Connecting to %s as %s, on port %d", s.Name, s.User, s.Port))
 	err = a.runScript(s, asUser(s, "bash", "-c"), remote.Setup, out, "start", userDefault(a.Username), strconv.Itoa(port), strconv.Itoa(s.Port), s.Name)
 	out.flush()
@@ -141,8 +141,8 @@ func runSetup(a *App, args []string) error {
 				oldPort, port, port, s.Name)
 		}
 	}
-	// The rest logs in as your user on the new port, which shows both work:
-	// first without sudo, to set up your shell, then as root.
+	// The second logs in as your user on the new port, which shows both work:
+	// first without sudo, to set up your shell, then as root, with sudo.
 	onNewPort := func(err error) error {
 		if cantLogIn(err) {
 			return fmt.Errorf("%w. If %s's cloud provider has a firewall, open port %d/tcp in it, then run rembox setup %s again",
@@ -150,14 +150,11 @@ func runSetup(a *App, args []string) error {
 		}
 		return err
 	}
-	a.heading(fmt.Sprintf("Reconnecting to %s as %s, on port %d, to set up your shell, GitHub, toolchains, coding agents and T3 Code", s.Name, s.User, s.Port))
-	if err := onNewPort(a.runScript(s, asUser(s, "bash", "-c"), remote.Setup, a.Stdout,
-		"home", a.GitConfig("user.name"), a.GitConfig("user.email"))); err != nil {
-		return err
-	}
-	a.heading(fmt.Sprintf("Reconnecting to %s as %s, on port %d, to finish as root", s.Name, s.User, s.Port))
-	finish := append([]string{"finish", strconv.Itoa(port)}, a.Locales...)
-	if err := onNewPort(a.runScript(s, asUser(s, "bash", "-c"), remote.Setup, a.Stdout, finish...)); err != nil {
+	a.heading(fmt.Sprintf("Reconnecting to %s as %s, on port %d, to set up your shell, GitHub, toolchains, coding agents and T3 Code, then finish as root", s.Name, s.User, s.Port))
+	home := append([]string{"home", a.GitConfig("user.name"), a.GitConfig("user.email"), strconv.Itoa(port)}, a.Locales...)
+	err = a.runScript(s, asUser(s, "bash", "-c"), remote.Setup, out, home...)
+	out.flush()
+	if err := onNewPort(err); err != nil {
 		return err
 	}
 	if err := a.offerInclude(); err != nil {
@@ -165,8 +162,24 @@ func runSetup(a *App, args []string) error {
 	}
 	fmt.Fprintf(a.Stdout, "\n\n%s %s\n\n", a.paint(green, "==>"),
 		a.paint(bold, fmt.Sprintf("%s is set up. To log in: rembox ssh %s", s.Name, s.Name)))
+	a.printChecklist(out.checks)
 	a.printCommands(s.Name)
 	return nil
+}
+
+// printChecklist shows the checklist's lines, from setup.sh, each "MARK TEXT",
+// where MARK is ok, skip or warn, then a blank line, if there are any.
+func (a *App) printChecklist(lines []string) {
+	marks := map[string]string{"ok": a.paint(green, "✓"), "skip": a.paint(dim, "–"), "warn": a.paint(yellow, "!")}
+	for _, line := range lines {
+		mark, text, _ := strings.Cut(line, " ")
+		if m, ok := marks[mark]; ok {
+			fmt.Fprintf(a.Stdout, "  %s %s\n", m, text)
+		}
+	}
+	if len(lines) > 0 {
+		fmt.Fprintln(a.Stdout)
+	}
 }
 
 // printCommands lists the commands for the server called name, once it's set up.
@@ -183,37 +196,46 @@ func (a *App) printCommands(name string) {
 	tw.Flush()
 }
 
-// userMarker starts the line in which setup.sh tells rembox the name of your
-// user, after asking you for it, as "\x1b]rembox;user=NAME\a": an escape
-// sequence, which terminals ignore. See add_user in user.sh.
-const userMarker = "\x1b]rembox;user="
+// marker starts the lines in which setup.sh tells rembox things, as
+// "\x1b]rembox;KEY=VALUE\a": an escape sequence, which terminals ignore.
+// KEY is user, for the name of your user, after asking you for it (see
+// add_user in user.sh), or check, for a line of the checklist (see checklist
+// in lib.sh).
+const marker = "\x1b]rembox;"
 
-// userWriter passes what setup.sh prints on to w, but for the line starting
-// with userMarker, from which it keeps the user's name. The rest passes
-// straight through, so questions, which don't end their lines, show at once.
-type userWriter struct {
+// markerWriter passes what setup.sh prints on to w, but for the lines starting
+// with marker, from which it keeps the user's name and the checklist's lines.
+// The rest passes straight through, so questions, which don't end their
+// lines, show at once.
+type markerWriter struct {
 	w       io.Writer
 	user    string
-	held    []byte // the start of a line that may be the marker's
+	checks  []string
+	held    []byte // the start of a line that may be a marker's
 	midLine bool
 }
 
-func (u *userWriter) Write(p []byte) (int, error) {
+func (u *markerWriter) Write(p []byte) (int, error) {
 	out := make([]byte, 0, len(p))
 	for _, b := range p {
 		switch {
 		case u.held != nil:
 			u.held = append(u.held, b)
-			if n := len(u.held); n <= len(userMarker) && b != userMarker[n-1] {
-				out = append(out, u.held...) // not the marker after all
+			if n := len(u.held); n <= len(marker) && b != marker[n-1] {
+				out = append(out, u.held...) // not a marker after all
 				u.held = nil
 			} else if b == '\n' {
 				// The terminal ends lines with \r\n.
-				line := strings.TrimRight(string(u.held[len(userMarker):]), "\r\n")
-				u.user = strings.TrimSuffix(line, "\a")
+				line := strings.TrimSuffix(strings.TrimRight(string(u.held[len(marker):]), "\r\n"), "\a")
+				switch key, value, _ := strings.Cut(line, "="); key {
+				case "user":
+					u.user = value
+				case "check":
+					u.checks = append(u.checks, value)
+				}
 				u.held = nil
 			}
-		case !u.midLine && b == userMarker[0]:
+		case !u.midLine && b == marker[0]:
 			u.held = []byte{b}
 		default:
 			out = append(out, b)
@@ -229,7 +251,7 @@ func (u *userWriter) Write(p []byte) (int, error) {
 }
 
 // flush passes on what's held back, once the output has ended.
-func (u *userWriter) flush() {
+func (u *markerWriter) flush() {
 	if len(u.held) > 0 {
 		u.w.Write(u.held)
 		u.held = nil

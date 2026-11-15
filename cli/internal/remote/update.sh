@@ -23,11 +23,13 @@ update() {
   upgrades=$(grep -c '^Inst ' <<<"$plan" || true)
   if [[ $upgrades == 0 ]]; then
     ok "Every package is already up to date."
+    checklist ok "Every package was up to date"
   else
     # Where a package comes with a new default config file, keep the server's.
     step "Upgrade $(plural "$upgrades" package), keeping the server's config files"
     run "${APT[@]}" -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold full-upgrade
     ok "Upgraded $(plural "$upgrades" package)."
+    checklist ok "Upgraded $(plural "$upgrades" package)"
   fi
 
   step "Remove packages that are no longer needed"
@@ -60,8 +62,10 @@ setup_auto_upgrades() {
   eval "$(apt-config shell lists APT::Periodic::Update-Package-Lists upgrade APT::Periodic::Unattended-Upgrade)"
   if [[ $lists == 1 && $upgrade == 1 ]]; then
     ok "unattended-upgrades installs security updates every day."
+    checklist ok "; security updates install daily"
   else
     warn "A file in /etc/apt/apt.conf.d that comes after $AUTO_UPGRADES turns off daily updates. To have unattended-upgrades install them, remove what it says about APT::Periodic."
+    checklist warn "; daily security updates are off, in /etc/apt/apt.conf.d"
   fi
 }
 
@@ -101,17 +105,25 @@ install_basics() {
   install_release zoxide ajeetdsouza/zoxide "zoxide-VERSION-$target-unknown-linux-musl.tar.gz"
   install_release zellij zellij-org/zellij "zellij-$target-unknown-linux-musl.tar.gz"
   ok "The tools for development are installed."
+  if ((${#NOT_RELEASED[@]} > 0)); then
+    checklist warn "Installed dev tools, but not $(joined "${NOT_RELEASED[@]}")"
+  else
+    checklist ok "Installed dev tools"
+  fi
 }
 
 # install_release NAME REPO FILE: installs the program NAME from the latest
 # release of the GitHub repo REPO, as /usr/local/bin/NAME, which comes before
 # apt's on PATH, unless that's the latest already. FILE is the release's
 # .tar.gz for this server, with VERSION for the version. The download must
-# match the SHA-256 GitHub lists for it.
+# match the SHA-256 GitHub lists for it. If it can't find the release, and
+# NAME isn't installed, adds NAME to NOT_RELEASED.
+NOT_RELEASED=()
 install_release() {
   local name=$1 repo=$2 file=/usr/local/bin/$1 release version url sha256 have
   if ! release=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest"); then
     warn "Couldn't find $name's latest release on GitHub, so it's not installed or updated. Run rembox setup again later."
+    [[ -x $file ]] || NOT_RELEASED+=("$name")
     return
   fi
   version=$(jq -r '.tag_name | ltrimstr("v")' <<<"$release")

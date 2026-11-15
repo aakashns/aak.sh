@@ -20,9 +20,13 @@ install_go() {
   fi
   if [[ -z $version && -z $have ]]; then
     warn "Couldn't find Go's latest release on go.dev, so it's not installed. Run rembox setup again later."
+    checklist warn ", but not Go"
     return
   fi
-  wants_latest Go "$have" "$version" || return 0
+  if ! wants_latest Go "$have" "$version"; then
+    checklist ok " and Go $have"
+    return
+  fi
 
   local file sha256 dir
   file=go$version.linux-$(dpkg --print-architecture).tar.gz
@@ -39,6 +43,7 @@ install_go() {
   run tar -xzf "$dir/$file" -C "${GO_DIR%/*}"
   rm -rf "$dir"
   ok "Go $version is installed in $GO_DIR."
+  checklist ok " and Go $version"
 }
 
 # setup_toolchains: installs or upgrades bun, Node, Python and Rust. Runs as
@@ -48,9 +53,24 @@ install_go() {
 setup_toolchains() {
   ((EUID != 0)) || fail "Run this as your user, not root."
   setup_bun
+  checklist_version "" bun "$(version_of "$HOME/.bun/bin/bun")"
   setup_node
+  checklist_version ", " Node "$("$HOME/.local/share/vite-plus/bin/vp" env list --json 2>/dev/null |
+    jq -r '.node[] | select(.default) | .version | ltrimstr("v")' || true)"
   setup_python
+  checklist_version ", " Python "$(version_of "$HOME/.local/bin/python")"
   setup_rust
+  checklist_version ", " Rust "$(version_of "$HOME/.cargo/bin/rustc")"
+}
+
+# checklist_version SEPARATOR NAME VERSION: adds NAME and VERSION, the version
+# installed, to the checklist line, after SEPARATOR, or warns if it's empty.
+checklist_version() {
+  if [[ -n $3 ]]; then
+    checklist ok "$1$2 $3"
+  else
+    checklist warn "$1no $2"
+  fi
 }
 
 # setup_bun: installs the latest bun, in ~/.bun, or upgrades it.

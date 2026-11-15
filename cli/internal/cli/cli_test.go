@@ -46,7 +46,7 @@ func scriptIn(args []string) string {
 // tells rembox your user, as if you took the default, DEFAULT_USER.
 func tellUser(args []string, stdout io.Writer) error {
 	if sa := scriptArgs(args); sa[0] == "start" {
-		fmt.Fprintf(stdout, "%s%s\a\r\n", userMarker, sa[1])
+		fmt.Fprintf(stdout, "%suser=%s\a\r\n", marker, sa[1])
 	}
 	return nil
 }
