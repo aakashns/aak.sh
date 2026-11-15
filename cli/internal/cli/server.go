@@ -21,7 +21,6 @@ func sshArgs(s config.Server, command ...string) []string {
 		"-o", "PasswordAuthentication=no",
 		"-o", "KbdInteractiveAuthentication=no",
 		"-o", "ConnectTimeout=15",
-		"-o", "ServerAliveInterval=15", // notice within a minute if the server goes away
 		// Rather than your Mac's locale, which ssh passes on and a new server
 		// may not have, so every shell on it warns about it.
 		"-o", "SetEnv=LC_ALL=C.UTF-8",

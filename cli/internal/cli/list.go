@@ -10,8 +10,8 @@ import (
 
 const listHelp = `Usage: rembox list
 
-List the servers added with 'rembox setup': each one's name, the user and
-host rembox logs in as, the port, and the SSH key it logs in with.
+List the servers added with 'rembox setup': each one's name, host, SSH port,
+the user rembox logs in as, and the SSH key it logs in with.
 `
 
 func runList(a *App, args []string) error {
@@ -35,9 +35,9 @@ func runList(a *App, args []string) error {
 	}
 	home, _ := a.HomeDir() // just for showing keys as ~/...
 	tw := tabwriter.NewWriter(a.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(tw, "NAME\tLOGIN\tPORT\tKEY")
+	fmt.Fprintln(tw, "NAME\tHOST\tPORT\tUSER\tKEY")
 	for _, s := range servers {
-		fmt.Fprintf(tw, "%s\t%s\t%d\t%s\n", s.Name, s.Destination(), s.Port, tildePath(home, s.Key))
+		fmt.Fprintf(tw, "%s\t%s\t%d\t%s\t%s\n", s.Name, s.Host, s.Port, s.User, tildePath(home, s.Key))
 	}
 	return tw.Flush()
 }
