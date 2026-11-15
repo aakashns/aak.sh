@@ -1,5 +1,5 @@
 # zsh.sh: makes zsh your shell, with plugins, fzf, zoxide, a git prompt, and
-# Zellij on ssh logins.
+# Zellij on ssh logins, starting locked, with Ctrl+g to unlock it.
 
 # rembox's zsh config is in files of its own, which ~/.zshenv, ~/.zprofile and
 # ~/.zshrc each source from a line at their top. Running setup again rewrites
@@ -42,6 +42,38 @@ setup_zsh() {
     run zsh -i -c exit
   fi
   ok "zsh is set up. Its config is in ~/$ZSH_CONFIG_DIR; yours goes in ~/.zshrc."
+}
+
+ZELLIJ_CONFIG=.config/zellij/config.kdl # in your home folder
+
+# setup_zellij: has Zellij start locked, with Ctrl+g to unlock it, so its keys
+# don't clash with the programs in it, with its unlock-first keybinding preset,
+# and turns its startup tips off. A preset or tips setting you've chosen stays
+# as it is. Runs as your user.
+setup_zellij() {
+  step "Have Zellij start locked, with Ctrl+g to unlock it, and no startup tips"
+  if ! command -v zellij >/dev/null; then
+    warn "Zellij isn't installed, so rembox leaves it as it is."
+    return
+  fi
+  local file=$HOME/$ZELLIJ_CONFIG preset
+  preset=$(sed -nE 's/^[[:space:]]*keybinds[[:space:]].*preset="([^"]*)".*/\1/p' "$file" 2>/dev/null | head -1)
+  # zellij setup writes Zellij's default config first, if there's none.
+  if [[ -z $preset ]]; then
+    if ! run zellij setup --keybinding-preset unlock-first; then
+      warn "Zellij couldn't set its keybindings, as it says above. Run rembox setup again later."
+      return
+    fi
+    preset=unlock-first
+  fi
+  if ! grep -qE '^[[:space:]]*show_startup_tips[[:space:]]' "$file"; then
+    run sed -i '$a show_startup_tips false' "$file"
+  fi
+  if [[ $preset == unlock-first ]]; then
+    ok "Zellij starts locked; Ctrl+g unlocks it. Its config is in ~/$ZELLIJ_CONFIG."
+  else
+    ok "Zellij uses your $preset keybindings. Its config is in ~/$ZELLIJ_CONFIG."
+  fi
 }
 
 # source_from FILE CONFIG: puts a line that sources CONFIG at the top of FILE,
@@ -223,7 +255,7 @@ _rembox_git_done() {
 }
 
 add-zsh-hook precmd _rembox_prompt
-PROMPT='%F{8}%n@%M%f %F{blue}%~%f$_rembox_git %(?.%F{green}.%F{red})❯%f '
+PROMPT='%F{cyan}%n@%M%f %F{blue}%~%f$_rembox_git %(?.%F{green}.%F{red})❯%f '
 
 # zoxide: z FOLDER goes to the folder you use most that matches, and zi picks
 # one with fzf. It goes last, after compinit.

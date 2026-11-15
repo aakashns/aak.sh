@@ -31,7 +31,7 @@ Run `rembox setup` to begin setting up a remote server.
 - [`user.sh`](cli/internal/remote/user.sh): asks for your user's name, and adds it, with a sudo password, your SSH keys and zsh.
 - [`sshd.sh`](cli/internal/remote/sshd.sh): moves ssh to the port you give, with keys only and no root login.
 - [`firewall.sh`](cli/internal/remote/firewall.sh): turns on ufw, blocking every incoming connection but ssh.
-- [`zsh.sh`](cli/internal/remote/zsh.sh): sets up zsh for your user, with plugins, fzf, zoxide, a git prompt, and Zellij on ssh logins.
+- [`zsh.sh`](cli/internal/remote/zsh.sh): sets up zsh for your user, with plugins, fzf, zoxide, a git prompt, and Zellij on ssh logins, starting locked, with Ctrl+g to unlock it, and no startup tips.
 - [`agents.sh`](cli/internal/remote/agents.sh): asks whether to install Claude Code, Codex, OpenCode and Pi, installs each with its own installer, and logs it in, to a subscription or with API billing.
 - [`instructions.sh`](cli/internal/remote/instructions.sh): writes `~/.config/rembox/AGENTS.md`, about the server, and links each agent's global instructions to it.
 - [`t3.sh`](cli/internal/remote/t3.sh): makes ~/work for your projects, installs T3 Code, connects it to your devices with T3 Connect, and shows a QR code for its phone app.
