@@ -18,10 +18,10 @@
 #
 #   setup.sh home GIT_NAME GIT_EMAIL PORT [LOCALE...]
 #     As USER, on PORT, which shows that both work: makes ~/work, for USER's
-#     projects, sets up zsh for USER, logs gh in to GitHub, if USER likes, and
-#     sets the name and email for git commits, from GitHub, or if gh isn't
-#     logged in, GIT_NAME and GIT_EMAIL, from git on your Mac (either may be
-#     empty), installs the latest bun, Node, Python and Rust, or asks to
+#     projects, sets up zsh and Zellij for USER, logs gh in to GitHub, if USER
+#     likes, and sets the name and email for git commits, from GitHub, or if
+#     gh isn't logged in, GIT_NAME and GIT_EMAIL, from git on your Mac (either
+#     may be empty), installs the latest bun, Node, Python and Rust, or asks to
 #     upgrade them, then installs the coding agents USER picks, and logs them
 #     in, installs the latest Playwright, with Chromium, for them, writes
 #     instructions for them about the server, and installs T3 Code, connected
@@ -70,6 +70,7 @@ main() {
     (($# >= 4)) || fail "Usage: setup.sh home GIT_NAME GIT_EMAIL PORT [LOCALE...]"
     make_projects_dir
     setup_zsh
+    setup_zellij
     setup_github
     setup_git "$2" "$3"
     checklist_send

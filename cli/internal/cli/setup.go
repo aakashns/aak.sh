@@ -337,7 +337,7 @@ func (a *App) offerInclude() error {
 	}
 	line := includeLine(home, dir)
 	fmt.Fprintln(a.Stdout)
-	if !a.confirm(fmt.Sprintf("Add '%s' to ~/.ssh/config?", line), false) {
+	if !a.confirm(fmt.Sprintf("Add '%s' to ~/.ssh/config?", line), true) {
 		return nil
 	}
 	if err := addInclude(home, dir); err != nil {

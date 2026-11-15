@@ -3,6 +3,7 @@
 # with T3 Connect, which needs no open ports.
 
 T3_APP_URL=https://t3.codes/mobile # T3 Code's phone app, in the App Store or Google Play
+T3_DESKTOP_URL=https://t3.codes/download # T3 Code's desktop app
 T3_SETTINGS=.t3/userdata/settings.json # in your home folder
 T3_LOGIN=.t3/userdata/secrets/cloud-cli-oauth-token.bin # in your home folder: T3 Connect's login
 PROJECTS_DIR=work # in your home folder, where T3 Code adds projects
@@ -39,7 +40,7 @@ setup_t3() {
   fi
   t3_settings
   if t3_connected "$t3"; then
-    ok "T3 Code $(version_of "$t3") runs in the background, and your devices reach it through T3 Connect$(t3_account). To get its phone app: $T3_APP_URL"
+    ok "T3 Code $(version_of "$t3") runs in the background, and your devices reach it through T3 Connect$(t3_account). To get its phone app: $T3_APP_URL, or its desktop app: $T3_DESKTOP_URL"
     checklist ok "T3 Code $(version_of "$t3"), connected with T3 Connect$(t3_account)"
     return
   fi
@@ -98,6 +99,7 @@ setup_phone() {
   printf '\n'
   qrencode -t ANSIUTF8 -m 2 "$T3_APP_URL" | sed 's/^/    /'
   info "Or open $T3_APP_URL on your phone. In the app, sign in to T3 Connect with the same account, and choose $HOSTNAME."
+  info "You can also use T3 Code's desktop app, from $T3_DESKTOP_URL, the same way."
   local answer
   ask answer "Press Enter once the app shows $HOSTNAME" || true
 }
