@@ -3,7 +3,7 @@
 # the server, as one script.
 #
 # Each script defines main and ends with `main "$@" </dev/null`, so no command
-# in it stops to read input; only confirm and ask ask, at the terminal.
+# in it stops to read input; only confirm, ask and ask_secret ask, at the terminal.
 #
 # rembox passes --color when your terminal shows color.
 
@@ -134,6 +134,17 @@ ask() {
     return 1
   fi
   printf -v "$1" '%s' "${answer:-${3:-}}"
+}
+
+# ask_secret VAR QUESTION: asks QUESTION as ask does, without showing what you
+# type, and sets VAR to the answer. Fails at the end of input (Ctrl-D).
+ask_secret() {
+  local answer='' status=0
+  printf '\n    %s%s%s: ' "$BOLD" "$2" "$RESET"
+  read -rs answer </dev/tty || status=$?
+  printf '\n'
+  ((status == 0)) || return 1
+  printf -v "$1" '%s' "$answer"
 }
 
 # same FILE CONTENT: succeeds if FILE holds just CONTENT (and a newline).
