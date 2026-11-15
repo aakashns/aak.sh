@@ -2,7 +2,9 @@
 
 # add_user DEFAULT: asks for your user's name, DEFAULT if you don't give one,
 # and tells rembox. Adds the user, if it isn't there yet, with a password for
-# sudo, and lets in the SSH keys of the user rembox logged in as.
+# sudo, lets in the SSH keys of the user rembox logged in as, and makes zsh its
+# login shell, so the steps that run as the user, like installers that set up
+# your shell, run in zsh.
 add_user() {
   local user problem login=${SUDO_USER:-root}
 
@@ -70,6 +72,7 @@ add_user() {
     run chmod 700 "$home/.ssh"
     run chmod 600 "$keys"
   fi
+  set_login_shell "$user"
 }
 
 # user_problem USER: says what's wrong with USER as your user's name, as

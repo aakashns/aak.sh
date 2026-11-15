@@ -40,15 +40,14 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
       to xterm-256color only if the server has no terminfo for yours (like Ghostty's).
   - **Shell config:** rembox owns `~/.config/rembox/{zshenv,zprofile,zshrc}`, which `~/.zshenv`,
     `~/.zprofile` and `~/.zshrc` source from a line at their top, added once; your own settings go
-    below it. Re-runs rewrite only rembox's files. zshenv sets `skip_global_compinit` (Debian and
-    Ubuntu's /etc/zsh/zshrc runs compinit too early); zprofile sources `~/.profile` (for
-    `~/.local/bin`). Later steps that need PATH (bun, uv, cargo) add it to rembox's zprofile and
-    run their installers without touching shell files.
+    below it, as do the toolchain installers'. Re-runs rewrite only rembox's files. zshenv sets
+    `skip_global_compinit` (Debian and Ubuntu's /etc/zsh/zshrc runs compinit too early) and adds
+    Go to PATH; zprofile sources `~/.profile` (for `~/.local/bin`).
   - **Running as your user:** a third ssh session, `setup.sh home`, as your user on the new port,
     without sudo, between `start` and `finish` (finish may restart the server, so it stays last).
     It's a real login (PAM, systemd user bus) at a terminal (`ssh -t`), for device-code logins.
-    Later user steps (git/gh, toolchains, agents) go in it. `finish` makes zsh the login shell, so
-    that happens only once `home` has set it up.
+    Later user steps (git/gh, toolchains, agents) go in it. `add_user` makes zsh the login shell,
+    so `home` runs in zsh, and installers set up zsh's files.
   - zinit and its plugins download during `home` (`zsh -i -c exit`), unless they're there.
     Re-runs don't update them; `zinit update` does.
   - Zellij instead of tmux: ssh logins attach to the session `main` (top of rembox's zshrc).
@@ -56,26 +55,21 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
 - [x] Git and GitHub (`git.sh`): gh from GitHub's apt repo. In `home`: `gh auth login` (device
       code) and `gh auth setup-git`, then git's name and email, unless set, from GitHub (public
       email, else noreply; profile name, else login), else this Mac's, without asking.
+- [x] Toolchains (`toolchains.sh`), no questions: the latest Go in `/usr/local/go` (in `start`);
+      in `home`, each with its own installer and defaults: bun, Node via Vite+, Python via uv,
+      Rust via rustup. Re-runs ask before upgrading. gcc comes with build-essential.
 
 ## Next
 
-1. [ ] **Toolchains, as your user, each optional:** bun; Node via Vite+ (`vp`, with
-   `VP_BUN_MANAGER=no`); Python via uv; Rust via rustup (minimal + clippy + rustfmt).
-2. [ ] **Coding agents, each optional:** Codex, Claude Code, Pi, with their logins. A shared
+1. [ ] **Coding agents:** Codex, Claude Code, Pi, with their logins. A shared
    `~/.config/rembox/AGENTS.md` (or similar), symlinked to `~/.codex/AGENTS.md`,
    `~/.claude/CLAUDE.md` and `~/.pi/agent/AGENTS.md`; never overwrite real files.
-3. [ ] **HTTPS and T3 Code.** Ask for a domain, check its A record points at the server, install
+2. [ ] **HTTPS and T3 Code.** Ask for a domain, check its A record points at the server, install
    Caddy, reverse-proxy to T3 on 127.0.0.1:3773, enable linger so T3's systemd user service runs
    without a login, add its PATH drop-in, and pair a device (QR code). See SETUP.md's gotchas.
    - ufw: open 80/tcp, 443/tcp and 443/udp. `setup_firewall` in `firewall.sh` asks "Keep the ufw
      rule to …?" for every allow rule but ssh's, so make it take the ports rembox opens and skip
      the question for them, or every re-run asks about Caddy's ports.
-
-## Open questions
-
-- Should `rembox setup` stay about hardening the server, with toolchains, agents and T3 as
-  separate commands (like `rembox install claude`)? That keeps setup's questions and the site's
-  list short. Decide before step 1.
 
 ## Testing on real machines
 
