@@ -29,8 +29,7 @@ Get a server ready for development, securely. rembox setup:
      - logs in, upgrades all packages, and turns on unattended-upgrades
 
   2. Locks down SSH access
-     - creates a non-root user with sudo, asking you for its name and
-       password
+     - creates a non-root user with password protected sudo access
      - moves SSH from 22 to a random port to counter automated attacks
      - turns off password-based & root SSH access, and turns on fail2ban
      - turns on the ufw firewall to block all incoming traffic except SSH
@@ -40,7 +39,7 @@ Get a server ready for development, securely. rembox setup:
        tools
      - makes zsh your shell, with curated plugins to improve your workflow
      - sets your name and email for git, and logs gh in to GitHub with a
-       code, if you like
+       code
      - adds swap as big as the server's memory (up to 4 GiB), if it has none
 
 To reach a program on the server, like a dev server or database, forward its
