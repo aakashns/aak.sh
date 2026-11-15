@@ -55,10 +55,13 @@ run() {
 }
 
 # at_terminal COMMAND...: shows a command, then runs it at the terminal, for
-# commands that ask you things, like passwd. Returns its exit status.
+# commands that ask you things, like passwd. Returns its exit status. Its
+# output is open for reading too: programs like gh ask the terminal things,
+# like its colors, and read the answer from there, or their next question
+# reads it as what you typed.
 at_terminal() {
   printf '\n    %s$ %s%s\n' "$CYAN" "$(quoted "$@")" "$RESET"
-  "$@" </dev/tty >/dev/tty 2>&1
+  "$@" </dev/tty 1<>/dev/tty 2>&1
 }
 
 # plural N WORD: "1 WORD", or "N WORDs".

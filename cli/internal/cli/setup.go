@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/aakashns/rembox/cli/internal/config"
 	"github.com/aakashns/rembox/cli/internal/remote"
@@ -167,9 +168,24 @@ func runSetup(a *App, args []string) error {
 	if err := a.offerInclude(); err != nil {
 		return err
 	}
-	fmt.Fprintf(a.Stdout, "\n\n%s %s\n", a.paint(green, "==>"),
+	fmt.Fprintf(a.Stdout, "\n\n%s %s\n\n", a.paint(green, "==>"),
 		a.paint(bold, fmt.Sprintf("%s is set up. To log in: rembox ssh %s", s.Name, s.Name)))
+	a.printCommands(s.Name)
 	return nil
+}
+
+// printCommands lists the commands for the server called name, once it's set up.
+func (a *App) printCommands(name string) {
+	tw := tabwriter.NewWriter(a.Stdout, 0, 0, 3, ' ', 0)
+	for _, c := range [][2]string{
+		{"rembox ssh " + name, "Log in to " + name + ", or run a command on it"},
+		{"rembox list", "List your servers"},
+		{"rembox setup " + name, "Set " + name + " up again, or change how rembox logs in to it"},
+		{"rembox delete " + name, "Remove " + name + " from rembox; the server stays as it is"},
+	} {
+		fmt.Fprintf(tw, "  %s\t%s\n", a.paint(cyan, c[0]), c[1])
+	}
+	tw.Flush()
 }
 
 // userMarker starts the line in which setup.sh tells rembox the name of your
