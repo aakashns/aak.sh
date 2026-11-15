@@ -46,6 +46,8 @@ type App struct {
 	Command func(stdout io.Writer, name string, args ...string) error
 	Euid    int // 0 when run as root
 
+	BackupDir string // where implode saves a copy of your servers' ssh config
+
 	in *bufio.Reader // Stdin, shared by every question
 }
 
@@ -68,6 +70,7 @@ func Main() int {
 		GitConfig:  gitConfig,
 		Command:    atTerminal,
 		Euid:       os.Geteuid(),
+		BackupDir:  "/tmp",
 	}
 	return app.Run(os.Args[1:])
 }

@@ -110,7 +110,8 @@ func newTestApp(t *testing.T, current string) *testApp {
 			}
 			return fmt.Errorf("the tests don't fake %s", name)
 		},
-		Euid: 1000,
+		Euid:      1000,
+		BackupDir: t.TempDir(),
 	}
 	return ta
 }
