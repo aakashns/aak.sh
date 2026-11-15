@@ -1,7 +1,8 @@
 # toolchains.sh: installs the latest Go, and, as your user, the latest bun,
-# Node with Vite+, Python with uv, and Rust with rustup, each with its own
-# installer, in the usual place, and as it usually sets up your shell. Once
-# they're installed, running setup again asks before upgrading any of them.
+# Node with Vite+, Python with uv, Rust with rustup, and Playwright with
+# Chromium, each with its own installer, in the usual place, and as it usually
+# sets up your shell. Once they're installed, running setup again asks before
+# upgrading any of them.
 
 GO_DIR=/usr/local/go # where go.dev's instructions put it
 
@@ -119,6 +120,50 @@ setup_node() {
     return
   fi
   ok "Node $latest is installed, and is Vite+'s default."
+}
+
+# setup_playwright: installs the latest Playwright, as a global package of
+# Vite+'s, with playwright in ~/.local/share/vite-plus/bin, or upgrades it,
+# then the Chromium it uses, with the system libraries Chromium needs, which
+# Playwright installs with sudo. Runs as your user, after setup_node.
+setup_playwright() {
+  step "Install the latest Playwright, with Chromium"
+  ((EUID != 0)) || fail "Run this as your user, not root."
+  local bin=$HOME/.local/share/vite-plus/bin have latest
+  if [[ ! -x $bin/node ]]; then
+    warn "Playwright needs Node, which isn't installed, so it isn't either. Run rembox setup again later."
+    checklist warn "No Playwright, as there's no Node"
+    return
+  fi
+  have=$(version_of "$bin/playwright")
+  latest=$(npm_latest playwright)
+  if wants_latest Playwright "$have" "$latest"; then
+    run "$bin/vp" install -g playwright@latest || warn "Vite+ couldn't install Playwright, as it says above. Run rembox setup again later."
+  fi
+  have=$(version_of "$bin/playwright")
+  if [[ -z $have ]]; then
+    checklist warn "Playwright didn't install"
+    return
+  fi
+  if ! chromium_installed "$bin/playwright"; then
+    info "Playwright installs the libraries Chromium needs with sudo, which may ask for $(id -un)'s password on $HOSTNAME."
+    if ! at_terminal "$bin/playwright" install --with-deps chromium; then
+      warn "Playwright couldn't install Chromium, as it says above. To try again: playwright install --with-deps chromium"
+      checklist warn "Playwright $have, without Chromium"
+      return
+    fi
+  fi
+  ok "Playwright $have is installed, with Chromium."
+  checklist ok "Playwright $have, with Chromium"
+}
+
+# chromium_installed PLAYWRIGHT: succeeds if the Chromium PLAYWRIGHT uses is
+# installed, in the folder its dry run shows first, which Playwright marks once
+# it's done.
+chromium_installed() {
+  local dir
+  dir=$("$1" install --dry-run chromium 2>/dev/null | awk '/Install location:/ { print $3; exit }' || true)
+  [[ -n $dir && -f $dir/INSTALLATION_COMPLETE ]]
 }
 
 # setup_python: installs the latest uv, in ~/.local/bin, or upgrades it, then

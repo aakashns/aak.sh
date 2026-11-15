@@ -47,6 +47,7 @@ Get a server ready for development, securely. rembox setup:
 
   4. Installs AI coding agents and sets up remote access
      - installs & sets up Claude Code, Codex, OpenCode, and Pi coding agents
+     - installs Playwright with Chromium, so agents can do browser testing
      - installs T3 Code and configures secure remote access via T3 Connect
      - displays a QR code to set up T3 Code on your phone for remote access
 
