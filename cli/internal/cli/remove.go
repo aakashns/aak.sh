@@ -8,14 +8,14 @@ import (
 	"github.com/aakashns/rembox/cli/internal/config"
 )
 
-const deleteHelp = `Usage: rembox delete NAME
+const removeHelp = `Usage: rembox remove NAME
 
 Remove the server called NAME from rembox: how rembox logs in to it, and its
 Host block in ~/.config/rembox/ssh_config. It asks first. The server itself
 stays as it is; to set it up again: rembox setup.
 `
 
-func runDelete(a *App, args []string) error {
+func runRemove(a *App, args []string) error {
 	switch {
 	case len(args) == 0:
 		return usagef("give the name of a server; 'rembox list' shows them")
@@ -30,7 +30,7 @@ func runDelete(a *App, args []string) error {
 	if err != nil {
 		return err
 	}
-	if !a.confirm(fmt.Sprintf("Delete %s (%s, port %d) from rembox? The server itself stays as it is.",
+	if !a.confirm(fmt.Sprintf("Remove %s (%s, port %d) from rembox? The server itself stays as it is.",
 		s.Name, s.Destination(), s.Port), false) {
 		return errDeclined
 	}
@@ -39,8 +39,8 @@ func runDelete(a *App, args []string) error {
 		return err
 	}
 	if err := config.RemoveServer(dir, s.Name); err != nil {
-		return fmt.Errorf("deleting %s: %w", s.Name, err)
+		return fmt.Errorf("removing %s: %w", s.Name, err)
 	}
-	a.done(fmt.Sprintf("Deleted %s.", s.Name))
+	a.done(fmt.Sprintf("Removed %s.", s.Name))
 	return nil
 }

@@ -80,7 +80,7 @@ func TestSetup(t *testing.T) {
 		"Is box1 behind a firewall outside it, like your cloud provider's? [y/N]",
 		"Open port 23456/tcp in that firewall now. Have you opened it? [y/N]",
 		"box1 is set up. To log in: rembox ssh box1",
-		"rembox list", "rembox setup box1", "rembox delete box1"} {
+		"rembox list", "rembox setup box1", "rembox remove box1"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output missing %q:\n%s", want, out)
 		}
