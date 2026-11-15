@@ -20,8 +20,10 @@ add_user() {
 
   if id -u "$user" >/dev/null 2>&1; then
     ok "$user is already there."
+    checklist ok "Your user is $user"
   else
     run useradd --create-home --shell /bin/bash "$user"
+    checklist ok "Added your user, $user"
   fi
   install_packages sudo
   if ! id -nG "$user" | tr ' ' '\n' | grep -qx sudo; then
@@ -38,8 +40,10 @@ add_user() {
   fi
   if sudo -l -U "$user" | grep -q NOPASSWD; then
     warn "A rule in /etc/sudoers or /etc/sudoers.d lets $user use sudo without its password. To have sudo ask for it, remove the rule."
+    checklist warn ", with zsh, and sudo that doesn't ask for its password"
   else
     ok "$user can use sudo, with its password."
+    checklist ok ", with sudo and zsh"
   fi
 
   local home group

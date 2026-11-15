@@ -13,6 +13,7 @@ setup_swap() {
   step "Add swap, for when memory runs low"
   if systemd-detect-virt --quiet --container; then
     ok "The server is a container, which uses its host's swap, so it gets none of its own."
+    checklist ok ", with its host's swap"
     return
   fi
 
@@ -22,6 +23,7 @@ setup_swap() {
       fs=$(findmnt --noheadings --output FSTYPE --target "${SWAP_FILE%/*}")
       if [[ $fs != ext4 && $fs != xfs ]]; then
         warn "Not adding swap: / is $fs, and rembox adds swap files on ext4 and xfs only."
+        checklist warn ", with no swap, as / is $fs"
         return
       fi
       memory=$(awk '/^MemTotal:/ { print $2 }' /proc/meminfo) # KiB
@@ -30,6 +32,7 @@ setup_swap() {
       free=$(df -Pk / | awk 'NR == 2 { print $4 }') # KiB
       if ((free < (size + 5) * 1048576)); then
         warn "Not adding swap: / has $((free / 1048576)) GiB free, too little for $size GiB of swap and 5 GiB to spare."
+        checklist warn ", with no swap, as / is low on space"
         return
       fi
       run fallocate --length "${size}G" "$SWAP_FILE"
@@ -58,4 +61,5 @@ setup_swap() {
   local total
   total=$(free -m | awk '/^Swap:/ { printf "%.1f", $2 / 1024 }')
   ok "The server has $total GiB of swap, used only once memory runs low."
+  checklist ok ", with ${total%.0} GiB of swap"
 }

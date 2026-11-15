@@ -15,11 +15,12 @@ set -euo pipefail
 export LC_ALL=C.UTF-8 LANG=C.UTF-8
 unset LANGUAGE
 
-# The script's arguments, as rembox gave them, for as_root.
-SCRIPT_ARGS=("$@")
+# --color, if rembox passed it, for as_root to pass on.
+COLOR_ARG=()
 
 if [[ ${1:-} == --color ]]; then
   shift
+  COLOR_ARG=(--color)
   BOLD=$'\e[1m' DIM=$'\e[2m' RED=$'\e[31m' CYAN=$'\e[36m' GREEN=$'\e[32m' YELLOW=$'\e[33m' RESET=$'\e[0m'
 else
   BOLD='' DIM='' RED='' CYAN='' GREEN='' YELLOW='' RESET=''
@@ -84,6 +85,36 @@ warn() {
   printf '\n    %s! %s%s\n' "$YELLOW" "$1" "$RESET"
 }
 
+# The line of the checklist that rembox shows once setup is done, as the steps
+# put it together: its mark (ok, skip or warn) and its text.
+CHECK_MARK='' CHECK_TEXT=''
+
+# checklist MARK TEXT: adds TEXT, a part of a line of the checklist, to the line.
+# MARK is ok, skip (you chose not to) or warn; the line gets the worst of its
+# parts' marks.
+checklist() {
+  case $1:$CHECK_MARK in
+  warn:* | skip:ok | *:) CHECK_MARK=$1 ;;
+  esac
+  CHECK_TEXT+=$2
+}
+
+# checklist_send: sends the checklist line to rembox, if it has any parts, in a line
+# rembox takes out of the output, as add_user does, then starts the next.
+checklist_send() {
+  [[ -z $CHECK_TEXT ]] || printf '\e]rembox;check=%s %s\a\n' "$CHECK_MARK" "$CHECK_TEXT"
+  CHECK_MARK='' CHECK_TEXT=''
+}
+
+# joined WORD...: "A", "A and B", or "A, B and C".
+joined() {
+  local out=$1 i
+  for ((i = 2; i <= $#; i++)); do
+    if ((i == $#)); then out+=" and ${!i}"; else out+=", ${!i}"; fi
+  done
+  printf '%s' "$out"
+}
+
 # fail MESSAGE...: says why the script can't carry on, a line each, and stops it.
 fail() {
   printf '\n'
@@ -100,14 +131,15 @@ logged_in() {
   [[ -n ${SUDO_USER:-} ]] || step "Logged in to $HOSTNAME as $(id -un)"
 }
 
-# as_root: carries on as root. Unless the script runs as root already, it
-# says so, then runs itself again with sudo, which may ask for the password.
+# as_root ARG...: carries on as root. Unless the script runs as root already,
+# it says so, then runs itself again with sudo, which may ask for the
+# password, with ARGs.
 as_root() {
   ((EUID != 0)) || return 0
   local me
   me=$(id -un)
   info "$me isn't root, so rembox carries on with sudo, which may ask for $me's password on $HOSTNAME."
-  exec sudo bash -c "$BASH_EXECUTION_STRING" bash "${SCRIPT_ARGS[@]}"
+  exec sudo bash -c "$BASH_EXECUTION_STRING" bash "${COLOR_ARG[@]}" "$@"
 }
 
 # confirm QUESTION [yes]: asks a yes/no question at the terminal, which rembox

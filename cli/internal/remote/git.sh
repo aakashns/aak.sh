@@ -63,8 +63,10 @@ setup_git() {
   fi
   if [[ -z $name || -z $email ]]; then
     warn "git has no name or email for your commits. To set them: git config --global user.name 'Your Name', and user.email you@example.com"
+    checklist warn "; git has no name or email for commits"
   else
     ok "git puts $name <$email> on your commits. To change them: git config --global user.name or user.email"
+    checklist ok "; git commits as $name <$email>"
   fi
 }
 
@@ -86,14 +88,18 @@ setup_github() {
     # link in a text browser on the server, like w3m, if there is one.
     if ! BROWSER=false at_terminal gh auth login --hostname github.com --git-protocol https --web; then
       warn "gh couldn't log in, as it says above. To try again: gh auth login, then gh auth setup-git"
+      checklist warn "gh isn't logged in to GitHub"
       return
     fi
   elif [[ $default == yes ]]; then
     ok "gh isn't logged in. To log in later: gh auth login, then gh auth setup-git"
+    checklist skip "gh isn't logged in to GitHub"
     return
   fi
   if [[ $(git config --global --get-all credential.https://github.com.helper || true) != *'gh auth git-credential'* ]]; then
     run gh auth setup-git --hostname github.com
   fi
-  ok "gh is logged in to GitHub as $(gh api user --jq .login 2>/dev/null || echo 'you'), and git uses its login for github.com."
+  login=$(gh api user --jq .login 2>/dev/null || echo 'you')
+  ok "gh is logged in to GitHub as $login, and git uses its login for github.com."
+  checklist ok "gh logged in to GitHub as $login"
 }

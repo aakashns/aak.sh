@@ -32,18 +32,24 @@ setup_t3() {
     info "T3 Code lets you use your coding agents from your phone, or any browser at app.t3.codes. It runs here in the background, and T3 Connect lets your devices reach it without opening any ports."
     if ! run_installer https://t3.codes/install.sh setsid -w sh SCRIPT || [[ ! -x $t3 ]]; then
       warn "T3 Code couldn't install, as it says above. Run rembox setup again later."
+      checklist warn "T3 Code didn't install"
       return
     fi
   fi
   t3_settings
   if t3_connected "$t3"; then
     ok "T3 Code $(version_of "$t3") runs in the background, and your devices reach it through T3 Connect. To get its phone app: $T3_APP_URL"
+    checklist ok "T3 Code $(version_of "$t3"), connected with T3 Connect"
     return
   fi
   info "T3 Connect logs in with a code: open the link it shows on any device, check the code matches, and approve."
   log_in "t3 up --connect --no-lan" "$t3" up --connect --no-lan
-  t3_connected "$t3" || return 0
+  if ! t3_connected "$t3"; then
+    checklist warn "T3 Code $(version_of "$t3"), not connected to T3 Connect"
+    return
+  fi
   ok "T3 Code $(version_of "$t3") runs in the background, and your devices reach it through T3 Connect."
+  checklist ok "T3 Code $(version_of "$t3"), connected with T3 Connect"
   setup_phone
 }
 
