@@ -74,6 +74,7 @@ setup_firewall() {
   fi
   # ufw.service turns ufw on when the server starts.
   systemctl is-enabled --quiet ufw || run systemctl enable ufw
+  docker_localhost
   local others=''
   if ((kept == 1)); then
     others=", and what its other rule lets in"
@@ -81,6 +82,30 @@ setup_firewall() {
     others=", and what its $kept other rules let in"
   fi
   ok "ufw blocks every incoming connection but ssh on port $port$others."
+}
+
+# docker_localhost: has Docker publish containers' ports on 127.0.0.1 only,
+# unless told otherwise, since they get past ufw. Docker reads it once it's
+# installed. Settings you've changed stay as they are.
+docker_localhost() {
+  local file=/etc/docker/daemon.json old='{}' new
+  if [[ -e $file ]] && ! old=$(jq . "$file"); then
+    warn "$file isn't valid JSON, so rembox leaves it as it is."
+    return
+  fi
+  new=$(jq '.ip //= "127.0.0.1"
+    | ."default-network-opts".bridge."com.docker.network.bridge.host_binding_ipv4" //= "127.0.0.1"' <<<"$old")
+  [[ $new != "$old" ]] || return 0
+  [[ -d ${file%/*} ]] || run mkdir -p "${file%/*}"
+  put "$file" 644 "$new"
+  # Docker reads it when it starts; restarting it restarts its containers.
+  if systemctl is-active --quiet docker; then
+    if confirm "Restart Docker, and its containers, to publish their ports on 127.0.0.1 only?" yes; then
+      run systemctl restart docker
+    else
+      warn "Docker publishes ports on 127.0.0.1 only once it restarts: sudo systemctl restart docker"
+    fi
+  fi
 }
 
 # delete_ufw_rule RULE: deletes RULE, as `ufw show added` shows it, like
