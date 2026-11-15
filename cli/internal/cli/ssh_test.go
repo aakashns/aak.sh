@@ -23,11 +23,11 @@ func TestSSH(t *testing.T) {
 	ta.withServers(t, "a", "b")
 
 	ta.mustRun(t, "ssh", "b")
-	want := []string{"-p", "2222", "-i", "/k/b", "-o", "IdentitiesOnly=yes", "--", "dev@b.example.com"}
+	want := []string{"-p", "2222", "-i", "/k/b", "-o", "IdentitiesOnly=yes", "-o", "ServerAliveInterval=15", "--", "dev@b.example.com"}
 	if !slices.Equal(ta.sshArgs, want) {
 		t.Errorf("ssh args %q, want %q", ta.sshArgs, want)
 	}
-	if !strings.Contains(ta.stdout.String(), "\n$ ssh -p 2222 -i /k/b -o IdentitiesOnly=yes -- dev@b.example.com\n") {
+	if !strings.Contains(ta.stdout.String(), "\n$ ssh -p 2222 -i /k/b -o IdentitiesOnly=yes -o ServerAliveInterval=15 -- dev@b.example.com\n") {
 		t.Errorf("output doesn't show the ssh command:\n%s", ta.stdout)
 	}
 

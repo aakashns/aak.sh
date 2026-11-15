@@ -24,7 +24,7 @@ func writeSSHConfig(dir string) error {
 		if !strings.EqualFold(s.Host, s.Name) {
 			hosts += " " + s.Host
 		}
-		fmt.Fprintf(&b, "\nHost %s\n  HostName %s\n  Port %d\n  User %s\n  IdentityFile %s\n  IdentitiesOnly yes\n",
+		fmt.Fprintf(&b, "\nHost %s\n  HostName %s\n  Port %d\n  User %s\n  IdentityFile %s\n  IdentitiesOnly yes\n  ServerAliveInterval 15\n",
 			hosts, s.Host, s.Port, s.User, QuoteSSH(s.Key))
 	}
 	return WriteFile(SSHConfig(dir), []byte(b.String()), 0o600)

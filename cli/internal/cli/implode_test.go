@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/aakashns/rembox/cli/internal/config"
 )
 
 // withConfig gives the test app some files in its config folder.
@@ -45,6 +47,38 @@ func TestImplode(t *testing.T) {
 	}
 	if exists(ta.exe) || exists(ta.configDir) {
 		t.Error("binary or config folder still exists")
+	}
+}
+
+func TestImplodeBacksUpSSHConfig(t *testing.T) {
+	ta := newTestApp(t, "0.1.0")
+	if err := config.SaveServer(ta.configDir, config.Server{Name: "box1", Host: "203.0.113.10", Port: 23456, User: "ada", Key: "/k"}); err != nil {
+		t.Fatal(err)
+	}
+	want := readFile(t, config.SSHConfig(ta.configDir))
+	ta.typing("y")
+
+	if code := ta.Run([]string{"implode"}); code != 0 {
+		t.Fatalf("exit %d: %s", code, ta.stderr)
+	}
+	backups, _ := filepath.Glob(filepath.Join(ta.BackupDir, "rembox-ssh_config-*"))
+	if len(backups) != 1 {
+		t.Fatalf("backups: %v", backups)
+	}
+	if got := readFile(t, backups[0]); got != want {
+		t.Errorf("backup:\n%s", got)
+	}
+	if info, err := os.Stat(backups[0]); err != nil || info.Mode().Perm() != 0o600 {
+		t.Errorf("backup's mode: %v, %v", info, err)
+	}
+	out := ta.stdout.String()
+	for _, want := range []string{"Saved a copy of your servers' ssh config in " + backups[0] + ":\n\n" + want, "HostName and Port"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output missing %q:\n%s", want, out)
+		}
+	}
+	if exists(ta.configDir) {
+		t.Error("config folder still exists")
 	}
 }
 

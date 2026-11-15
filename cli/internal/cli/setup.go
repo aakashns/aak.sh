@@ -632,6 +632,7 @@ func loginArgs(s config.Server) []string {
 		"-p", strconv.Itoa(s.Port),
 		"-i", s.Key,
 		"-o", "IdentitiesOnly=yes", // just this key, not every key in the agent
+		"-o", "ServerAliveInterval=15", // notice within a minute if the server goes away
 	}
 }
 

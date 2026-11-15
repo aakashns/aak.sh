@@ -127,7 +127,7 @@ func TestSetup(t *testing.T) {
 	ta.stdout.Reset()
 	ta.mustRun(t, "list")
 	lines := strings.Split(strings.TrimSpace(ta.stdout.String()), "\n")
-	if len(lines) != 2 || strings.Join(strings.Fields(lines[1]), " ") != "box1 ada@203.0.113.10 23456 ~/.ssh/id_ed25519" {
+	if len(lines) != 2 || strings.Join(strings.Fields(lines[1]), " ") != "box1 203.0.113.10 23456 ada ~/.ssh/id_ed25519" {
 		t.Errorf("list output:\n%s", ta.stdout)
 	}
 }
