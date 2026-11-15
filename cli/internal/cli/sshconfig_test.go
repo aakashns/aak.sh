@@ -30,7 +30,7 @@ func TestSetupSSHConfig(t *testing.T) {
 	out := ta.stdout.String()
 	include := "Include ~/.config/rembox/ssh_config"
 	for _, want := range []string{
-		"Add '" + include + "' to ~/.ssh/config? [y/N]",
+		"Add '" + include + "' to ~/.ssh/config? [Y/n]",
 		"Added '" + include + "' to ~/.ssh/config."} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output missing %q:\n%s", want, out)
