@@ -24,6 +24,8 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
 - [x] The server's name is its hostname (`hostname.sh`), and the prompt shows it in full: `user@devbox.example.com`.
 - [x] Move ssh to the port you give (a random one by default), with keys only and no root login; fail2ban
 - [x] ufw: block every incoming connection but ssh
+- [x] Docker publishes ports on 127.0.0.1 unless told otherwise (`/etc/docker/daemon.json`),
+      since its ports get past ufw.
 - [x] Restart the server, if an update needs it
 - [x] Base dev packages (`BASIC_PACKAGES` in `update.sh`): build-essential, git, gh, curl, wget,
       zip, unzip, jq, ripgrep, fd-find (plus an `fd` link to `fdfind`), htop, zsh, nano,
@@ -75,6 +77,8 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
       by default), runs `t3 up --connect --no-lan` (sign-in with a code; installs the service),
       then shows a QR code for https://t3.codes/mobile. T3 reads PATH from your login shell, so it
       finds the agents without a PATH drop-in.
+- [x] Site: a terminal that plays `rembox setup` (`site.js`), and collapsible FAQs in place of
+      the install, upgrade and verify sections.
 
 ## Next
 

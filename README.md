@@ -6,8 +6,7 @@ Set up and manage remote development machines, from your Mac.
 curl -fsSL https://rembox.aakashns.com/install.sh | sh
 ```
 
-See [rembox.aakashns.com](https://rembox.aakashns.com) for the docs. Until the site is live, install with
-`curl -fsSL https://raw.githubusercontent.com/aakashns/rembox/main/site/public/install.sh | sh`.
+See [rembox.aakashns.com](https://rembox.aakashns.com) for the docs.
 
 ## Layout
 
