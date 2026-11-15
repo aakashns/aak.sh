@@ -1,12 +1,14 @@
-# rembox
+# rembox - Set up and manage remote dev machines
 
-Set up and manage remote development machines, from your Mac.
+Docs: https://rembox.aakashns.com
+
+Turn any Ubuntu or Debian server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone. Run this command to install `rembox` on Mac/Linux/WSL:
 
 ```sh
 curl -fsSL https://rembox.aakashns.com/install.sh | sh
 ```
 
-See [rembox.aakashns.com](https://rembox.aakashns.com) for the docs.
+Run `rembox setup` to begin setting up a remote server.
 
 ## Layout
 
