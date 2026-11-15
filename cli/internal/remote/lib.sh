@@ -156,27 +156,28 @@ confirm() {
 
 # ask VAR QUESTION [DEFAULT]: asks QUESTION at the terminal, as rembox asks
 # its own, and sets VAR to the answer, or DEFAULT if there's none. Fails at the
-# end of input (Ctrl-D).
+# end of input (Ctrl-D). Its locals start with _ask_ so they don't hide VAR
+# from it, as bash's locals hide their caller's of the same name.
 ask() {
-  local answer='' hint=''
-  [[ -n ${3:-} ]] && hint=" ${DIM}[default: $3]${RESET}"
-  printf '\n    %s%s%s%s: ' "$BOLD" "$2" "$RESET" "$hint"
-  if ! read -r answer </dev/tty; then
+  local _ask_answer='' _ask_hint=''
+  [[ -n ${3:-} ]] && _ask_hint=" ${DIM}[default: $3]${RESET}"
+  printf '\n    %s%s%s%s: ' "$BOLD" "$2" "$RESET" "$_ask_hint"
+  if ! read -r _ask_answer </dev/tty; then
     printf '\n'
     return 1
   fi
-  printf -v "$1" '%s' "${answer:-${3:-}}"
+  printf -v "$1" '%s' "${_ask_answer:-${3:-}}"
 }
 
 # ask_secret VAR QUESTION: asks QUESTION as ask does, without showing what you
 # type, and sets VAR to the answer. Fails at the end of input (Ctrl-D).
 ask_secret() {
-  local answer='' status=0
+  local _ask_answer='' _ask_status=0
   printf '\n    %s%s%s: ' "$BOLD" "$2" "$RESET"
-  read -rs answer </dev/tty || status=$?
+  read -rs _ask_answer </dev/tty || _ask_status=$?
   printf '\n'
-  ((status == 0)) || return 1
-  printf -v "$1" '%s' "$answer"
+  ((_ask_status == 0)) || return 1
+  printf -v "$1" '%s' "$_ask_answer"
 }
 
 # same FILE CONTENT: succeeds if FILE holds just CONTENT (and a newline).
