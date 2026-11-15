@@ -43,7 +43,7 @@ while 1 {
     -re {(New password|Retype new password|\[sudo\] password for [^\n]*): $} { send "e2e-pass\r" }
     -re {Move ssh to port [^\n]*\] $} { send "y\r" }
     -re {Keep the ufw rule [^\n]*\] $} { send "\r" }
-    -re {Log in to GitHub now\?[^\n]*\] $} { send "n\r" }
+    -re {Log in (to GitHub now|again)\?[^\n]*\] $} { send "n\r" }
     -re {Restart it now\?[^\n]*\] $} { send "n\r" }
     -re {to ~/.ssh/config\?[^\n]*\] $} { send "y\r" }
     -re {Replace it\?[^\n]*\] $} { send "y\r" }

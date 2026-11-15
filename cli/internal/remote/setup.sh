@@ -15,8 +15,8 @@
 #   setup.sh home GIT_NAME GIT_EMAIL
 #     As USER, on PORT, which shows that both work: sets up zsh for USER, logs
 #     gh in to GitHub, if USER likes, and sets the name and email for git
-#     commits, from GitHub, or else GIT_NAME and GIT_EMAIL, from git on your
-#     Mac (either may be empty).
+#     commits, from GitHub, or if gh isn't logged in, GIT_NAME and GIT_EMAIL,
+#     from git on your Mac (either may be empty).
 #
 #   setup.sh finish USER PORT [LOCALE...]
 #     As root, as USER: sets sshd to listen only on PORT, with no root login,

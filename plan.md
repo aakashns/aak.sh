@@ -55,7 +55,7 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
   - Later, maybe: Neovim + LazyVim (section 8).
 - [x] Git and GitHub (`git.sh`): gh from GitHub's apt repo. In `home`: `gh auth login` (device
       code) and `gh auth setup-git`, then git's name and email, unless set, from GitHub (public
-      email, else noreply), else this Mac's, without asking.
+      email, else noreply; profile name, else login), else this Mac's, without asking.
 
 ## Next
 
