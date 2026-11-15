@@ -34,6 +34,8 @@ setup() {
 set timeout 180
 log_file -a $env(HOME)/../log
 lassign $argv rembox host key name
+# A terminal wide enough that no question wraps, which would split it from the end of its line.
+set stty_init "rows 50 columns 200"
 spawn $rembox setup {*}[lrange $argv 4 end]
 while 1 {
   expect {
