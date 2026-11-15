@@ -219,9 +219,9 @@
         <details>
           <summary>Can I run rembox on a server I already use?</summary>
           <div>
-            Yes. Each step checks the server first and changes only what needs changing. Note that
-            the firewall blocks all incoming traffic but SSH, so a web server on it stops being
-            reachable from outside.
+            Yes. Each step checks the server first and changes only what needs changing. If ufw
+            already lets something in, like a web server on port 80, rembox asks whether to keep
+            each of those rules; any other incoming traffic but SSH gets blocked.
           </div>
         </details>
         <details>
