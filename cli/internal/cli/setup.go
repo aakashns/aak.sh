@@ -47,7 +47,7 @@ Get a server ready for development, securely. rembox setup:
   4. Sets up coding agents and T3 Code
      - installs & sets up Claude Code, Codex, OpenCode, and Pi coding agents
      - installs T3 Code and configures secure remote access via T3 Connect
-     - displays a QR code you can scan with the T3 Code app on your phone
+     - displays a QR code to get the T3 Code app on your phone
 
 To reach a program on the server, like a dev server or database, forward its
 port over ssh: 'ssh -L 3000:localhost:3000 NAME' makes localhost:3000 on this
