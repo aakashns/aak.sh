@@ -34,25 +34,61 @@
     </header>
 
     <main id="main">
-      <h1>Set up and manage <br class="mobile" />remote development machines</h1>
+      <h1>Set up and manage <br class="mobile" />remote dev machines</h1>
       <p class="lede">
-        Point rembox at a fresh Ubuntu or Debian server, answer a few questions, and get a locked-down
-        box with your own user, a firewall, zsh and dev tools, ready to code on over ssh.
+        Turn any Ubuntu or Debian server into a locked-down box with secure SSH, developer tools, AI coding
+        agents, and remote access from your phone.
       </p>
 
-      <p>Run this on your Mac (or a Linux machine) to install rembox:</p>
+      <!-- site.js plays it: each [data-step] shows after waiting its value in ms; [data-type]
+           ones are typed. It's all laid out from the start, so the box never changes height. -->
+      <figure class="term" aria-label="Running rembox setup">
+        <div class="term-bar" aria-hidden="true">
+          <i></i><i></i><i></i>
+          <span>Terminal</span>
+          <button type="button" id="term-replay" hidden>Replay</button>
+        </div>
+        <div class="term-screen" id="term-screen">
+          <div><span data-step="0"><span class="t-green">$</span> </span><span data-step="700" data-type>rembox setup</span></div>
+          <div data-step="500"><b>Server IP address or hostname</b>: <span data-step="500" data-type>203.0.113.42</span></div>
+          <div data-step="300"><b>SSH port</b> <span class="t-dim">[default: 22]</span>: </div>
+          <div data-step="700"><b>New SSH port</b> <span class="t-dim">[default: 47213]</span>: </div>
+          <div data-step="700"><b>User to log in as</b> <span class="t-dim">[default: root]</span>: </div>
+          <div data-step="700"><b>SSH private key</b> <span class="t-dim">[default: ~/.ssh/id_ed25519]</span>: </div>
+          <div data-step="700"><b>Name for this server</b>: <span data-step="500" data-type>alex-devbox</span></div>
+          <div class="t-gap"></div>
+          <div class="t-dim" data-step="600" data-type>…a few minutes later (intermediate output hidden)…</div>
+          <div class="t-gap"></div>
+          <div data-step="700"><span class="t-green">==&gt;</span> <b>alex-devbox is set up. To log in: rembox ssh alex-devbox</b></div>
+          <div class="t-gap"></div>
+          <div class="t-check" data-step="500"><span class="t-green">✓</span> Named the server alex-devbox, with 4 GiB of swap</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Upgraded 37 packages; security updates install daily</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed dev tools and Go 1.27.3</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Added your user, alex, with sudo and zsh</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> gh logged in to GitHub as alex; git commits as Alex Kim &lt;alex@example.com&gt;</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed bun 1.3.9, Node 26.2.0, Python 3.15.0 and Rust 1.99.0</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed Claude Code 2.4.1 and logged in</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed Codex 0.91.0 and logged in</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed OpenCode 1.4.2 and logged in</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed Pi 0.12.0</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> T3 Code 0.8.0, connected to your phone with T3 Connect</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> ssh on port 47213 only, with keys and no root login; ufw and fail2ban on</div>
+        </div>
+      </figure>
+      <p>Run this on Mac, Linux, or WSL to install rembox:</p>
       <div class="command">
         <pre><code id="install-command">curl -fsSL https://rembox.aakashns.com/install.sh | sh</code></pre>
         <!-- Shown by site.js. -->
         <button type="button" id="copy" hidden aria-label="Copy install command">Copy</button>
       </div>
+      <p class="after-command">Run <code>rembox setup</code> to begin setting up a remote server.</p>
       <p id="copy-status" class="sr-only" role="status"></p>
 
       <section aria-labelledby="setup">
         <h2 id="setup">What does <code>rembox setup</code> do?</h2>
         <ol class="steps">
           <li>
-            <strong>Saves your server details and runs upgrades</strong>
+            <strong>Saves your server’s details and keeps it up to date</strong>
             <ul>
               <li>asks you for the server’s IP/host, SSH port, key file, and username</li>
               <li>
@@ -70,7 +106,7 @@
             </ul>
           </li>
           <li>
-            <strong>Locks down network and SSH access</strong>
+            <strong>Locks down incoming network traffic and SSH access</strong>
             <ul>
               <li>
                 creates a non-root user with password protected <a href="https://www.sudo.ws/" target="_blank"><code>sudo</code></a> access
@@ -87,7 +123,7 @@
             </ul>
           </li>
           <li>
-            <strong>Installs dev tools and sets up zsh</strong>
+            <strong>Installs development tools and configures the shell</strong>
             <ul>
               <li>
                 installs <a href="https://git-scm.com/" target="_blank">git</a>, <a href="https://cli.github.com/" target="_blank">gh</a>,
@@ -111,7 +147,7 @@
             </ul>
           </li>
           <li>
-            <strong>Sets up coding agents and T3 Code</strong>
+            <strong>Installs AI coding agents and sets up remote access</strong>
             <ul>
               <li>
                 installs & sets up <a href="https://code.claude.com/" target="_blank">Claude Code</a>,
@@ -122,16 +158,21 @@
                 installs <a href="https://t3.codes/" target="_blank">T3 Code</a> and configures secure remote access via <a href="https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md" target="_blank">T3 Connect</a>
               </li>
               <li>
-                displays a QR code to get the <a href="https://t3.codes/download" target="_blank">T3 Code app</a> on your phone
+                displays a QR code to set up <a href="https://t3.codes/download" target="_blank">T3 Code</a> on your phone for remote access
               </li>
             </ul>
           </li>
         </ol>
-        <p>It’s early days for rembox, and more steps are coming soon.</p>
+        <p>
+          You can re-run <code>rembox setup &lt;MACHINE&gt;</code> anytime to update or fix your setup.
+          <code>rembox</code> prints every command it runs, check the
+          <a href="https://github.com/aakashns/rembox#server-scripts" target="_blank">server scripts</a>
+          for details.
+        </p>
       </section>
 
       <section aria-labelledby="commands">
-        <h2 id="commands">Commands</h2>
+        <h2 id="commands">CLI Commands</h2>
         <dl class="commands">
           <dt><code>rembox setup [NAME]</code></dt>
           <dd>
@@ -141,11 +182,10 @@
           <dd>Lists the servers you’ve added, with the user, host, port and key rembox logs in with.</dd>
           <dt><code>rembox ssh NAME [COMMAND...]</code></dt>
           <dd>
-            Logs in to the server called NAME, as its user, on its port and with its key, or runs a
-            command on it.
+            Logs in to the server called NAME as configured, or runs a command on it.
           </dd>
           <dt><code>rembox delete NAME</code></dt>
-          <dd>Removes a server from rembox, leaving the server as it is.</dd>
+          <dd>Removes a server’s login details and ssh alias; the server itself stays as it is.</dd>
           <dt><code>rembox help [command]</code></dt>
           <dd>Lists the commands, or explains one of them.</dd>
           <dt><code>rembox version</code></dt>
@@ -154,58 +194,93 @@
           <dd>Upgrades rembox to the latest release.</dd>
           <dt><code>rembox implode</code></dt>
           <dd>
-            Removes rembox, <code>~/.config/rembox</code>, and the line setup added to
+            Removes rembox, <code>~/.config/rembox</code>, and the line added to
             <code>~/.ssh/config</code>.
           </dd>
         </dl>
       </section>
 
-      <p>
-        rembox prints every command it runs, including those in
-        <a href="https://github.com/aakashns/rembox/tree/main/cli/internal/remote">its server scripts</a>,
-        and asks before destructive ones.
-      </p>
-
-      <section aria-labelledby="installing">
-        <h2 id="installing">Installing</h2>
-        <p>
-          Run the install command again to reinstall or upgrade. Two environment variables change
-          what it does:
-        </p>
-        <dl class="commands">
-          <dt><code>REMBOX_VERSION</code></dt>
-          <dd>Installs this version, like 0.1.0, instead of the latest.</dd>
-          <dt><code>REMBOX_INSTALL_DIR</code></dt>
-          <dd>Installs in this folder instead of <code>/usr/local/bin</code>.</dd>
-        </dl>
-        <pre class="block"><code>curl -fsSL https://rembox.aakashns.com/install.sh \
-  | REMBOX_VERSION=0.1.0 sh</code></pre>
-        <p>
-          Releases have a binary for macOS and Linux, on both Apple Silicon/ARM and Intel/AMD
-          processors.
-        </p>
-      </section>
-
-      <section aria-labelledby="upgrading">
-        <h2 id="upgrading">Upgrading and uninstalling</h2>
-        <p>
-          Run <code>rembox upgrade</code> with sudo if rembox is in a folder only root can write to,
-          like <code>/usr/local/bin</code>.
-        </p>
-        <pre class="block"><code>sudo rembox upgrade
-rembox implode</code></pre>
-      </section>
-
-      <section aria-labelledby="security">
-        <h2 id="security">Verifying a release</h2>
-        <p>
-          Every release is built by
-          <a href="https://github.com/aakashns/rembox/actions" target="_blank">GitHub Actions</a>
-          from the main branch, with a <code>SHA256SUMS</code> file that both the install script and
-          <code>rembox upgrade</code> check downloads against. Each binary also has a signed build
-          attestation, which you can check with the GitHub CLI:
-        </p>
-        <pre class="block"><code>gh attestation verify "$(command -v rembox)" --repo aakashns/rembox</code></pre>
+      <section class="faq" aria-labelledby="faq">
+        <h2 id="faq">FAQs</h2>
+        <details>
+          <summary>Where should I install rembox: my laptop or the remote server?</summary>
+          <div>
+            On your laptop/desktop (Mac, Linux, or WSL). rembox logs in to the server over ssh and sets it
+            up from there, so you don’t need to install anything on the server first.
+          </div>
+        </details>
+        <details>
+          <summary>What servers does rembox work on?</summary>
+          <div>
+            Any Ubuntu or Debian server you can ssh into with a key, as root or a user with sudo, from
+            any provider. A fresh one works best, since rembox sets up the firewall and SSH its own way.
+          </div>
+        </details>
+        <details>
+          <summary>Can I run rembox on a server I already use?</summary>
+          <div>
+            Yes. Each step checks the server first and changes only what needs changing. Note that
+            the firewall blocks all incoming traffic but SSH, so a web server on it stops being
+            reachable from outside.
+          </div>
+        </details>
+        <details>
+          <summary>I can’t connect after the SSH port changed. What now?</summary>
+          <div>
+            Your cloud provider probably has a firewall of its own. Open the new port in it, then run
+            <code>rembox setup &lt;MACHINE&gt;</code> again to pick up where it left off.
+          </div>
+        </details>
+        <details>
+          <summary>How do I open a dev server running on the machine?</summary>
+          <div>
+            Forward its port over ssh: <code>ssh -L 3000:localhost:3000 &lt;MACHINE&gt;</code> makes
+            <code>localhost:3000</code> on your laptop reach port 3000 on the server.
+          </div>
+        </details>
+        <details>
+          <summary>What does rembox keep on my laptop?</summary>
+          <div>
+            Only how to log in to each server, in <code>~/.config/rembox</code>, and one line in
+            <code>~/.ssh/config</code> that includes it. Nothing about the server itself.
+          </div>
+        </details>
+        <details>
+          <summary>How do I upgrade or uninstall rembox?</summary>
+          <div>
+            Run <code>rembox upgrade</code>, with sudo if it’s in <code>/usr/local/bin</code>. To
+            remove rembox and everything it keeps on your laptop, run <code>rembox implode</code>.
+          </div>
+        </details>
+        <details>
+          <summary>Can I install a specific version, or in another folder?</summary>
+          <div>
+            Yes. Set <code>REMBOX_VERSION</code> (like <code>0.1.0</code>) or
+            <code>REMBOX_INSTALL_DIR</code> (instead of <code>/usr/local/bin</code>) for the install
+            script:
+            <pre class="block"><code>curl -fsSL https://rembox.aakashns.com/install.sh \
+  | REMBOX_VERSION=0.1.0 REMBOX_INSTALL_DIR="$HOME/.local/bin" sh</code></pre>
+          </div>
+        </details>
+        <details>
+          <summary>How do I verify a release?</summary>
+          <div>
+            Releases are built by GitHub Actions, and the install script and
+            <code>rembox upgrade</code> check every download against its <code>SHA256SUMS</code>. To
+            check a binary’s signed build attestation:
+            <pre class="block"><code>gh attestation verify "$(command -v rembox)" --repo aakashns/rembox</code></pre>
+          </div>
+        </details>
+        <details>
+          <summary>Something went wrong, or I have an idea. What do I do?</summary>
+          <div>
+            First, run <code>rembox upgrade</code> to get the latest version, then run
+            <code>rembox setup &lt;MACHINE&gt;</code> again. If it still goes wrong,
+            <a href="https://github.com/aakashns/rembox/issues/new" target="_blank">open an issue</a>
+            on GitHub with what you ran and what it printed, or send a
+            <a href="https://github.com/aakashns/rembox/pulls" target="_blank">pull request</a>.
+          </div>
+        </details>
       </section>
     </main>
 

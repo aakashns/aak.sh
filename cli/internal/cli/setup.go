@@ -24,19 +24,19 @@ const setupHelp = `Usage: rembox setup [NAME]
 
 Get a server ready for development, securely. rembox setup:
 
-  1. Saves your server details and runs upgrades
+  1. Saves your server's details and keeps it up to date
      - asks you for the server's IP/host, SSH port, key file, and username
      - saves it to ~/.ssh/config, so you can connect with ssh <name>
      - logs in, upgrades all packages, and turns on unattended-upgrades
      - adds swap as big as the server's memory (up to 4 GiB), if it has none
 
-  2. Locks down network and SSH access
+  2. Locks down incoming network traffic and SSH access
      - creates a non-root user with password protected sudo access
      - moves SSH from 22 to a random port to counter automated attacks
      - turns off password-based & root SSH access, and turns on fail2ban
      - turns on the ufw firewall to block all incoming traffic except SSH
 
-  3. Installs dev tools and sets up zsh
+  3. Installs development tools and configures the shell
      - installs git, gh, ripgrep, fd, fzf, jq, htop, Zellij, and other dev
        tools
      - installs the latest Node (with Vite+), bun, Python (with uv), Rust and
@@ -45,10 +45,10 @@ Get a server ready for development, securely. rembox setup:
      - sets your name and email for git, and logs gh in to GitHub with a
        code
 
-  4. Sets up coding agents and T3 Code
+  4. Installs AI coding agents and sets up remote access
      - installs & sets up Claude Code, Codex, OpenCode, and Pi coding agents
      - installs T3 Code and configures secure remote access via T3 Connect
-     - displays a QR code to get the T3 Code app on your phone
+     - displays a QR code to set up T3 Code on your phone for remote access
 
 To reach a program on the server, like a dev server or database, forward its
 port over ssh: 'ssh -L 3000:localhost:3000 NAME' makes localhost:3000 on this

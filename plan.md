@@ -75,6 +75,8 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
       by default), runs `t3 up --connect --no-lan` (sign-in with a code; installs the service),
       then shows a QR code for https://t3.codes/mobile. T3 reads PATH from your login shell, so it
       finds the agents without a PATH drop-in.
+- [x] Site: a terminal that plays `rembox setup` (`site.js`), and collapsible FAQs in place of
+      the install, upgrade and verify sections.
 
 ## Next
 
