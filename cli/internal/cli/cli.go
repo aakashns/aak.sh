@@ -235,10 +235,10 @@ func commands() []command {
 			run:     runSSH,
 		},
 		{
-			name:    "delete",
+			name:    "remove",
 			summary: "Remove a server from rembox, leaving the server as it is",
-			help:    deleteHelp,
-			run:     runDelete,
+			help:    removeHelp,
+			run:     runRemove,
 		},
 		{
 			name:    "help",

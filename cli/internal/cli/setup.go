@@ -202,7 +202,7 @@ func (a *App) printCommands(name string) {
 		{"rembox ssh " + name, "Log in to " + name + ", or run a command on it"},
 		{"rembox list", "List your servers"},
 		{"rembox setup " + name, "Set " + name + " up again, or change how rembox logs in to it"},
-		{"rembox delete " + name, "Remove " + name + " from rembox; the server stays as it is"},
+		{"rembox remove " + name, "Remove " + name + " from rembox; the server stays as it is"},
 	} {
 		fmt.Fprintf(tw, "  %s\t%s\n", a.paint(cyan, c[0]), c[1])
 	}

@@ -138,7 +138,7 @@ func TestHelp(t *testing.T) {
 		if code := ta.Run(args); code != 0 {
 			t.Errorf("rembox %v: exit %d", args, code)
 		}
-		for _, want := range []string{"Usage:", "setup", "list", "ssh", "delete", "help", "version", "upgrade", "implode"} {
+		for _, want := range []string{"Usage:", "setup", "list", "ssh", "remove", "help", "version", "upgrade", "implode"} {
 			if !strings.Contains(ta.stdout.String(), want) {
 				t.Errorf("rembox %v: output missing %q:\n%s", args, want, ta.stdout)
 			}

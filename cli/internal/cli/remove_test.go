@@ -9,7 +9,7 @@ import (
 	"github.com/aakashns/rembox/cli/internal/config"
 )
 
-func TestDelete(t *testing.T) {
+func TestRemove(t *testing.T) {
 	ta := newTestApp(t, "0.1.0")
 	for _, name := range []string{"box", "other"} {
 		if err := config.SaveServer(ta.configDir, config.Server{Name: name, Host: name + ".example.com", Port: 2222, User: "ada", Key: "/k"}); err != nil {
@@ -18,14 +18,14 @@ func TestDelete(t *testing.T) {
 	}
 
 	ta.typing("n")
-	ta.mustFail(t, "cancelled", "delete", "box")
+	ta.mustFail(t, "cancelled", "remove", "box")
 	if len(ta.servers(t)) != 2 {
-		t.Fatal("deleted after you said no")
+		t.Fatal("removed after you said no")
 	}
 
 	ta.typing("y")
-	ta.mustRun(t, "delete", "box")
-	if !strings.Contains(ta.stdout.String(), "Delete box (ada@box.example.com, port 2222) from rembox? The server itself stays as it is. [y/N]") {
+	ta.mustRun(t, "remove", "box")
+	if !strings.Contains(ta.stdout.String(), "Remove box (ada@box.example.com, port 2222) from rembox? The server itself stays as it is. [y/N]") {
 		t.Errorf("output:\n%s", ta.stdout)
 	}
 	if got := ta.servers(t); len(got) != 1 || got[0].Name != "other" {
@@ -39,11 +39,11 @@ func TestDelete(t *testing.T) {
 		t.Errorf("ran %q", ta.commands)
 	}
 
-	ta.mustFail(t, "there's no server named box", "delete", "box")
+	ta.mustFail(t, "there's no server named box", "remove", "box")
 }
 
-func TestDeleteArgs(t *testing.T) {
-	for _, args := range [][]string{{"delete"}, {"delete", "-f", "box"}, {"delete", "a", "b"}} {
+func TestRemoveArgs(t *testing.T) {
+	for _, args := range [][]string{{"remove"}, {"remove", "-f", "box"}, {"remove", "a", "b"}} {
 		ta := newTestApp(t, "0.1.0")
 		if code := ta.Run(args); code != 2 {
 			t.Errorf("rembox %q: exit %d, want 2", args, code)
