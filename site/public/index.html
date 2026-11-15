@@ -19,6 +19,12 @@
       content="Turn a fresh Ubuntu server into a secure remote dev box, from your Mac."
     />
     <meta property="og:url" content="https://rembox.aakashns.com/" />
+    <!-- Before the first paint, so the terminal (see site.js) starts empty instead of flashing. -->
+    <script>
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.documentElement.classList.add("animate");
+      }
+    </script>
     <script src="/site.js" defer></script>
   </head>
   <body>
@@ -46,7 +52,7 @@
         <div class="term-bar" aria-hidden="true">
           <i></i><i></i><i></i>
           <span>Terminal</span>
-          <button type="button" id="term-replay" hidden>Replay</button>
+          <button type="button" id="term-replay">Replay</button>
         </div>
         <div class="term-screen" id="term-screen">
           <div><span data-step="0"><span class="t-green">$</span> </span><span data-step="700" data-type>rembox setup</span></div>

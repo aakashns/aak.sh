@@ -32,7 +32,8 @@ if (button && command && status && navigator.clipboard) {
 const termScreen = document.querySelector("#term-screen");
 const replay = document.querySelector("#term-replay");
 
-if (termScreen && replay && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+// The page sets .animate, unless you prefer reduced motion.
+if (termScreen && replay && document.documentElement.classList.contains("animate")) {
   const steps = [...termScreen.querySelectorAll("[data-step]")];
   for (const step of steps.filter((s) => s.hasAttribute("data-type"))) {
     const chars = [...step.textContent].map((c) => {
@@ -53,7 +54,6 @@ if (termScreen && replay && !matchMedia("(prefers-reduced-motion: reduce)").matc
   const play = async () => {
     const me = ++run;
     termScreen.querySelectorAll(".shown").forEach((el) => el.classList.remove("shown"));
-    termScreen.classList.add("playing");
     for (const step of steps) {
       await sleep(Number(step.dataset.step));
       if (me !== run) return;
@@ -76,7 +76,6 @@ if (termScreen && replay && !matchMedia("(prefers-reduced-motion: reduce)").matc
     cursor.remove();
   };
 
-  replay.hidden = false;
   replay.addEventListener("click", play);
   // Starts once you can see it.
   new IntersectionObserver((entries, observer) => {

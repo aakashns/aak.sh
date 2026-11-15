@@ -247,6 +247,10 @@ footer.site {
   border-radius: 4px;
   cursor: pointer;
 }
+/* Always takes its space, so the bar's height doesn't change; it shows when the terminal plays. */
+html:not(.animate) .term-bar button {
+  visibility: hidden;
+}
 .term-bar button:hover {
   color: var(--text);
   border-color: var(--muted);
@@ -276,8 +280,8 @@ footer.site {
   color: var(--muted);
 }
 /* While playing, what hasn't shown yet keeps its space, so nothing moves. */
-.term-screen.playing [data-step]:not(.shown),
-.term-screen.playing .t-char:not(.shown) {
+.animate .term-screen [data-step]:not(.shown),
+.animate .term-screen .t-char:not(.shown) {
   visibility: hidden;
 }
 /* An empty inline, so it takes no space and can't change where lines wrap. */
