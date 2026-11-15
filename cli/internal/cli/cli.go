@@ -488,7 +488,9 @@ func readLineCompleting(in, out *os.File, prompt string, complete completer) (st
 		io.Reader
 		io.Writer
 	}{in, out}, prompt)
-	if w, h, err := term.GetSize(fd); err == nil {
+	// Terminals with no size, like expect's, keep the default, 80 columns, as
+	// with 0, every character goes on a line of its own.
+	if w, h, err := term.GetSize(fd); err == nil && w > 0 {
 		t.SetSize(w, h)
 	}
 	t.AutoCompleteCallback = func(line string, pos int, key rune) (string, int, bool) {
