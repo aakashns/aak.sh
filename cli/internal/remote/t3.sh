@@ -4,6 +4,7 @@
 
 T3_APP_URL=https://t3.codes/mobile # T3 Code's phone app, in the App Store or Google Play
 T3_SETTINGS=.t3/userdata/settings.json # in your home folder
+T3_LOGIN=.t3/userdata/secrets/cloud-cli-oauth-token.bin # in your home folder: T3 Connect's login
 PROJECTS_DIR=work # in your home folder, where T3 Code adds projects
 
 # make_projects_dir: makes ~/PROJECTS_DIR, for your projects, whether or not
@@ -38,8 +39,8 @@ setup_t3() {
   fi
   t3_settings
   if t3_connected "$t3"; then
-    ok "T3 Code $(version_of "$t3") runs in the background, and your devices reach it through T3 Connect. To get its phone app: $T3_APP_URL"
-    checklist ok "T3 Code $(version_of "$t3"), connected with T3 Connect"
+    ok "T3 Code $(version_of "$t3") runs in the background, and your devices reach it through T3 Connect$(t3_account). To get its phone app: $T3_APP_URL"
+    checklist ok "T3 Code $(version_of "$t3"), connected with T3 Connect$(t3_account)"
     return
   fi
   info "T3 Connect logs in with a code: open the link it shows on any device, check the code matches, and approve."
@@ -48,14 +49,23 @@ setup_t3() {
     checklist warn "T3 Code $(version_of "$t3"), not connected to T3 Connect"
     return
   fi
-  ok "T3 Code $(version_of "$t3") runs in the background, and your devices reach it through T3 Connect."
-  checklist ok "T3 Code $(version_of "$t3"), connected with T3 Connect"
+  ok "T3 Code $(version_of "$t3") runs in the background, and your devices reach it through T3 Connect$(t3_account)."
+  checklist ok "T3 Code $(version_of "$t3"), connected with T3 Connect$(t3_account)"
   setup_phone
 }
 
 # t3_connected T3: succeeds if T3 Code runs in the background, with T3 Connect.
 t3_connected() {
   "$1" status --json 2>/dev/null | jq -e '.service.installed and .connect.enabled' >/dev/null
+}
+
+# t3_account: " as EMAIL", the account T3 Connect logged in to, or nothing.
+# Only t3 connect login says it, and it logs in if it isn't, so it's read from
+# the login t3 keeps, which holds it, from the login's ID token, as identity.
+t3_account() {
+  local account
+  account=$(jq -r '.identity // empty' "$HOME/$T3_LOGIN" 2>/dev/null) || true
+  [[ -z $account ]] || printf ' as %s' "$account"
 }
 
 # t3_settings: sets T3 Code to add projects in ~/PROJECTS_DIR, and turns on Pi

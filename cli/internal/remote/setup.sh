@@ -3,7 +3,7 @@
 # which carries on as root with finish. start and finish run themselves
 # again with sudo, unless that's root:
 #
-#   setup.sh start DEFAULT_USER PORT LOGIN_PORT NAME
+#   setup.sh start DEFAULT_USER DEFAULT_PORT LOGIN_PORT NAME
 #     As root, as the user you log in as, on LOGIN_PORT: checks that rembox
 #     can set up the server, makes NAME its hostname, adds swap, has apt
 #     install gh from GitHub's apt repo, installs the latest version of every
@@ -11,9 +11,10 @@
 #     installs tools for development and the latest Go, asks for your user's
 #     name (DEFAULT_USER, if you don't give one; DEFAULT_USER may be empty) and
 #     adds it with your keys and zsh as its login shell, keeps its services
-#     running when it isn't logged in, for T3 Code, and sets sshd to
-#     listen on PORT as well, and ufw, if it's on, to let it in. It prints a
-#     line telling rembox the name; see add_user.
+#     running when it isn't logged in, for T3 Code, asks for the port to move
+#     ssh to (DEFAULT_PORT, if you don't give one), and sets sshd to listen on
+#     it as well, and ufw, if it's on, to let it in. It prints lines telling
+#     rembox the name and the port; see add_user and ask_port.
 #
 #   setup.sh home GIT_NAME GIT_EMAIL PORT [LOCALE...]
 #     As USER, on PORT, which shows that both work: makes ~/work, for USER's
@@ -42,9 +43,9 @@ main() {
   logged_in
   case ${1:-} in
   start)
-    (($# == 5)) || fail "Usage: setup.sh start DEFAULT_USER PORT LOGIN_PORT NAME"
+    (($# == 5)) || fail "Usage: setup.sh start DEFAULT_USER DEFAULT_PORT LOGIN_PORT NAME"
     as_root "$@"
-    local default_user=$2 port=$3 login_port=$4 name=$5
+    local default_user=$2 default_port=$3 login_port=$4 name=$5 port
     # rembox logs in as root until it can log in as USER.
     local root_login=no
     [[ -n ${SUDO_USER:-} ]] || root_login=prohibit-password
@@ -61,6 +62,7 @@ main() {
     checklist_send
     add_user "$default_user"
     checklist_send
+    ask_port port "$default_port"
     setup_sshd "$root_login" "$login_port" "$port"
     open_ssh_port "$port"
     ;;
@@ -92,7 +94,7 @@ main() {
     finish "$@"
     ;;
   *)
-    fail "Usage: setup.sh start DEFAULT_USER PORT LOGIN_PORT NAME, setup.sh home GIT_NAME GIT_EMAIL PORT [LOCALE...], or setup.sh finish PORT [LOCALE...]"
+    fail "Usage: setup.sh start DEFAULT_USER DEFAULT_PORT LOGIN_PORT NAME, setup.sh home GIT_NAME GIT_EMAIL PORT [LOCALE...], or setup.sh finish PORT [LOCALE...]"
     ;;
   esac
 }

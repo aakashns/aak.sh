@@ -98,7 +98,7 @@ func runSetup(a *App, args []string) error {
 		saved = &s
 	}
 
-	s, port, err := a.askServer(saved)
+	s, err := a.askServer(saved)
 	if err != nil {
 		return err
 	}
@@ -113,10 +113,16 @@ func runSetup(a *App, args []string) error {
 
 	// Two sessions, each doing all it can, so ssh and sudo ask for a password
 	// at most once each in each. The first asks for your user's name, just
-	// before adding it, and tells rembox. Both tell it the checklist's lines.
+	// before adding it, and the port to move ssh to, just before moving it, and
+	// tells rembox both. Both tell it the checklist's lines. ssh stays on its
+	// port, unless that's 22.
+	newPort := s.Port
+	if newPort == config.DefaultPort {
+		newPort = a.NewPort()
+	}
 	out := &markerWriter{w: a.Stdout}
 	a.heading(fmt.Sprintf("Connecting to %s as %s, on port %d", s.Name, s.User, s.Port))
-	err = a.runScript(s, asUser(s, "bash", "-c"), remote.Setup, out, "start", userDefault(a.Username), strconv.Itoa(port), strconv.Itoa(s.Port), s.Name)
+	err = a.runScript(s, asUser(s, "bash", "-c"), remote.Setup, out, "start", userDefault(a.Username), strconv.Itoa(newPort), strconv.Itoa(s.Port), s.Name)
 	out.flush()
 	if cantLogIn(err) {
 		return fmt.Errorf("%w. To change the address, port, user or key: rembox setup %s", err, s.Name)
@@ -127,6 +133,11 @@ func runSetup(a *App, args []string) error {
 	if err != nil {
 		return fmt.Errorf("setup.sh didn't say which user it added on %s (%w)", s.Name, err)
 	}
+	p, err := checkPort(out.port)
+	if err != nil {
+		return fmt.Errorf("setup.sh didn't say which port it moved ssh to on %s (%w)", s.Name, err)
+	}
+	port := mustAtoi(p)
 
 	// Saved before asking, so if you stop here, setup keeps this port next time.
 	oldPort := s.Port
@@ -201,17 +212,20 @@ func (a *App) printCommands(name string) {
 // marker starts the lines in which setup.sh tells rembox things, as
 // "\x1b]rembox;KEY=VALUE\a": an escape sequence, which terminals ignore.
 // KEY is user, for the name of your user, after asking you for it (see
-// add_user in user.sh), or check, for a line of the checklist (see checklist
+// add_user in user.sh), port, for the port ssh moves to, after asking you for
+// it (see ask_port in sshd.sh), or check, for a line of the checklist (see checklist
 // in lib.sh).
 const marker = "\x1b]rembox;"
 
 // markerWriter passes what setup.sh prints on to w, but for the lines starting
-// with marker, from which it keeps the user's name and the checklist's lines.
+// with marker, from which it keeps the user's name, ssh's port and the
+// checklist's lines.
 // The rest passes straight through, so questions, which don't end their
 // lines, show at once.
 type markerWriter struct {
 	w       io.Writer
 	user    string
+	port    string
 	checks  []string
 	held    []byte // the start of a line that may be a marker's
 	midLine bool
@@ -232,6 +246,8 @@ func (u *markerWriter) Write(p []byte) (int, error) {
 				switch key, value, _ := strings.Cut(line, "="); key {
 				case "user":
 					u.user = value
+				case "port":
+					u.port = value
 				case "check":
 					u.checks = append(u.checks, value)
 				}
@@ -346,18 +362,17 @@ func cantLogIn(err error) bool {
 	return errors.As(err, &ee) && ee.ExitCode() == 255
 }
 
-// askServer asks which server to set up, and the port to move ssh to. saved is
-// the server to set up again, if any: its settings are the defaults, and it
-// keeps its name.
-func (a *App) askServer(saved *config.Server) (config.Server, int, error) {
+// askServer asks which server to set up. saved is the server to set up again,
+// if any: its settings are the defaults, and it keeps its name.
+func (a *App) askServer(saved *config.Server) (config.Server, error) {
 	var s config.Server
 	dir, err := a.ConfigDir()
 	if err != nil {
-		return s, 0, err
+		return s, err
 	}
 	home, err := a.HomeDir()
 	if err != nil {
-		return s, 0, fmt.Errorf("can't find your home folder: %w", err)
+		return s, fmt.Errorf("can't find your home folder: %w", err)
 	}
 
 	def := config.Server{Port: config.DefaultPort, User: "root", Key: defaultKey(home)}
@@ -367,25 +382,16 @@ func (a *App) askServer(saved *config.Server) (config.Server, int, error) {
 	}
 	s.Host, err = a.answer("Server IP address or hostname", def.Host, checkHost)
 	if err != nil {
-		return s, 0, err
+		return s, err
 	}
 	port, err := a.answer("SSH port", strconv.Itoa(def.Port), checkPort)
 	if err != nil {
-		return s, 0, err
+		return s, err
 	}
 	s.Port = mustAtoi(port)
-	// Keep ssh on the port it's on, unless that's 22.
-	newDef := s.Port
-	if newDef == config.DefaultPort {
-		newDef = a.NewPort()
-	}
-	newPort, err := a.answer("New SSH port", strconv.Itoa(newDef), checkPort)
-	if err != nil {
-		return s, 0, err
-	}
 	s.User, err = a.answer("User to log in as", def.User, checkUser)
 	if err != nil {
-		return s, 0, err
+		return s, err
 	}
 	s.Key, err = a.answerCompleting("SSH private key", def.Key, func(p string) (string, error) {
 		return checkKey(home, p)
@@ -393,16 +399,16 @@ func (a *App) askServer(saved *config.Server) (config.Server, int, error) {
 		return completePath(home, typed)
 	})
 	if err != nil {
-		return s, 0, err
+		return s, err
 	}
 	current := ""
 	if saved != nil {
 		current = saved.Name
 	}
 	if s.Name, err = a.askName(dir, home, s, current); err != nil {
-		return s, 0, err
+		return s, err
 	}
-	return s, mustAtoi(newPort), nil
+	return s, nil
 }
 
 // askName asks for a name for s, offering current, the name of the server
