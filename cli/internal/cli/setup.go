@@ -14,6 +14,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/aakashns/rembox/cli/internal/config"
 	"github.com/aakashns/rembox/cli/internal/remote"
@@ -75,7 +76,7 @@ as your user.
 `
 
 // defaultKeys are the private keys setup offers, in order of preference.
-var defaultKeys = []string{"id_ed25519", "id_ecdsa", "id_rsa"}
+var defaultKeys = []string{"id_ecdsa", "id_ed25519", "id_rsa"}
 
 func runSetup(a *App, args []string) error {
 	var saved *config.Server
@@ -137,9 +138,11 @@ func runSetup(a *App, args []string) error {
 		return err
 	}
 	if port != oldPort {
-		a.note(fmt.Sprintf("If %s's cloud provider has a firewall, open port %d/tcp in it now.", s.Name, port))
-		if !a.confirm(fmt.Sprintf("Move ssh to port %d, closing port %d?", port, oldPort), false) {
-			return fmt.Errorf("ssh is on ports %d and %d for now. To move it to port %d: rembox setup %s",
+		// Port oldPort stays open until rembox has logged in on port, but a
+		// firewall outside the server must let port in too, or you're locked out.
+		if a.confirm(fmt.Sprintf("Is %s behind a firewall outside it, like your cloud provider's?", s.Name), false) &&
+			!a.confirm(fmt.Sprintf("Open port %d/tcp in that firewall now. Have you opened it?", port), false) {
+			return fmt.Errorf("ssh is on ports %d and %d for now. Once port %d/tcp is open in the firewall: rembox setup %s",
 				oldPort, port, port, s.Name)
 		}
 	}
@@ -165,9 +168,24 @@ func runSetup(a *App, args []string) error {
 	if err := a.offerInclude(); err != nil {
 		return err
 	}
-	fmt.Fprintf(a.Stdout, "\n\n%s %s\n", a.paint(green, "==>"),
+	fmt.Fprintf(a.Stdout, "\n\n%s %s\n\n", a.paint(green, "==>"),
 		a.paint(bold, fmt.Sprintf("%s is set up. To log in: rembox ssh %s", s.Name, s.Name)))
+	a.printCommands(s.Name)
 	return nil
+}
+
+// printCommands lists the commands for the server called name, once it's set up.
+func (a *App) printCommands(name string) {
+	tw := tabwriter.NewWriter(a.Stdout, 0, 0, 3, ' ', 0)
+	for _, c := range [][2]string{
+		{"rembox ssh " + name, "Log in to " + name + ", or run a command on it"},
+		{"rembox list", "List your servers"},
+		{"rembox setup " + name, "Set " + name + " up again, or change how rembox logs in to it"},
+		{"rembox delete " + name, "Remove " + name + " from rembox; the server stays as it is"},
+	} {
+		fmt.Fprintf(tw, "  %s\t%s\n", a.paint(cyan, c[0]), c[1])
+	}
+	tw.Flush()
 }
 
 // userMarker starts the line in which setup.sh tells rembox the name of your
@@ -340,8 +358,10 @@ func (a *App) askServer(saved *config.Server) (config.Server, error) {
 	if err != nil {
 		return s, err
 	}
-	s.Key, err = a.answer("SSH private key", def.Key, func(p string) (string, error) {
+	s.Key, err = a.answerCompleting("SSH private key", def.Key, func(p string) (string, error) {
 		return checkKey(home, p)
+	}, func(typed string) (string, []string) {
+		return completePath(home, typed)
 	})
 	if err != nil {
 		return s, err
@@ -393,8 +413,14 @@ func (a *App) askName(dir, home string, s config.Server, current string) (string
 // answer asks question until check accepts the answer. check returns the
 // answer as rembox keeps it.
 func (a *App) answer(question, def string, check func(string) (string, error)) (string, error) {
+	return a.answerCompleting(question, def, check, nil)
+}
+
+// answerCompleting is answer, with Tab completing what you've typed, at a
+// terminal, with complete, if it isn't nil.
+func (a *App) answerCompleting(question, def string, check func(string) (string, error), complete completer) (string, error) {
 	for {
-		v, err := a.ask(question, def)
+		v, err := a.askCompleting(question, def, complete)
 		if err != nil {
 			return "", err
 		}
@@ -518,6 +544,57 @@ func defaultKey(home string) string {
 		}
 	}
 	return ""
+}
+
+// completePath completes typed, the start of a file's path (which may start
+// with ~/), as a shell does: to the one file or folder it can be, else to
+// as much as all of them share, else it lists them. It leaves out public keys,
+// and hidden files unless typed names one.
+func completePath(home, typed string) (string, []string) {
+	if typed == "~" {
+		return "~/", nil
+	}
+	dir, base := typed[:strings.LastIndex(typed, "/")+1], typed[strings.LastIndex(typed, "/")+1:]
+	read := dir
+	switch {
+	case dir == "":
+		read = "."
+	case strings.HasPrefix(dir, "~/"):
+		read = filepath.Join(home, dir[2:])
+	}
+	entries, err := os.ReadDir(read)
+	if err != nil {
+		return typed, nil
+	}
+	var names []string
+	for _, e := range entries {
+		name := e.Name()
+		if !strings.HasPrefix(name, base) || (strings.HasPrefix(name, ".") && !strings.HasPrefix(base, ".")) {
+			continue
+		}
+		if info, err := os.Stat(filepath.Join(read, name)); err == nil && info.IsDir() {
+			name += "/"
+		} else if strings.HasSuffix(name, ".pub") {
+			continue
+		}
+		names = append(names, name)
+	}
+	switch len(names) {
+	case 0:
+		return typed, nil
+	case 1:
+		return dir + names[0], nil
+	}
+	shared := names[0]
+	for _, n := range names[1:] {
+		for !strings.HasPrefix(n, shared) {
+			shared = shared[:len(shared)-1]
+		}
+	}
+	if len(shared) > len(base) {
+		return dir + shared, nil
+	}
+	return typed, names
 }
 
 // loginArgs are the ssh arguments to log in to s on its port, with its key.
