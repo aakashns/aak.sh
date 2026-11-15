@@ -43,6 +43,7 @@ while 1 {
     -re {(New password|Retype new password|\[sudo\] password for [^\n]*): $} { send "e2e-pass\r" }
     -re {Move ssh to port [^\n]*\] $} { send "y\r" }
     -re {Keep the ufw rule [^\n]*\] $} { send "\r" }
+    -re {Upgrade [^\n]*\?[^\n]*\] $} { send "\r" }
     -re {Log in (to GitHub now|again)\?[^\n]*\] $} { send "n\r" }
     -re {Restart it now\?[^\n]*\] $} { send "n\r" }
     -re {to ~/.ssh/config\?[^\n]*\] $} { send "y\r" }
@@ -65,5 +66,5 @@ setup
 setup "$name"
 port=$(sed -n 's/^ *Port //p' "$tmp/home/.config/rembox/ssh_config")
 ssh -F /dev/null -o UserKnownHostsFile="$tmp/known_hosts" -i "$key" -o IdentitiesOnly=yes -p "$port" \
-  "dev@$host" 'zsh -lic "echo \$SHELL; hostname"'
+  "dev@$host" 'zsh -lic "echo \$SHELL; hostname; node --version; bun --version; python --version; cargo --version; go version"'
 echo "e2e: passed. Delete the machine with: orb delete -f $name"

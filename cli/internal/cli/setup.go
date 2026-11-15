@@ -27,20 +27,22 @@ Get a server ready for development, securely. rembox setup:
      - asks you for the server's IP/host, SSH port, key file, and username
      - saves it to ~/.ssh/config, so you can connect with ssh <name>
      - logs in, upgrades all packages, and turns on unattended-upgrades
+     - adds swap as big as the server's memory (up to 4 GiB), if it has none
 
-  2. Locks down SSH access
+  2. Locks down network and SSH access
      - creates a non-root user with password protected sudo access
      - moves SSH from 22 to a random port to counter automated attacks
      - turns off password-based & root SSH access, and turns on fail2ban
      - turns on the ufw firewall to block all incoming traffic except SSH
 
-  3. Installs dev tools, sets up zsh, and adds swap
+  3. Installs dev tools and sets up zsh
      - installs git, gh, ripgrep, fd, fzf, jq, htop, Zellij, and other dev
        tools
+     - installs the latest Node (with Vite+), bun, Python (with uv), Rust and
+       Go
      - makes zsh your shell, with curated plugins to improve your workflow
      - sets your name and email for git, and logs gh in to GitHub with a
        code
-     - adds swap as big as the server's memory (up to 4 GiB), if it has none
 
 To reach a program on the server, like a dev server or database, forward its
 port over ssh: 'ssh -L 3000:localhost:3000 NAME' makes localhost:3000 on this
@@ -145,13 +147,13 @@ func runSetup(a *App, args []string) error {
 		}
 		return err
 	}
-	a.heading(fmt.Sprintf("Reconnecting to %s as %s, on port %d, to set up your shell and GitHub", s.Name, s.User, s.Port))
+	a.heading(fmt.Sprintf("Reconnecting to %s as %s, on port %d, to set up your shell, GitHub and toolchains", s.Name, s.User, s.Port))
 	if err := onNewPort(a.runScript(s, asUser(s, "bash", "-c"), remote.Setup, a.Stdout,
 		"home", a.GitConfig("user.name"), a.GitConfig("user.email"))); err != nil {
 		return err
 	}
 	a.heading(fmt.Sprintf("Reconnecting to %s as %s, on port %d, to finish as root", s.Name, s.User, s.Port))
-	finish := append([]string{"finish", user, strconv.Itoa(port)}, a.Locales...)
+	finish := append([]string{"finish", strconv.Itoa(port)}, a.Locales...)
 	if err := onNewPort(a.runScript(s, asUser(s, "bash", "-c"), remote.Setup, a.Stdout, finish...)); err != nil {
 		return err
 	}

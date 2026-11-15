@@ -108,15 +108,15 @@ func TestSetup(t *testing.T) {
 		t.Errorf("home session's args %q", home)
 	}
 	if !slices.Equal(second[:3], []string{"-t", "-p", "23456"}) || !slices.Contains(second, "ada@203.0.113.10") ||
-		slices.Contains(second, "sudo") || !slices.Equal(scriptArgs(second), []string{"finish", "ada", "23456"}) {
+		slices.Contains(second, "sudo") || !slices.Equal(scriptArgs(second), []string{"finish", "23456"}) {
 		t.Errorf("last session's args %q", second)
 	}
-	files := `"$(cat lib.sh check.sh hostname.sh git.sh update.sh user.sh sshd.sh firewall.sh zsh.sh fail2ban.sh swap.sh locale.sh restart.sh setup.sh)"`
+	files := `"$(cat lib.sh check.sh hostname.sh git.sh update.sh toolchains.sh user.sh sshd.sh firewall.sh zsh.sh fail2ban.sh swap.sh locale.sh restart.sh setup.sh)"`
 	if !strings.Contains(out, "\n$ ssh -t -p 22 -i "+key+" -o IdentitiesOnly=yes") ||
 		!strings.Contains(out, "root@203.0.113.10 bash -c "+files+" bash start ada 23456 22 box1\n"+
 			"  These scripts come with rembox; read them at https://github.com/aakashns/rembox/tree/v0.1.0/cli/internal/remote\n") ||
 		!strings.Contains(out, "ada@203.0.113.10 bash -c "+files+" bash home '' ''\n") ||
-		!strings.Contains(out, "ada@203.0.113.10 bash -c "+files+" bash finish ada 23456\n") {
+		!strings.Contains(out, "ada@203.0.113.10 bash -c "+files+" bash finish 23456\n") {
 		t.Errorf("output doesn't show the scripts' commands:\n%s", out)
 	}
 	if strings.Index(out, "User to log in as") > strings.Index(out, "SSH private key") {
@@ -194,7 +194,7 @@ func TestSetupLocales(t *testing.T) {
 	// Only the last session adds them.
 	s := ta.sessions()
 	if len(s) != 3 || !slices.Equal(scriptArgs(s[0]), []string{"start", "ada", "23456", "22", "box1"}) ||
-		!slices.Equal(scriptArgs(s[2]), []string{"finish", "ada", "23456", "en_IN.UTF-8", "en_US.UTF-8"}) {
+		!slices.Equal(scriptArgs(s[2]), []string{"finish", "23456", "en_IN.UTF-8", "en_US.UTF-8"}) {
 		t.Errorf("sessions %q", s)
 	}
 }

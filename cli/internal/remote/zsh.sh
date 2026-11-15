@@ -79,6 +79,12 @@ rembox_zshenv() {
 # Debian and Ubuntu's /etc/zsh/zshrc runs compinit, which rembox's zshrc runs
 # once its plugins have added their completions; once is enough.
 skip_global_compinit=1
+
+# Go, which rembox installs in /usr/local/go, and the commands go install adds,
+# as go.dev says to. The other toolchains' installers add theirs to your own
+# files. typeset -U keeps one of each folder, in shells started from this one.
+typeset -U path
+path+=(/usr/local/go/bin ~/go/bin)
 EOF
 }
 
