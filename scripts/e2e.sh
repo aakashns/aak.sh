@@ -42,7 +42,7 @@ while 1 {
     -re {Name for this server[^\n]*: $} { send "$name\r" }
     -re {(SSH port|User to log in as|Username)[^\n]*: $} { send "\r" }
     -re {(New password|Retype new password|\[sudo\] password for [^\n]*): $} { send "e2e-pass\r" }
-    -re {Move ssh to port [^\n]*\] $} { send "y\r" }
+    -re {behind a firewall outside it[^\n]*\] $} { send "n\r" }
     -re {Keep the ufw rule [^\n]*\] $} { send "\r" }
     -re {Upgrade [^\n]*\?[^\n]*\] $} { send "\r" }
     -re {Log in (to GitHub now|again)\?[^\n]*\] $} { send "n\r" }

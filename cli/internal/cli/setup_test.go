@@ -68,7 +68,7 @@ func TestSetup(t *testing.T) {
 	key := ta.withKey(t, "id_ed25519")
 	// An IP address has no default name, so the name is typed; the rest are
 	// the defaults.
-	ta.typing("203.0.113.10", "", "", "", "box1", "y")
+	ta.typing("203.0.113.10", "", "", "", "box1", "y", "y")
 
 	ta.mustRun(t, "setup")
 	out := ta.stdout.String()
@@ -76,8 +76,8 @@ func TestSetup(t *testing.T) {
 		"Name for this server:",
 		"Saved box1 (root@203.0.113.10, port 22)", "(what setup.sh prints)",
 		"Saved box1 (ada@203.0.113.10, port 23456)",
-		"! If box1's cloud provider has a firewall, open port 23456/tcp in it now.",
-		"Move ssh to port 23456, closing port 22? [y/N]",
+		"Is box1 behind a firewall outside it, like your cloud provider's? [y/N]",
+		"Open port 23456/tcp in that firewall now. Have you opened it? [y/N]",
 		"box1 is set up. To log in: rembox ssh box1"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("output missing %q:\n%s", want, out)
@@ -138,7 +138,7 @@ func TestSetup(t *testing.T) {
 func TestSetupNotRoot(t *testing.T) {
 	ta := newTestApp(t, "0.1.0")
 	ta.withKey(t, "id_ed25519")
-	ta.typing("box", "", "ubuntu", "", "", "y")
+	ta.typing("box", "", "ubuntu", "", "", "n")
 	ta.mustRun(t, "setup")
 	if !strings.Contains(ta.stdout.String(), `-- ubuntu@box bash -c "$(cat `) {
 		t.Errorf("output:\n%s", ta.stdout)
@@ -189,7 +189,7 @@ func TestSetupLocales(t *testing.T) {
 	ta := newTestApp(t, "0.1.0")
 	ta.withKey(t, "id_ed25519")
 	ta.Locales = []string{"en_IN.UTF-8", "en_US.UTF-8"}
-	ta.typing("203.0.113.10", "", "", "", "box1", "y")
+	ta.typing("203.0.113.10", "", "", "", "box1", "n")
 	ta.mustRun(t, "setup")
 	// Only the last session adds them.
 	s := ta.sessions()
@@ -205,7 +205,7 @@ func TestSetupGitDefaults(t *testing.T) {
 	ta.GitConfig = func(key string) string {
 		return map[string]string{"user.name": "Ada Lovelace", "user.email": "ada@example.com"}[key]
 	}
-	ta.typing("203.0.113.10", "", "", "", "box1", "y")
+	ta.typing("203.0.113.10", "", "", "", "box1", "n")
 	ta.mustRun(t, "setup")
 	// The home session asks for them, with these as defaults.
 	s := ta.sessions()
@@ -267,7 +267,7 @@ func TestSetupOldServer(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`{"host": "box", "user": "root", "key": "`+key+`"}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	ta.typing("", "", "", "", "", "y")
+	ta.typing("", "", "", "", "", "n")
 	ta.mustRun(t, "setup", "box")
 	if !strings.Contains(ta.stdout.String(), "SSH port [default: 22]:") ||
 		!slices.Equal(scriptArgs(ta.sessions()[0]), []string{"start", "ada", "23456", "22", "box"}) {
@@ -368,7 +368,7 @@ func TestSetupCantLogInOnNewPort(t *testing.T) {
 			}
 			return tellUser(args, stdout)
 		}
-		ta.typing("box.example.com", "", "", "", "", "y")
+		ta.typing("box.example.com", "", "", "", "", "n")
 		ta.mustFail(t, "ssh couldn't log in to ada@box.example.com on port 23456 (exit status 255). "+
 			"If box.example.com's cloud provider has a firewall, open port 23456/tcp in it, then run rembox setup box.example.com again", "setup")
 		if strings.Contains(ta.stdout.String(), "~/.ssh/config") {
@@ -387,8 +387,8 @@ func TestSetupCantLogInOnNewPort(t *testing.T) {
 func TestSetupNotMoved(t *testing.T) {
 	ta := newTestApp(t, "0.1.0")
 	ta.withKey(t, "id_ed25519")
-	ta.typing("box.example.com", "", "", "", "", "n")
-	ta.mustFail(t, "ssh is on ports 22 and 23456 for now. To move it to port 23456: rembox setup box.example.com", "setup")
+	ta.typing("box.example.com", "", "", "", "", "y", "n")
+	ta.mustFail(t, "ssh is on ports 22 and 23456 for now. Once port 23456/tcp is open in the firewall: rembox setup box.example.com", "setup")
 	if len(ta.sessions()) != 1 {
 		t.Errorf("logged in on the new port after you said no: %q", ta.commands)
 	}
@@ -401,7 +401,7 @@ func TestSetupNotMoved(t *testing.T) {
 func TestSetupHostnameIsDefaultName(t *testing.T) {
 	ta := newTestApp(t, "0.1.0")
 	ta.withKey(t, "id_rsa")
-	ta.typing("Dev.Example.com", "", "ubuntu", "", "", "y")
+	ta.typing("Dev.Example.com", "", "ubuntu", "", "", "n")
 	ta.mustRun(t, "setup")
 	if !strings.Contains(ta.stdout.String(), "Name for this server [default: dev.example.com]:") {
 		t.Errorf("output:\n%s", ta.stdout)
@@ -455,14 +455,14 @@ func TestSetupNameTaken(t *testing.T) {
 	}
 
 	// Declining to replace it asks for another name.
-	ta.typing("new", "", "", "", "box", "n", "box2", "y")
+	ta.typing("new", "", "", "", "box", "n", "box2", "n")
 	ta.mustRun(t, "setup")
 	if got := ta.servers(t); len(got) != 2 || got[0].Host != "old" || got[1].Name != "box2" {
 		t.Errorf("saved %+v", got)
 	}
 
 	// Agreeing replaces it.
-	ta.typing("newer", "", "", "", "box", "y", "y")
+	ta.typing("newer", "", "", "", "box", "y", "n")
 	ta.mustRun(t, "setup")
 	if got := ta.servers(t); len(got) != 2 || got[0].Host != "newer" {
 		t.Errorf("saved %+v", got)
@@ -576,5 +576,55 @@ func TestSetupHelpMatchesSite(t *testing.T) {
 	}
 	if help := strings.Join(words, " "); help != site {
 		t.Errorf("rembox help setup's steps differ from the site's:\nhelp: %s\nsite: %s", help, site)
+	}
+}
+
+func TestDefaultKeyPrefersECDSA(t *testing.T) {
+	ta := newTestApp(t, "0.1.0")
+	ta.withKey(t, "id_rsa")
+	ta.withKey(t, "id_ed25519")
+	if got := defaultKey(ta.home); got != "~/.ssh/id_ed25519" {
+		t.Errorf("without id_ecdsa, defaultKey = %q", got)
+	}
+	ta.withKey(t, "id_ecdsa")
+	if got := defaultKey(ta.home); got != "~/.ssh/id_ecdsa" {
+		t.Errorf("defaultKey = %q, want ~/.ssh/id_ecdsa", got)
+	}
+}
+
+func TestCompletePath(t *testing.T) {
+	ta := newTestApp(t, "0.1.0")
+	ta.withKey(t, "devbox")
+	ta.withKey(t, "deploy")
+	ta.withKey(t, "work")
+	ssh := filepath.Join(ta.home, ".ssh")
+	for _, f := range []string{"config", ".hidden"} {
+		if err := os.WriteFile(filepath.Join(ssh, f), nil, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.Mkdir(filepath.Join(ssh, "keys"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		typed, want string
+		choices     []string
+	}{
+		{"~", "~/", nil},
+		{"~/.s", "~/.ssh/", nil},
+		{"~/.ssh/w", "~/.ssh/work", nil},  // not work.pub
+		{"~/.ssh/k", "~/.ssh/keys/", nil}, // a folder
+		{"~/.ssh/de", "~/.ssh/de", []string{"deploy", "devbox"}},
+		{"~/.ssh/dev", "~/.ssh/devbox", nil},
+		{"~/.ssh/", "~/.ssh/", []string{"config", "deploy", "devbox", "keys/", "work"}},
+		{"~/.ssh/.", "~/.ssh/.hidden", nil},
+		{"~/.ssh/x", "~/.ssh/x", nil},
+		{"~/nowhere/x", "~/nowhere/x", nil},
+		{ssh + "/wo", ssh + "/work", nil},
+	} {
+		got, choices := completePath(ta.home, tc.typed)
+		if got != tc.want || !slices.Equal(choices, tc.choices) {
+			t.Errorf("completePath(%q) = %q, %q; want %q, %q", tc.typed, got, choices, tc.want, tc.choices)
+		}
 	}
 }

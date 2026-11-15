@@ -17,6 +17,7 @@ import (
 	"github.com/aakashns/rembox/cli/internal/config"
 	"github.com/aakashns/rembox/cli/internal/release"
 	"github.com/aakashns/rembox/cli/internal/version"
+	"golang.org/x/term"
 )
 
 // App is one invocation of rembox, with everything it touches outside itself
@@ -411,12 +412,29 @@ func (a *App) confirm(question string, def bool) bool {
 // of input (Ctrl-D) cancels, since a question may be asked until it's
 // answered.
 func (a *App) ask(question, def string) (string, error) {
+	return a.askCompleting(question, def, nil)
+}
+
+// completer completes typed, what's before the cursor, when you press Tab. It
+// returns what to replace it with, and the choices to list, if it can't pick
+// one.
+type completer func(typed string) (string, []string)
+
+// askCompleting is ask, with Tab completing what you've typed, at a terminal,
+// with complete, if it isn't nil.
+func (a *App) askCompleting(question, def string, complete completer) (string, error) {
+	prompt := a.paint(bold, question) + ": "
 	if def != "" {
-		fmt.Fprintf(a.Stdout, "%s %s: ", a.paint(bold, question), a.paint(dim, "[default: "+def+"]"))
-	} else {
-		fmt.Fprintf(a.Stdout, "%s: ", a.paint(bold, question))
+		prompt = a.paint(bold, question) + " " + a.paint(dim, "[default: "+def+"]") + ": "
 	}
-	line, ok := a.readLine()
+	var line string
+	var ok bool
+	if in, out, isTerm := a.terminal(); isTerm && complete != nil {
+		line, ok = readLineCompleting(in, out, prompt, complete)
+	} else {
+		fmt.Fprint(a.Stdout, prompt)
+		line, ok = a.readLine()
+	}
 	if !ok {
 		return "", errors.New("cancelled")
 	}
@@ -435,6 +453,52 @@ func (a *App) readLine() (string, bool) {
 	line, err := a.in.ReadString('\n')
 	if err != nil && line == "" {
 		fmt.Fprintln(a.Stdout)
+		return "", false
+	}
+	return strings.TrimSpace(line), true
+}
+
+// terminal is the terminal that's rembox's stdin and stdout, if they are one,
+// and nothing typed is waiting in readLine's buffer.
+func (a *App) terminal() (in, out *os.File, ok bool) {
+	in, inOK := a.Stdin.(*os.File)
+	out, outOK := a.Stdout.(*os.File)
+	ok = inOK && outOK && term.IsTerminal(int(in.Fd())) && term.IsTerminal(int(out.Fd())) &&
+		(a.in == nil || a.in.Buffered() == 0)
+	return in, out, ok
+}
+
+// readLineCompleting is readLine at the terminal in and out, after showing
+// prompt, with Tab completing what's before the cursor with complete. It
+// puts the terminal in raw mode while you type, so Ctrl-C and Ctrl-D cancel.
+func readLineCompleting(in, out *os.File, prompt string, complete completer) (string, bool) {
+	fd := int(in.Fd())
+	state, err := term.MakeRaw(fd)
+	if err != nil {
+		return "", false
+	}
+	defer term.Restore(fd, state)
+	t := term.NewTerminal(struct {
+		io.Reader
+		io.Writer
+	}{in, out}, prompt)
+	if w, h, err := term.GetSize(fd); err == nil {
+		t.SetSize(w, h)
+	}
+	t.AutoCompleteCallback = func(line string, pos int, key rune) (string, int, bool) {
+		if key != '\t' {
+			return "", 0, false
+		}
+		typed, choices := complete(line[:pos])
+		if len(choices) > 0 {
+			// Write redraws the prompt and line after the choices.
+			fmt.Fprintf(t, "%s%s\n%s\n", prompt, line, strings.Join(choices, "  "))
+		}
+		return typed + line[pos:], len(typed), true
+	}
+	line, err := t.ReadLine()
+	if err != nil {
+		fmt.Fprint(out, "\r\n")
 		return "", false
 	}
 	return strings.TrimSpace(line), true
