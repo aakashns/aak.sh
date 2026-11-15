@@ -111,7 +111,7 @@ func TestSetup(t *testing.T) {
 		slices.Contains(second, "sudo") || !slices.Equal(scriptArgs(second), []string{"finish", "23456"}) {
 		t.Errorf("last session's args %q", second)
 	}
-	files := `"$(cat lib.sh check.sh hostname.sh git.sh update.sh toolchains.sh user.sh sshd.sh firewall.sh zsh.sh fail2ban.sh swap.sh locale.sh restart.sh setup.sh)"`
+	files := `"$(cat lib.sh check.sh hostname.sh git.sh update.sh toolchains.sh agents.sh t3.sh user.sh sshd.sh firewall.sh zsh.sh fail2ban.sh swap.sh locale.sh restart.sh setup.sh)"`
 	if !strings.Contains(out, "\n$ ssh -t -p 22 -i "+key+" -o IdentitiesOnly=yes") ||
 		!strings.Contains(out, "root@203.0.113.10 bash -c "+files+" bash start ada 23456 22 box1\n"+
 			"  These scripts come with rembox; read them at https://github.com/aakashns/rembox/tree/v0.1.0/cli/internal/remote\n") ||

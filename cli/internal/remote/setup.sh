@@ -9,7 +9,8 @@
 #     package, has unattended-upgrades install security updates every day,
 #     installs tools for development and the latest Go, asks for your user's
 #     name (DEFAULT_USER, if you don't give one; DEFAULT_USER may be empty) and
-#     adds it with your keys and zsh as its login shell, and sets sshd to
+#     adds it with your keys and zsh as its login shell, keeps its services
+#     running when it isn't logged in, for T3 Code, and sets sshd to
 #     listen on PORT as well, and ufw, if it's on, to let it in. It prints a
 #     line telling rembox the name; see add_user.
 #
@@ -17,8 +18,10 @@
 #     As USER, on PORT, which shows that both work: sets up zsh for USER, logs
 #     gh in to GitHub, if USER likes, and sets the name and email for git
 #     commits, from GitHub, or if gh isn't logged in, GIT_NAME and GIT_EMAIL,
-#     from git on your Mac (either may be empty), then installs the latest
-#     bun, Node, Python and Rust, or asks to upgrade them.
+#     from git on your Mac (either may be empty), installs the latest
+#     bun, Node, Python and Rust, or asks to upgrade them, then installs the
+#     coding agents USER picks, and logs them in, and T3 Code, connected to
+#     USER's devices with T3 Connect.
 #
 #   setup.sh finish PORT [LOCALE...]
 #     As root, as USER: sets sshd to listen only on PORT, with no root login,
@@ -56,6 +59,8 @@ main() {
     setup_github
     setup_git "$2" "$3"
     setup_toolchains
+    setup_agents
+    setup_t3
     ;;
   finish)
     (($# >= 2)) || fail "Usage: setup.sh finish PORT [LOCALE...]"
