@@ -4,15 +4,19 @@
 #
 #   setup.sh start DEFAULT_USER PORT LOGIN_PORT NAME
 #     As root, as the user you log in as, on LOGIN_PORT: checks that rembox
-#     can set up the server, makes NAME its hostname, installs the latest version of every package,
+#     can set up the server, makes NAME its hostname, has apt install gh from
+#     GitHub's apt repo, installs the latest version of every package,
 #     has unattended-upgrades install security updates every day, installs
 #     tools for development, asks for your user's name (DEFAULT_USER, if you
 #     don't give one; DEFAULT_USER may be empty) and adds it with your keys,
 #     and sets sshd to listen on PORT as well, and ufw, if it's on, to let it
 #     in. It prints a line telling rembox the name; see add_user.
 #
-#   setup.sh home
-#     As USER, on PORT, which shows that both work: sets up zsh for USER.
+#   setup.sh home GIT_NAME GIT_EMAIL
+#     As USER, on PORT, which shows that both work: sets up zsh for USER, logs
+#     gh in to GitHub, if USER likes, and sets the name and email for git
+#     commits, from GitHub, or if gh isn't logged in, GIT_NAME and GIT_EMAIL,
+#     from git on your Mac (either may be empty).
 #
 #   setup.sh finish USER PORT [LOCALE...]
 #     As root, as USER: sets sshd to listen only on PORT, with no root login,
@@ -34,6 +38,7 @@ main() {
     [[ -n ${SUDO_USER:-} ]] || root_login=prohibit-password
     check
     set_hostname "$name"
+    add_gh_repo
     update
     setup_auto_upgrades
     install_basics
@@ -42,8 +47,10 @@ main() {
     open_ssh_port "$port"
     ;;
   home)
-    (($# == 1)) || fail "Usage: setup.sh home"
+    (($# == 3)) || fail "Usage: setup.sh home GIT_NAME GIT_EMAIL"
     setup_zsh
+    setup_github
+    setup_git "$2" "$3"
     ;;
   finish)
     (($# >= 3)) || fail "Usage: setup.sh finish USER PORT [LOCALE...]"
@@ -59,7 +66,7 @@ main() {
     restart
     ;;
   *)
-    fail "Usage: setup.sh start DEFAULT_USER PORT LOGIN_PORT NAME, setup.sh home, or setup.sh finish USER PORT [LOCALE...]"
+    fail "Usage: setup.sh start DEFAULT_USER PORT LOGIN_PORT NAME, setup.sh home GIT_NAME GIT_EMAIL, or setup.sh finish USER PORT [LOCALE...]"
     ;;
   esac
 }

@@ -69,8 +69,7 @@
             <strong>Locks down SSH access</strong>
             <ul>
               <li>
-                creates a non-root user with <a href="https://www.sudo.ws/" target="_blank"><code>sudo</code></a>, asking you for
-                its name and password
+                creates a non-root user with password protected <a href="https://www.sudo.ws/" target="_blank"><code>sudo</code></a> access
               </li>
               <li>moves <a href="https://www.openssh.com/" target="_blank">SSH</a> from 22 to a random port to counter automated attacks</li>
               <li>
@@ -90,10 +89,14 @@
                 installs <a href="https://git-scm.com/" target="_blank">git</a>, <a href="https://cli.github.com/" target="_blank">gh</a>,
                 <a href="https://github.com/BurntSushi/ripgrep" target="_blank">ripgrep</a>, <a href="https://github.com/sharkdp/fd" target="_blank">fd</a>,
                 <a href="https://github.com/junegunn/fzf" target="_blank">fzf</a>, <a href="https://jqlang.org/" target="_blank">jq</a>,
-                <a href="https://htop.dev/" target="_blank">htop</a>, <a href="https://github.com/tmux/tmux" target="_blank">tmux</a>,
+                <a href="https://htop.dev/" target="_blank">htop</a>, <a href="https://zellij.dev/" target="_blank">Zellij</a>,
                 and other dev tools
               </li>
               <li>makes <a href="https://www.zsh.org/" target="_blank">zsh</a> your shell, with curated plugins to improve your workflow</li>
+              <li>
+                sets your name and email for <a href="https://git-scm.com/" target="_blank">git</a>, and logs
+                <a href="https://cli.github.com/" target="_blank">gh</a> in to GitHub with a code
+              </li>
               <li>
                 adds <a href="https://wiki.debian.org/Swap" target="_blank">swap</a> as big as the server’s memory (up to 4 GiB), if it
                 has none

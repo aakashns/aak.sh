@@ -1,9 +1,11 @@
 package cli
 
 import (
+	"html"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -102,18 +104,18 @@ func TestSetup(t *testing.T) {
 		t.Errorf("first session's args %q", first)
 	}
 	if !slices.Equal(home[:3], []string{"-t", "-p", "23456"}) || !slices.Contains(home, "ada@203.0.113.10") ||
-		slices.Contains(home, "sudo") || !slices.Equal(scriptArgs(home), []string{"home"}) {
+		slices.Contains(home, "sudo") || !slices.Equal(scriptArgs(home), []string{"home", "''", "''"}) {
 		t.Errorf("home session's args %q", home)
 	}
 	if !slices.Equal(second[:3], []string{"-t", "-p", "23456"}) || !slices.Contains(second, "ada@203.0.113.10") ||
 		slices.Contains(second, "sudo") || !slices.Equal(scriptArgs(second), []string{"finish", "ada", "23456"}) {
 		t.Errorf("last session's args %q", second)
 	}
-	files := `"$(cat lib.sh check.sh hostname.sh update.sh user.sh sshd.sh firewall.sh zsh.sh fail2ban.sh swap.sh locale.sh restart.sh setup.sh)"`
+	files := `"$(cat lib.sh check.sh hostname.sh git.sh update.sh user.sh sshd.sh firewall.sh zsh.sh fail2ban.sh swap.sh locale.sh restart.sh setup.sh)"`
 	if !strings.Contains(out, "\n$ ssh -t -p 22 -i "+key+" -o IdentitiesOnly=yes") ||
 		!strings.Contains(out, "root@203.0.113.10 bash -c "+files+" bash start ada 23456 22 box1\n"+
 			"  These scripts come with rembox; read them at https://github.com/aakashns/rembox/tree/v0.1.0/cli/internal/remote\n") ||
-		!strings.Contains(out, "ada@203.0.113.10 bash -c "+files+" bash home\n") ||
+		!strings.Contains(out, "ada@203.0.113.10 bash -c "+files+" bash home '' ''\n") ||
 		!strings.Contains(out, "ada@203.0.113.10 bash -c "+files+" bash finish ada 23456\n") {
 		t.Errorf("output doesn't show the scripts' commands:\n%s", out)
 	}
@@ -193,6 +195,21 @@ func TestSetupLocales(t *testing.T) {
 	s := ta.sessions()
 	if len(s) != 3 || !slices.Equal(scriptArgs(s[0]), []string{"start", "ada", "23456", "22", "box1"}) ||
 		!slices.Equal(scriptArgs(s[2]), []string{"finish", "ada", "23456", "en_IN.UTF-8", "en_US.UTF-8"}) {
+		t.Errorf("sessions %q", s)
+	}
+}
+
+func TestSetupGitDefaults(t *testing.T) {
+	ta := newTestApp(t, "0.1.0")
+	ta.withKey(t, "id_ed25519")
+	ta.GitConfig = func(key string) string {
+		return map[string]string{"user.name": "Ada Lovelace", "user.email": "ada@example.com"}[key]
+	}
+	ta.typing("203.0.113.10", "", "", "", "box1", "y")
+	ta.mustRun(t, "setup")
+	// The home session asks for them, with these as defaults.
+	s := ta.sessions()
+	if len(s) != 3 || !slices.Equal(scriptArgs(s[1]), []string{"home", "'Ada Lovelace'", "ada@example.com"}) {
 		t.Errorf("sessions %q", s)
 	}
 }
@@ -530,5 +547,34 @@ func TestCheckHost(t *testing.T) {
 		if (err != nil) != (want == "") || got != want {
 			t.Errorf("checkHost(%q) = %q, %v; want %q", in, got, err, want)
 		}
+	}
+}
+
+// TestSetupHelpMatchesSite checks that 'rembox help setup' lists the same
+// steps, in the same words, as "What does rembox setup do?" on the site.
+func TestSetupHelpMatchesSite(t *testing.T) {
+	page, err := os.ReadFile("../../../site/public/index.html")
+	if err != nil {
+		t.Fatal(err)
+	}
+	steps := regexp.MustCompile(`(?s)<ol class="steps">(.*?)</ol>`).FindSubmatch(page)
+	if steps == nil {
+		t.Fatal(`no <ol class="steps"> in index.html`)
+	}
+	site := html.UnescapeString(regexp.MustCompile(`<[^>]+>`).ReplaceAllString(string(steps[1]), ""))
+	site = strings.Join(strings.Fields(strings.ReplaceAll(site, "’", "'")), " ")
+
+	// The help's steps: the indented lines after the first paragraph, less
+	// their numbers and dashes.
+	_, list, _ := strings.Cut(setupHelp, "rembox setup:\n")
+	var words []string
+	for _, line := range strings.Split(list, "\n") {
+		if line != "" && !strings.HasPrefix(line, " ") {
+			break
+		}
+		words = append(words, strings.Fields(regexp.MustCompile(`^\s*(\d+\.|-)\s`).ReplaceAllString(line, ""))...)
+	}
+	if help := strings.Join(words, " "); help != site {
+		t.Errorf("rembox help setup's steps differ from the site's:\nhelp: %s\nsite: %s", help, site)
 	}
 }

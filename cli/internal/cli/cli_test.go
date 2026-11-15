@@ -84,6 +84,7 @@ func newTestApp(t *testing.T, current string) *testApp {
 		ConfigDir:  func() (string, error) { return ta.configDir, nil },
 		HomeDir:    func() (string, error) { return home, nil },
 		Username:   "ada",
+		GitConfig:  func(string) string { return "" },
 		NewPort:    func() int { return 23456 },
 		Command: func(stdout io.Writer, name string, args ...string) error {
 			ta.commands = append(ta.commands, append([]string{name}, args...))

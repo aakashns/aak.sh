@@ -33,11 +33,12 @@ type App struct {
 	GOOS       string
 	GOARCH     string
 
-	ConfigDir func() (string, error) // where rembox keeps its files
-	HomeDir   func() (string, error) // for ~/.ssh
-	Username  string                 // yours on this machine, for your user on servers
-	NewPort   func() int             // a random port to move ssh to
-	Locales   []string               // the locales ssh passes on to servers, like en_US.UTF-8
+	ConfigDir func() (string, error)  // where rembox keeps its files
+	HomeDir   func() (string, error)  // for ~/.ssh
+	Username  string                  // yours on this machine, for your user on servers
+	NewPort   func() int              // a random port to move ssh to
+	Locales   []string                // the locales ssh passes on to servers, like en_US.UTF-8
+	GitConfig func(key string) string // a setting from your git config, like user.name, or ""
 
 	// Command runs a program at the terminal, with its output going to stdout.
 	// Show the command first, as App.run does.
@@ -63,6 +64,7 @@ func Main() int {
 		Username:   os.Getenv("USER"),
 		NewPort:    func() int { return 10000 + rand.IntN(22768) }, // 10000-32767, below Linux's ports for outgoing connections
 		Locales:    sentLocales(os.Environ()),
+		GitConfig:  gitConfig,
 		Command:    atTerminal,
 		Euid:       os.Geteuid(),
 	}
@@ -75,6 +77,17 @@ func atTerminal(stdout io.Writer, name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, stdout, os.Stderr
 	return cmd.Run()
+}
+
+// gitConfig is a setting from your global git config, like user.name, or ""
+// if it's unset or there's no git. It only reads, so it isn't shown, as run
+// shows commands.
+func gitConfig(key string) string {
+	out, err := exec.Command("git", "config", "--global", "--get", key).Output()
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(out))
 }
 
 // run shows a command, as you could paste it into a shell, then runs it.
