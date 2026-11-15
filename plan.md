@@ -22,7 +22,7 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
 - [x] Restart the server, if an update needs it
 - [x] Base dev packages (`BASIC_PACKAGES` in `update.sh`): build-essential, git, gh, curl, wget,
       zip, unzip, jq, ripgrep, fd-find (plus an `fd` link to `fdfind`), htop, zsh, nano,
-      man-db, dnsutils, ufw. fzf, zoxide and Zellij come from their latest GitHub releases
+      man-db, dnsutils, ufw, qrencode. fzf, zoxide and Zellij come from their latest GitHub releases
       (`install_release`), as apt's are old or missing. These install in `start`, as `home`
       needs zsh and git.
 - [x] Swap file as big as memory, up to 4 GiB, unless there's swap already; swappiness 10
@@ -59,17 +59,23 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
       in `home`, each with its own installer and defaults: bun, Node via Vite+, Python via uv,
       Rust via rustup. Re-runs ask before upgrading. gcc comes with build-essential.
 
+- [x] Coding agents (`agents.sh`), in `home`: asks about each of Claude Code, Codex, OpenCode
+      and Pi; runs its own install script (with `setsid`, so it takes its defaults) and its own
+      login command (`claude auth login`, `codex login --device-auth`, `opencode auth login`;
+      Pi logs in from inside, with `/login`). Re-runs don't upgrade them; they offer to log in again.
+- [x] T3 Code (`t3.sh`): linger for your user (in `start`); in `home`, installs `t3`, sets
+      `~/.t3/userdata/settings.json` to add projects in `~/work` and turn on Pi and OpenCode (off
+      by default), runs `t3 up --connect --no-lan` (sign-in with a code; installs the service),
+      then shows a QR code for https://t3.codes/mobile. T3 reads PATH from your login shell, so it
+      finds the agents without a PATH drop-in.
+
 ## Next
 
-1. [ ] **Coding agents:** Codex, Claude Code, Pi, with their logins. A shared
-   `~/.config/rembox/AGENTS.md` (or similar), symlinked to `~/.codex/AGENTS.md`,
-   `~/.claude/CLAUDE.md` and `~/.pi/agent/AGENTS.md`; never overwrite real files.
-2. [ ] **HTTPS and T3 Code.** Ask for a domain, check its A record points at the server, install
-   Caddy, reverse-proxy to T3 on 127.0.0.1:3773, enable linger so T3's systemd user service runs
-   without a login, add its PATH drop-in, and pair a device (QR code). See SETUP.md's gotchas.
-   - ufw: open 80/tcp, 443/tcp and 443/udp. `setup_firewall` in `firewall.sh` asks "Keep the ufw
-     rule to …?" for every allow rule but ssh's, so make it take the ports rembox opens and skip
-     the question for them, or every re-run asks about Caddy's ports.
+1. [ ] **Shared agent instructions:** a `~/.config/rembox/AGENTS.md`, symlinked to
+   `~/.codex/AGENTS.md`, `~/.claude/CLAUDE.md` and `~/.pi/agent/AGENTS.md`; never overwrite real
+   files.
+2. [ ] Later, maybe: `t3 service protect` (asks for sudo), and T3 Connect's device approval, once
+   `t3` has a command for it.
 
 ## Testing on real machines
 

@@ -31,6 +31,8 @@ See [rembox.aakashns.com](https://rembox.aakashns.com) for the docs. Until the s
 - [`sshd.sh`](cli/internal/remote/sshd.sh): moves ssh to a new port, with keys only and no root login.
 - [`firewall.sh`](cli/internal/remote/firewall.sh): turns on ufw, blocking every incoming connection but ssh.
 - [`zsh.sh`](cli/internal/remote/zsh.sh): sets up zsh for your user, with plugins, fzf, zoxide, a git prompt, and Zellij on ssh logins.
+- [`agents.sh`](cli/internal/remote/agents.sh): asks whether to install Claude Code, Codex, OpenCode and Pi, installs each with its own installer, and logs it in.
+- [`t3.sh`](cli/internal/remote/t3.sh): installs T3 Code, with projects in ~/work, connects it to your devices with T3 Connect, and shows a QR code for its phone app.
 - [`fail2ban.sh`](cli/internal/remote/fail2ban.sh): bans IP addresses that keep failing to log in.
 - [`locale.sh`](cli/internal/remote/locale.sh): adds your Mac's locale, so programs on the server don't warn.
 - [`restart.sh`](cli/internal/remote/restart.sh): restarts the server, if an update needs it and you agree.

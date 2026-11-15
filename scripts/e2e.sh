@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # e2e.sh [IMAGE]: runs `rembox setup` on a fresh OrbStack machine, rembox-e2e, twice (the second
 # run should change nothing), answering its questions with expect, then logs in as your user. It
+# installs every coding agent, but logs none in, and cancels T3 Connect's sign-in. It
 # runs in a temp HOME, with its own known_hosts, so your own config is untouched. IMAGE is
 # ubuntu:noble by default. HOST is how to reach the machine: rembox-e2e.orb.local by default, or
 # 127.0.0.1 if your terminal lacks macOS's Local Network permission. Fails if setup prints
@@ -45,6 +46,9 @@ while 1 {
     -re {Keep the ufw rule [^\n]*\] $} { send "\r" }
     -re {Upgrade [^\n]*\?[^\n]*\] $} { send "\r" }
     -re {Log in (to GitHub now|again)\?[^\n]*\] $} { send "n\r" }
+    -re {Install [^\n]*\?[^\n]*\] $} { send "\r" }
+    -re {Log [^\n]* in now\?[^\n]*\] $} { send "n\r" }
+    -re {Waiting for approval[^\n]*\n} { send "\003" }
     -re {Restart it now\?[^\n]*\] $} { send "n\r" }
     -re {to ~/.ssh/config\?[^\n]*\] $} { send "y\r" }
     -re {Replace it\?[^\n]*\] $} { send "y\r" }
@@ -66,5 +70,5 @@ setup
 setup "$name"
 port=$(sed -n 's/^ *Port //p' "$tmp/home/.config/rembox/ssh_config")
 ssh -F /dev/null -o UserKnownHostsFile="$tmp/known_hosts" -i "$key" -o IdentitiesOnly=yes -p "$port" \
-  "dev@$host" 'zsh -lic "echo \$SHELL; hostname; node --version; bun --version; python --version; cargo --version; go version"'
+  "dev@$host" 'zsh -lic "echo \$SHELL; hostname; node --version; bun --version; python --version; cargo --version; go version; claude --version; codex --version; opencode --version; pi --version; t3 --version"'
 echo "e2e: passed. Delete the machine with: orb delete -f $name"
