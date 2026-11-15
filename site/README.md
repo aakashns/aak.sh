@@ -5,6 +5,9 @@ and `public/install.sh`, the installer. [`Caddyfile`](Caddyfile) serves it.
 
 To preview it locally: `python3 -m http.server -d public 8788`
 
+`images/render.sh` renders `public/social.png` (the link preview, from `images/social.html`),
+`favicon.ico` and `apple-touch-icon.png` (from `icon.svg`). Re-run it when you change those.
+
 ## Deploying
 
 The server serves the repo's `site/public` from `/srv/rembox`, which the `caddy` user can read

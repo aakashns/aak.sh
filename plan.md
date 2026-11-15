@@ -79,6 +79,7 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
       finds the agents without a PATH drop-in.
 - [x] Site: a terminal that plays `rembox setup` (`site.js`), and collapsible FAQs in place of
       the install, upgrade and verify sections.
+- [x] Site SEO: link preview image, favicons, sitemap, and structured data (`site/images/render.sh`).
 
 ## Next
 

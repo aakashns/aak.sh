@@ -1,0 +1,68 @@
+<!doctype html>
+<!-- The social card (public/social.png, 1200×630), in the site's colors and words. render.sh renders it. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html {
+        background: #161616;
+        color: #e6e6e6;
+        font-family: system-ui, -apple-system, sans-serif;
+      }
+      body {
+        box-sizing: border-box;
+        width: 1200px;
+        height: 630px;
+        margin: 0;
+        padding: 72px 80px;
+        display: flex;
+        flex-direction: column;
+      }
+      .mono {
+        font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+      }
+      .wordmark {
+        font-size: 40px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .wordmark span {
+        margin-right: 0.35em;
+        color: #7ee2a8;
+      }
+      h1 {
+        margin: auto 0 24px;
+        font-size: 76px;
+        font-weight: 650;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0 0 48px;
+        max-width: 960px;
+        font-size: 30px;
+        line-height: 1.45;
+        color: #a1a1a1;
+      }
+      .command {
+        padding: 22px 28px;
+        font-size: 26px;
+        background: #1e1e1e;
+        border: 2px solid #2e2e2e;
+        border-radius: 12px;
+      }
+      .command span {
+        color: #7ee2a8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wordmark mono"><span>&gt;_</span>rembox</div>
+    <h1>Set up and manage<br />remote dev machines</h1>
+    <p>
+      Turn any Ubuntu or Debian server into a locked-down box with secure SSH, developer tools, AI
+      coding agents, and remote access from your phone.
+    </p>
+    <div class="command mono"><span>$</span> curl -fsSL https://rembox.aakashns.com/install.sh | sh</div>
+  </body>
+</html>

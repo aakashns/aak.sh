@@ -5,20 +5,44 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>rembox — Set up and manage remote development machines</title>
     <meta name="theme-color" content="#161616" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="stylesheet" href="/style.css" />
     <meta
       name="description"
-      content="Turn a fresh Ubuntu server into a secure remote dev box, from your Mac."
+      content="Turn any Ubuntu or Debian server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone."
     />
     <link rel="canonical" href="https://rembox.aakashns.com/" />
+    <!-- Link previews. site/images/render.sh makes social.png. -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="rembox" />
     <meta property="og:title" content="rembox — Set up and manage remote development machines" />
     <meta
       property="og:description"
-      content="Turn a fresh Ubuntu server into a secure remote dev box, from your Mac."
+      content="Turn any Ubuntu or Debian server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone."
     />
     <meta property="og:url" content="https://rembox.aakashns.com/" />
+    <meta property="og:image" content="https://rembox.aakashns.com/social.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="rembox: Set up and manage remote dev machines" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "rembox",
+        "url": "https://rembox.aakashns.com/",
+        "description": "Turn any Ubuntu or Debian server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "macOS, Linux, Windows (WSL)",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "license": "https://github.com/aakashns/rembox/blob/main/LICENSE",
+        "sameAs": "https://github.com/aakashns/rembox",
+        "author": { "@type": "Person", "name": "Aakash N S", "url": "https://aakashns.com" }
+      }
+    </script>
     <!-- Before the first paint, so the terminal (see site.js) starts empty instead of flashing. -->
     <script>
       if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
