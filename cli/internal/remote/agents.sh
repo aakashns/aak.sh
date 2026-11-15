@@ -16,26 +16,43 @@ setup_agents() {
 }
 
 # setup_claude: installs Claude Code, in ~/.local/bin, and logs it in, with a
-# link, to your Claude subscription.
+# link, to your Claude subscription or, if you say so, an Anthropic Console
+# account, billed by API usage.
 setup_claude() {
   step "Install Claude Code"
   local claude=$HOME/.local/bin/claude logged_in=no
   install_agent "Claude Code" "Anthropic's coding agent" "$claude" https://claude.ai/install.sh bash || return 0
   "$claude" auth status >/dev/null 2>&1 && logged_in=yes
-  offer_login "Claude Code" $logged_in \
-    "Claude Code logs in with a link: open it on any device, sign in, and paste the code it shows back here. To log in to an Anthropic Console account instead, billed by API usage: claude auth login --console" \
-    "claude auth login" "$claude" auth login
+  wants_login "Claude Code" $logged_in \
+    "claude auth login, or for an Anthropic Console account: claude auth login --console" || return 0
+  local console=()
+  confirm "Log in with a Claude subscription? Say no for an Anthropic Console account, billed by API usage." yes ||
+    console=(--console)
+  info "Claude Code logs in with a link: open it on any device, sign in, and paste the code it shows back here."
+  log_in "$(quoted claude auth login "${console[@]}")" "$claude" auth login "${console[@]}"
 }
 
 # setup_codex: installs Codex, in ~/.local/bin, and logs it in, with a code, to
-# your ChatGPT account.
+# your ChatGPT account or, if you say so, with an OpenAI API key.
 setup_codex() {
   step "Install Codex"
   local codex=$HOME/.local/bin/codex logged_in=no
   install_agent Codex "OpenAI's coding agent" "$codex" https://chatgpt.com/codex/install.sh sh || return 0
   "$codex" login status >/dev/null 2>&1 && logged_in=yes
-  offer_login Codex $logged_in "Codex logs in with a code: open the link it shows on any device, and enter the code." \
-    "codex login --device-auth" "$codex" login --device-auth
+  local api_hint="printenv OPENAI_API_KEY | codex login --with-api-key"
+  wants_login Codex $logged_in "codex login --device-auth, or with an API key: $api_hint" || return 0
+  if confirm "Log in with a ChatGPT account? Say no for an OpenAI API key, billed by API usage." yes; then
+    info "Codex logs in with a code: open the link it shows on any device, and enter the code."
+    log_in "codex login --device-auth" "$codex" login --device-auth
+    return 0
+  fi
+  local key=''
+  ask_secret key "OpenAI API key (from https://platform.openai.com/api-keys)" || true
+  if [[ -z $key ]]; then
+    ok "Codex isn't logged in. To log in later: $api_hint"
+  elif ! run "$codex" login --with-api-key <<<"$key"; then
+    warn "That didn't log in, as it says above. To try again later: $api_hint"
+  fi
 }
 
 # setup_opencode: installs OpenCode, in ~/.opencode/bin, and logs it in to the
@@ -78,20 +95,27 @@ install_agent() {
   ok "$name $(version_of "$command") is installed."
 }
 
-# offer_login NAME LOGGED_IN HOW HINT COMMAND...: asks whether to log NAME in,
-# or if it's logged in already (LOGGED_IN is yes), to log in again, then says
-# HOW it logs in and runs COMMAND, its login command, with log_in.
+# offer_login NAME LOGGED_IN HOW HINT COMMAND...: if wants_login, says HOW
+# NAME logs in and runs COMMAND, its login command, with log_in.
 offer_login() {
   local name=$1 logged_in=$2 how=$3 hint=$4
   shift 4
-  if [[ $logged_in == yes ]]; then
-    confirm "$name is logged in. Log in again?" no || return 0
-  elif ! confirm "Log $name in now?" yes; then
-    ok "$name isn't logged in. To log in later: $hint"
-    return 0
-  fi
+  wants_login "$name" "$logged_in" "$hint" || return 0
   info "$how"
   log_in "$hint" "$@"
+}
+
+# wants_login NAME LOGGED_IN HINT: asks whether to log NAME in, or if it's
+# logged in already (LOGGED_IN is yes), to log in again. Succeeds if so; if
+# not, and it isn't logged in, says to run HINT later.
+wants_login() {
+  local name=$1 logged_in=$2 hint=$3
+  if [[ $logged_in == yes ]]; then
+    confirm "$name is logged in. Log in again?" no
+  elif ! confirm "Log $name in now?" yes; then
+    ok "$name isn't logged in. To log in later: $hint"
+    return 1
+  fi
 }
 
 # log_in HINT COMMAND...: runs COMMAND, which logs something in, at the

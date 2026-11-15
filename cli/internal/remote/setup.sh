@@ -15,13 +15,13 @@
 #     line telling rembox the name; see add_user.
 #
 #   setup.sh home GIT_NAME GIT_EMAIL
-#     As USER, on PORT, which shows that both work: sets up zsh for USER, logs
-#     gh in to GitHub, if USER likes, and sets the name and email for git
-#     commits, from GitHub, or if gh isn't logged in, GIT_NAME and GIT_EMAIL,
-#     from git on your Mac (either may be empty), installs the latest
-#     bun, Node, Python and Rust, or asks to upgrade them, then installs the
-#     coding agents USER picks, and logs them in, and T3 Code, connected to
-#     USER's devices with T3 Connect.
+#     As USER, on PORT, which shows that both work: makes ~/work, for USER's
+#     projects, sets up zsh for USER, logs gh in to GitHub, if USER likes, and
+#     sets the name and email for git commits, from GitHub, or if gh isn't
+#     logged in, GIT_NAME and GIT_EMAIL, from git on your Mac (either may be
+#     empty), installs the latest bun, Node, Python and Rust, or asks to
+#     upgrade them, then installs the coding agents USER picks, and logs them
+#     in, and T3 Code, connected to USER's devices with T3 Connect.
 #
 #   setup.sh finish PORT [LOCALE...]
 #     As root, as USER: sets sshd to listen only on PORT, with no root login,
@@ -55,6 +55,7 @@ main() {
     ;;
   home)
     (($# == 3)) || fail "Usage: setup.sh home GIT_NAME GIT_EMAIL"
+    make_projects_dir
     setup_zsh
     setup_github
     setup_git "$2" "$3"

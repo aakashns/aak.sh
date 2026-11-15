@@ -96,14 +96,9 @@ func runSetup(a *App, args []string) error {
 		saved = &s
 	}
 
-	s, err := a.askServer(saved)
+	s, port, err := a.askServer(saved)
 	if err != nil {
 		return err
-	}
-	// Keep ssh on the port it's on, unless that's 22.
-	port := s.Port
-	if port == config.DefaultPort {
-		port = a.NewPort()
 	}
 	if err := a.saveServer(s); err != nil {
 		return err
@@ -327,17 +322,18 @@ func cantLogIn(err error) bool {
 	return errors.As(err, &ee) && ee.ExitCode() == 255
 }
 
-// askServer asks which server to set up. saved is the server to set up again,
-// if any: its settings are the defaults, and it keeps its name.
-func (a *App) askServer(saved *config.Server) (config.Server, error) {
+// askServer asks which server to set up, and the port to move ssh to. saved is
+// the server to set up again, if any: its settings are the defaults, and it
+// keeps its name.
+func (a *App) askServer(saved *config.Server) (config.Server, int, error) {
 	var s config.Server
 	dir, err := a.ConfigDir()
 	if err != nil {
-		return s, err
+		return s, 0, err
 	}
 	home, err := a.HomeDir()
 	if err != nil {
-		return s, fmt.Errorf("can't find your home folder: %w", err)
+		return s, 0, fmt.Errorf("can't find your home folder: %w", err)
 	}
 
 	def := config.Server{Port: config.DefaultPort, User: "root", Key: defaultKey(home)}
@@ -347,16 +343,25 @@ func (a *App) askServer(saved *config.Server) (config.Server, error) {
 	}
 	s.Host, err = a.answer("Server IP address or hostname", def.Host, checkHost)
 	if err != nil {
-		return s, err
+		return s, 0, err
 	}
 	port, err := a.answer("SSH port", strconv.Itoa(def.Port), checkPort)
 	if err != nil {
-		return s, err
+		return s, 0, err
 	}
 	s.Port = mustAtoi(port)
+	// Keep ssh on the port it's on, unless that's 22.
+	newDef := s.Port
+	if newDef == config.DefaultPort {
+		newDef = a.NewPort()
+	}
+	newPort, err := a.answer("New SSH port", strconv.Itoa(newDef), checkPort)
+	if err != nil {
+		return s, 0, err
+	}
 	s.User, err = a.answer("User to log in as", def.User, checkUser)
 	if err != nil {
-		return s, err
+		return s, 0, err
 	}
 	s.Key, err = a.answerCompleting("SSH private key", def.Key, func(p string) (string, error) {
 		return checkKey(home, p)
@@ -364,16 +369,16 @@ func (a *App) askServer(saved *config.Server) (config.Server, error) {
 		return completePath(home, typed)
 	})
 	if err != nil {
-		return s, err
+		return s, 0, err
 	}
 	current := ""
 	if saved != nil {
 		current = saved.Name
 	}
 	if s.Name, err = a.askName(dir, home, s, current); err != nil {
-		return s, err
+		return s, 0, err
 	}
-	return s, nil
+	return s, mustAtoi(newPort), nil
 }
 
 // askName asks for a name for s, offering current, the name of the server

@@ -20,7 +20,7 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
 - [x] Before moving ssh's port, asks if a firewall outside the server needs it opened, and stops if it isn't.
 - [x] `rembox delete NAME` removes a server from rembox. Setup ends by listing the commands for it.
 - [x] The server's name is its hostname (`hostname.sh`), and the prompt shows it in full: `user@devbox.example.com`.
-- [x] Move ssh to a random port, with keys only and no root login; fail2ban
+- [x] Move ssh to the port you give (a random one by default), with keys only and no root login; fail2ban
 - [x] ufw: block every incoming connection but ssh
 - [x] Restart the server, if an update needs it
 - [x] Base dev packages (`BASIC_PACKAGES` in `update.sh`): build-essential, git, gh, curl, wget,
@@ -64,8 +64,9 @@ but follow this repo's conventions (AGENTS.md, and the style of `cli/internal/re
 
 - [x] Coding agents (`agents.sh`), in `home`: asks about each of Claude Code, Codex, OpenCode
       and Pi; runs its own install script (with `setsid`, so it takes its defaults) and its own
-      login command (`claude auth login`, `codex login --device-auth`, `opencode auth login`;
-      Pi logs in from inside, with `/login`). Re-runs don't upgrade them; they offer to log in again.
+      login command (`claude auth login`, or `--console` for API billing; `codex login
+      --device-auth`, or `--with-api-key`; `opencode auth login`; Pi logs in from inside, with
+      `/login`). Re-runs don't upgrade them; they offer to log in again.
 - [x] T3 Code (`t3.sh`): linger for your user (in `start`); in `home`, installs `t3`, sets
       `~/.t3/userdata/settings.json` to add projects in `~/work` and turn on Pi and OpenCode (off
       by default), runs `t3 up --connect --no-lan` (sign-in with a code; installs the service),

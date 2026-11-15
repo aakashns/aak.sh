@@ -6,6 +6,14 @@ T3_APP_URL=https://t3.codes/mobile # T3 Code's phone app, in the App Store or Go
 T3_SETTINGS=.t3/userdata/settings.json # in your home folder
 PROJECTS_DIR=work # in your home folder, where T3 Code adds projects
 
+# make_projects_dir: makes ~/PROJECTS_DIR, for your projects, whether or not
+# T3 Code installs. Runs as your user.
+make_projects_dir() {
+  step "Make ~/$PROJECTS_DIR, for your projects"
+  [[ -d $HOME/$PROJECTS_DIR ]] || run mkdir -p "$HOME/$PROJECTS_DIR"
+  ok "Your projects go in ~/$PROJECTS_DIR."
+}
+
 # enable_linger USER: has systemd start USER's services at boot, and keep them
 # running when USER isn't logged in, as T3 Code runs as one. Runs as root.
 enable_linger() {
@@ -51,7 +59,6 @@ t3_settings() {
   local file=$HOME/$T3_SETTINGS old new pi=false opencode=false
   [[ -x $HOME/.local/bin/pi ]] && pi=true
   [[ -x $HOME/.opencode/bin/opencode ]] && opencode=true
-  [[ -d $HOME/$PROJECTS_DIR ]] || run mkdir -p "$HOME/$PROJECTS_DIR"
   old='{}'
   if [[ -e $file ]] && ! old=$(jq . "$file"); then
     warn "$file isn't valid JSON, so rembox leaves it as it is."
