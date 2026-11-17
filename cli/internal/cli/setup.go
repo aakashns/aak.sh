@@ -48,6 +48,8 @@ Get a server ready for development, securely. rembox setup:
   4. Installs AI coding agents and sets up remote access
      - installs & sets up Claude Code, Codex, OpenCode, and Pi coding agents
      - installs Playwright with Chromium, so agents can do browser testing
+     - installs opentunnel, so agents can share dev server links on your
+       phone
      - installs T3 Code and configures secure remote access via T3 Connect
      - displays a QR code to set up T3 Code on your phone for remote access
 
@@ -56,6 +58,9 @@ port over ssh: 'ssh -L 3000:localhost:3000 NAME' makes localhost:3000 on this
 machine reach port 3000 on the server. Docker's published ports get past ufw,
 so setup has Docker publish them on 127.0.0.1 only, except on networks made
 before. To open one to the internet: 'docker run -p 0.0.0.0:80:80'.
+
+To test a dev server on your phone, have an agent run 'opentunnel route add
+PORT', which prints a public https link to it.
 
 ssh asks you to check the server's host key again the first time it logs in
 on the new port. If it can't log in there, open the port in your cloud
