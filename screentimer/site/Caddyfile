@@ -1,0 +1,9 @@
+# Serves screentimer.aak.sh, assuming the repo is checked out at /srv.
+# Load every site from the main Caddyfile with: import /srv/*/site/Caddyfile
+screentimer.aak.sh {
+	root * /srv/screentimer/site
+	encode zstd gzip
+	file_server {
+		hide Caddyfile
+	}
+}
