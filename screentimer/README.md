@@ -1,5 +1,7 @@
 # Screen Timer
 
+Website: https://screentimer.aak.sh
+
 <img width="701" height="229" alt="image" src="https://github.com/user-attachments/assets/1bd751ca-7edb-49e0-b7c6-3620f68f4f02" />
 
 <img width="701" height="245" alt="image" src="https://github.com/user-attachments/assets/6e960b97-489a-417a-8067-d0651a5e8c4b" />
@@ -20,8 +22,8 @@ directly and assembles the app bundle.
 ## Build
 
 ```sh
-git clone https://github.com/aakashns/screen-timer.git
-cd screen-timer
+git clone https://github.com/aakashns/aak.sh.git
+cd aak.sh/screentimer
 ./build.sh
 open "build/Screen Timer.app"
 ```
@@ -151,4 +153,5 @@ Sources/main.swift                accessory activation policy, no Dock icon
 Sources/AppDelegate.swift         status item, menu, timers, sleep/wake observers
 Sources/Overlay.swift             panel, Core Text rendering, corners, hover
 Sources/ScreenTimeTracker.swift   pmset parsing, live tracking, persistence
+site/                             static site for screentimer.aak.sh
 ```

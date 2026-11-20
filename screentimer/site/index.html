@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screen Timer — screen time overlay for macOS</title>
+<meta name="description" content="A macOS menu bar app that shows how long your screen has been on today, as a large click-through overlay in a corner of the screen.">
+<style>
+  :root { color-scheme: light dark; --fg: #1d1d1f; --muted: #6e6e73; --bg: #fbfbfd; --card: #fff; --line: #e5e5ea; --accent: #0a66ff; }
+  @media (prefers-color-scheme: dark) { :root { --fg: #f5f5f7; --muted: #a1a1a6; --bg: #0b0b0d; --card: #161618; --line: #2c2c2e; --accent: #4c8dff; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+  main { max-width: 760px; margin: 0 auto; padding: 64px 24px 48px; }
+  .hero { position: relative; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, #3a6df0, #9b51e0 55%, #f0606e); aspect-ratio: 16 / 7; margin-bottom: 40px; }
+  .hero .time { position: absolute; right: 4%; bottom: 8%; font-size: clamp(48px, 13vw, 104px); font-weight: 600; font-variant-numeric: tabular-nums; color: rgba(255,255,255,.55); text-shadow: 0 2px 12px rgba(0,0,0,.35); letter-spacing: -.02em; }
+  h1 { font-size: clamp(34px, 6vw, 48px); line-height: 1.1; margin: 0 0 12px; letter-spacing: -.02em; }
+  .lede { font-size: 20px; color: var(--muted); margin: 0 0 32px; }
+  h2 { font-size: 22px; margin: 40px 0 12px; }
+  ul { padding-left: 20px; } li { margin: 6px 0; }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; font-size: 14px; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  a { color: var(--accent); }
+  .btn { display: inline-block; padding: 10px 18px; border-radius: 999px; background: var(--fg); color: var(--bg); text-decoration: none; font-weight: 600; }
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <div class="hero" aria-hidden="true"><span class="time" id="t">03:42</span></div>
+  <h1>Screen Timer</h1>
+  <p class="lede">A macOS menu bar app that shows how long your screen has been on today, as a large semi-transparent overlay in a corner of the screen.</p>
+  <a class="btn" href="https://github.com/aakashns/aak.sh/tree/main/screentimer">View source on GitHub</a>
+
+  <h2>Features</h2>
+  <ul>
+    <li>Click-through overlay that fades out when the cursor is over it.</li>
+    <li>Visible on every Space and over full-screen apps.</li>
+    <li>Accurate from launch: reads today's display on/off history from <code>pmset</code>.</li>
+    <li>Choice of corner, size, and transparency from the menu bar.</li>
+    <li>No Dock icon, no Xcode project, no dependencies.</li>
+  </ul>
+
+  <h2>Install</h2>
+  <p>Requires macOS 13+ and a Swift toolchain (<code>xcode-select --install</code>).</p>
+<pre><code>git clone https://github.com/aakashns/aak.sh.git
+cd aak.sh/screentimer
+./install.sh</code></pre>
+  <p>This builds the app, copies it to <code>/Applications</code>, adds it as a login item, and launches it. Re-run it to update.</p>
+
+  <footer>Open source by <a href="https://github.com/aakashns">aakashns</a>.</footer>
+</main>
+<script>
+  // Time since local midnight, as a stand-in for the overlay.
+  const el = document.getElementById("t");
+  const tick = () => { const d = new Date(); el.textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); };
+  tick(); setInterval(tick, 30000);
+</script>
+</body>
+</html>
