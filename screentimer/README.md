@@ -156,3 +156,7 @@ Sources/ScreenTimeTracker.swift   pmset parsing, live tracking, persistence
 site/Caddyfile                     Caddy config for screentimer.aak.sh
 site/public/                       static files served at screentimer.aak.sh
 ```
+
+## License
+
+[MIT](LICENSE)
