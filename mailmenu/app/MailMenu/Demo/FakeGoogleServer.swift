@@ -96,7 +96,7 @@ nonisolated final class FakeGoogleServer: URLProtocol {
                 let inbox = mailbox.messages.filter { $0.labels.contains("INBOX") }
                 return (200, ["messagesTotal": inbox.count, "messagesUnread": inbox.filter { $0.labels.contains("UNREAD") }.count])
             case ("GET", "labels", 1):
-                let labels = snoozeLabelCreated ? [["id": Self.snoozeLabelID, "name": "Mail Menu Snoozed"]] : []
+                let labels = snoozeLabelCreated ? [["id": Self.snoozeLabelID, "name": "MailMenu Snoozed"]] : []
                 return (200, ["labels": labels])
             case ("POST", "labels", 1):
                 snoozeLabelCreated = true

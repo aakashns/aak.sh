@@ -107,7 +107,7 @@ struct GmailClient {
         try await modify(threadID: threadID, add: [], remove: ["INBOX"])
     }
 
-    /// Hides the conversation from the inbox under a "Mail Menu Snoozed" label (the Gmail API can't use
+    /// Hides the conversation from the inbox under a "MailMenu Snoozed" label (the Gmail API can't use
     /// Gmail's own snooze), until `unsnooze` puts it back.
     func snooze(threadID: String) async throws {
         try await modify(threadID: threadID, add: [snoozeLabelID()], remove: ["INBOX"])
@@ -118,7 +118,7 @@ struct GmailClient {
         try await modify(threadID: threadID, add: ["INBOX", "UNREAD"], remove: [snoozeLabelID()])
     }
 
-    private static let snoozeLabelName = "Mail Menu Snoozed"
+    private static let snoozeLabelName = "MailMenu Snoozed"
 
     private func snoozeLabelID() async throws -> String {
         func find() async throws -> String? {

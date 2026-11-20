@@ -318,7 +318,7 @@ private struct FooterView: View {
             Button { NSApp.terminate(nil) } label: {
                 Image(systemName: "power")
             }
-            .help("Quit Mail Menu")
+            .help("Quit MailMenu")
         }
         .buttonStyle(.borderless)
         .padding(.horizontal, 12)
