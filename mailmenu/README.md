@@ -1,10 +1,10 @@
-# Mail Menu
+# MailMenu
 
 Website: https://mailmenu.aak.sh
 
 A macOS menu bar app to track unread email and upcoming calendar events.
 
-![Mail Menu showing unread mail and upcoming events for two accounts](docs/screenshot.jpg)
+![MailMenu showing unread mail and upcoming events for two accounts](docs/screenshot.jpg)
 
 ## Features
 
@@ -20,12 +20,12 @@ A macOS menu bar app to track unread email and upcoming calendar events.
 ## Prerequisites
 
 - macOS 14+ and Xcode 16+.
-- A Google OAuth client. There's no prebuilt download yet, so you build Mail Menu with your own client:
+- A Google OAuth client. There's no prebuilt download yet, so you build MailMenu with your own client:
 
-  1. Go to the [Google Cloud console](https://console.cloud.google.com/) and create a project (e.g. "Mail Menu").
+  1. Go to the [Google Cloud console](https://console.cloud.google.com/) and create a project (e.g. "MailMenu").
   2. Enable the [Gmail API](https://console.cloud.google.com/apis/library/gmail.googleapis.com) and the [Google Calendar API](https://console.cloud.google.com/apis/library/calendar-json.googleapis.com) for the project.
   3. Open [Google Auth Platform](https://console.cloud.google.com/auth/overview) and click **Get started**:
-     - App name: `Mail Menu`, plus your email as the support email.
+     - App name: `MailMenu`, plus your email as the support email.
      - Audience: **External**.
   4. Under **Audience → Test users**, add the Google account(s) you want to sign in with.
   5. Under **Data Access**, add the scopes `https://www.googleapis.com/auth/gmail.modify`, `https://www.googleapis.com/auth/gmail.settings.basic` and `https://www.googleapis.com/auth/calendar.events.readonly`.
@@ -58,9 +58,9 @@ A macOS menu bar app to track unread email and upcoming calendar events.
 
    This builds a release copy, installs it to `/Applications/MailMenu.app` and launches it. An envelope icon appears in the menu bar. Click it, then click **Continue with Google**.
 
-4. Mail Menu adds itself to **Login Items** the first time it launches. To turn that off, use **System Settings → General → Login Items**.
+4. MailMenu adds itself to **Login Items** the first time it launches. To turn that off, use **System Settings → General → Login Items**.
 
-To update, pull the latest changes and run `scripts/install.sh` again. It quits the running copy before replacing it. To uninstall, quit Mail Menu and delete `/Applications/MailMenu.app`. Your sign-in stays in the Keychain under `app.mailmenu.MailMenu` until you delete it in Keychain Access.
+To update, pull the latest changes and run `scripts/install.sh` again. It quits the running copy before replacing it. To uninstall, quit MailMenu and delete `/Applications/MailMenu.app`. Your sign-in stays in the Keychain under `app.mailmenu.MailMenu` until you delete it in Keychain Access.
 
 To install somewhere else, set `INSTALL_DIR`, e.g. `INSTALL_DIR=~/Applications scripts/install.sh`.
 
@@ -93,7 +93,7 @@ xcodebuild -project app/MailMenu.xcodeproj -scheme MailMenu -configuration Debug
 
 The command quits any running copy of the app before opening the new build. If the build fails, the old copy keeps running.
 
-If you've also installed Mail Menu with `scripts/install.sh`, quit the installed copy while developing, or you'll see two menu bar icons.
+If you've also installed MailMenu with `scripts/install.sh`, quit the installed copy while developing, or you'll see two menu bar icons.
 
 ### Demo mode
 

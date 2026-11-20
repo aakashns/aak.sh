@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds Mail Menu in Release mode, installs it to /Applications and launches it.
+# Builds MailMenu in Release mode, installs it to /Applications and launches it.
 # Run it again to update after pulling new changes. Usage: scripts/install.sh
 #
 # Set INSTALL_DIR to install somewhere else, e.g. INSTALL_DIR=~/Applications scripts/install.sh
@@ -17,7 +17,7 @@ if ! grep -Eq '^GOOGLE_CLIENT_ID *= *[^ ]+' "${LOCAL_CONFIG}" 2>/dev/null; then
   exit 1
 fi
 
-echo "Building Mail Menu..."
+echo "Building MailMenu..."
 xcodebuild -project app/MailMenu.xcodeproj -scheme MailMenu -configuration Release \
   -destination "generic/platform=macOS" -derivedDataPath "${BUILD_DIR}" -allowProvisioningUpdates -quiet
 
@@ -34,4 +34,4 @@ rm -rf "${INSTALL_DIR:?}/${APP_NAME}"
 ditto "${BUILD_DIR}/Build/Products/Release/${APP_NAME}" "${INSTALL_DIR}/${APP_NAME}"
 
 open "${INSTALL_DIR}/${APP_NAME}"
-echo "Done. Mail Menu is running from ${INSTALL_DIR}/${APP_NAME}."
+echo "Done. MailMenu is running from ${INSTALL_DIR}/${APP_NAME}."

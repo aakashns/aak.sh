@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds Mail Menu and runs it in demo mode: made-up accounts, mail and events from a fake Google server inside
+# Builds MailMenu and runs it in demo mode: made-up accounts, mail and events from a fake Google server inside
 # the app. Nothing goes over the network and your real accounts and Keychain aren't touched, so it's safe to
 # use for development, screenshots and PRs. Demo data resets every time the app quits.
 #
@@ -27,5 +27,5 @@ if [[ "${1:-}" == "--script" ]]; then
   "${APP}/Contents/MacOS/MailMenu" --demo --script 2>/dev/null
 else
   "${APP}/Contents/MacOS/MailMenu" --demo --open >/dev/null 2>&1 &
-  echo "Mail Menu is running in demo mode (look for a second envelope in the menu bar if the real app is running too)."
+  echo "MailMenu is running in demo mode (look for a second envelope in the menu bar if the real app is running too)."
 fi

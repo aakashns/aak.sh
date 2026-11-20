@@ -43,7 +43,7 @@ final class MenuBarController: NSObject {
         }
         guard let button = statusItem.button else { return }
         button.image = MenuBarIcon.image(unreadCount: count) ?? NSImage(systemSymbolName: "envelope", accessibilityDescription: nil)
-        button.setAccessibilityLabel(count > 0 ? "Mail Menu, \(count) unread" : "Mail Menu")
+        button.setAccessibilityLabel(count > 0 ? "MailMenu, \(count) unread" : "MailMenu")
     }
 
     @objc private func togglePanel() {
@@ -87,7 +87,7 @@ final class MenuBarController: NSObject {
     }
 
     /// Hides the panel. When it's closed from the keyboard or the menu bar icon, focus goes back to the app the user was in,
-    /// unless another Mail Menu window (the sign-in window) is open.
+    /// unless another MailMenu window (the sign-in window) is open.
     private func close(returningFocus: Bool) {
         guard panel.isVisible else { return }
         monitors.forEach(NSEvent.removeMonitor)
