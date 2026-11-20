@@ -1,0 +1,10 @@
+- monorepo for all of aakashns's open source projects
+- one top-level folder per project e.g. `screentimer`
+- each project has a `<project>/site/` folder
+  - site is deployed to `<project>.aak.sh`
+  - project folder names MUST match their subdomains
+- AGENTS.md changes MUST be manually reviewed
+  - always show proposed changes & ask for revisions
+  - use crisp bullets. don't state obvious or easily discoverable facts
+- keep main up to date, and NEVER push directly to main
+- start every task in a new branch, and always create PRs with evidence
