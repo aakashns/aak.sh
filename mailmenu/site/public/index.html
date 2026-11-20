@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mail Menu — unread email and calendar in your macOS menu bar</title>
+<meta name="description" content="A macOS menu bar app to track unread email and upcoming calendar events across multiple Google accounts. Private: your data never leaves your Mac.">
+<style>
+  :root { color-scheme: dark; --fg: #f5f5f7; --muted: #a1a1a6; --bg: #000; --card: #111113; --line: #2c2c2e; --accent: #4c8dff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; color: var(--fg); background: var(--bg); }
+  main { max-width: 760px; margin: 0 auto; padding: 64px 24px 48px; }
+  h1 { font-size: clamp(34px, 6vw, 48px); line-height: 1.1; margin: 0 0 12px; letter-spacing: -.02em; }
+  .lede { font-size: 20px; color: var(--muted); margin: 0 0 28px; }
+  .shot { display: block; width: 100%; height: auto; margin: 40px 0 8px; border-radius: 12px; border: 1px solid var(--line); }
+  h2 { font-size: 22px; margin: 40px 0 12px; }
+  ul, ol { padding-left: 20px; } li { margin: 6px 0; }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; font-size: 14px; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  a { color: var(--accent); }
+  .btn { display: inline-block; padding: 10px 18px; border-radius: 999px; background: var(--fg); color: var(--bg); text-decoration: none; font-weight: 600; }
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Mail Menu</h1>
+  <p class="lede">A macOS menu bar app to track unread email and upcoming calendar events, across all your Google accounts.</p>
+  <a class="btn" href="https://github.com/aakashns/aak.sh/tree/main/mailmenu">View source on GitHub</a>
+
+  <img class="shot" src="screenshot.jpg" width="1578" height="1182" alt="Mail Menu showing unread mail and upcoming events for two accounts, with an email preview on hover">
+
+  <h2>Features</h2>
+  <ul>
+    <li>Unread count in the menu bar, across multiple Google accounts.</li>
+    <li>Unread or all inbox mail, with collapsible accounts.</li>
+    <li>Text preview of an email on hover; click to open it in the browser.</li>
+    <li>Archive, unsubscribe, or block and report spam in one click.</li>
+    <li>Upcoming calendar events for the next 24 hours, with one-click join for Meet, Zoom and more.</li>
+    <li>Opens at login and refreshes every 2 minutes.</li>
+    <li>Private: no servers, and your data never leaves your Mac except to talk to Google.</li>
+  </ul>
+
+  <h2>Install</h2>
+  <p>There's no prebuilt download yet. You build Mail Menu with macOS 14+, Xcode 16+ and your own Google OAuth client ID. The <a href="https://github.com/aakashns/aak.sh/tree/main/mailmenu#prerequisites">README</a> walks through creating one.</p>
+<pre><code>git clone https://github.com/aakashns/aak.sh.git
+cd aak.sh/mailmenu
+cp app/Config/Local.xcconfig.example app/Config/Local.xcconfig
+# set GOOGLE_CLIENT_ID in app/Config/Local.xcconfig
+scripts/install.sh</code></pre>
+  <p>This builds a release copy, installs it to <code>/Applications</code> and launches it. Re-run it to update.</p>
+
+  <footer>Open source by <a href="https://github.com/aakashns">aakashns</a>. MIT licensed.</footer>
+</main>
+</body>
+</html>

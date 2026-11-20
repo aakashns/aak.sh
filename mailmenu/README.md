@@ -1,5 +1,7 @@
 # Mail Menu
 
+Website: https://mailmenu.aak.sh
+
 A macOS menu bar app to track unread email and upcoming calendar events.
 
 ![Mail Menu showing unread mail and upcoming events for two accounts](docs/screenshot.jpg)
@@ -37,8 +39,8 @@ A macOS menu bar app to track unread email and upcoming calendar events.
 1. Clone the repository:
 
    ```sh
-   git clone https://github.com/aakashns/mailmenu.git
-   cd mailmenu
+   git clone https://github.com/aakashns/aak.sh.git
+   cd aak.sh/mailmenu
    ```
 
 2. Create `app/Config/Local.xcconfig` and set `GOOGLE_CLIENT_ID` to your client ID:
@@ -69,6 +71,7 @@ app/        macOS app (SwiftUI, Xcode project)
   Config/   build settings, Info.plist, entitlements
   MailMenu/ Swift sources (Demo/ has the fake data and server for demo mode)
 scripts/    install and demo scripts
+site/       mailmenu.aak.sh (Caddyfile, and public/ for the static files)
 ```
 
 ## Development setup
@@ -81,7 +84,7 @@ open app/MailMenu.xcodeproj
 
 Press **⌘R** in Xcode. An envelope icon appears in the menu bar (there's no Dock icon). Click it, then click **Continue with Google**.
 
-To build and run from the terminal instead, run this from the repository root:
+To build and run from the terminal instead, run this from the `mailmenu/` folder:
 
 ```sh
 xcodebuild -project app/MailMenu.xcodeproj -scheme MailMenu -configuration Debug -derivedDataPath app/build -quiet \

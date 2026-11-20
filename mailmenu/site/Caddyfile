@@ -1,0 +1,8 @@
+# Serves mailmenu.aak.sh, assuming the repo is cloned to /srv/aak.sh.
+# Load every site from the main Caddyfile with: import /srv/aak.sh/*/site/Caddyfile
+# Only site/public/ is served; everything else in site/ stays private.
+mailmenu.aak.sh {
+	root * /srv/aak.sh/mailmenu/site/public
+	encode zstd gzip
+	file_server
+}
