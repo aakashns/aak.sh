@@ -153,5 +153,6 @@ Sources/main.swift                accessory activation policy, no Dock icon
 Sources/AppDelegate.swift         status item, menu, timers, sleep/wake observers
 Sources/Overlay.swift             panel, Core Text rendering, corners, hover
 Sources/ScreenTimeTracker.swift   pmset parsing, live tracking, persistence
-site/                             static site for screentimer.aak.sh
+site/Caddyfile                     Caddy config for screentimer.aak.sh
+site/public/                       static files served at screentimer.aak.sh
 ```
