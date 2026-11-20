@@ -9,4 +9,4 @@
   - use crisp bullets. don't state obvious or easily discoverable facts
 - keep main up to date, and NEVER push directly to main
 - start every task in a new branch, and always create PRs with evidence
-  - use `gh --attach` to attach images & videos to PRs & comments
+  - use `gh pr --attach` to attach images & videos to PRs & comments
