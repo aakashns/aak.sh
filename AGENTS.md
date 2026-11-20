@@ -3,8 +3,10 @@
 - each project has a `<project>/site/` folder
   - site is deployed to `<project>.aak.sh`
   - project folder names MUST match their subdomains
+  - prefer dark mode for project sites, with pure black background
 - AGENTS.md changes MUST be manually reviewed
   - always show proposed changes & ask for revisions
   - use crisp bullets. don't state obvious or easily discoverable facts
 - keep main up to date, and NEVER push directly to main
 - start every task in a new branch, and always create PRs with evidence
+  - use `gh pr --attach` to attach images & videos to PRs & comments
