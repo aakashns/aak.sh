@@ -1,0 +1,22 @@
+/*
+ * The posts' share button (see controls.tsx).
+ */
+@layer components {
+  /*
+   * The theme toggle's size, so their right edges line up. The button is taller than the line it
+   * sits on, so negative block margins keep it from adding height. Its check mark shows for a
+   * moment after the link is copied.
+   */
+  .share-button {
+    margin-block: -0.375rem;
+    color: var(--muted-foreground);
+
+    & .check-icon,
+    &.copied .share-icon {
+      display: none;
+    }
+    &.copied .check-icon {
+      display: block;
+    }
+  }
+}

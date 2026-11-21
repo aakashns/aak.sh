@@ -1,0 +1,130 @@
+# Checks the app and builds the logspace binary for each platform, testing each on its own runner.
+# A PR that changes what goes into the binary bumps platform/package.json's version, and others
+# leave it be (see platform/scripts/check-version.ts). Merging a bump to main publishes the binaries
+# as that version's GitHub release, which `logspace upgrade` installs; pushes to main that don't
+# bump it skip everything.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    # A bump changes package.json; the version job checks it was the version that changed.
+    paths: [platform/package.json]
+  pull_request:
+    paths: [platform/**, '!platform/**/*.md', .github/workflows/release.yml]
+  # Builds and releases the version, if it isn't released already.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Runs on main go one at a time, so releases are made in order. (If a third is queued while one
+# runs, it replaces the waiting one, whose changes go in the third's release.) A PR's new push
+# cancels its last run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    working-directory: platform
+
+jobs:
+  # Decides what to run: a PR is checked against its base, and a push against main before it.
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release: ${{ steps.version.outputs.release }}
+      build: ${{ steps.version.outputs.build }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: platform/package.json
+      - name: Check the version
+        id: version
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        # With the version job's shell, a pipe fails if any part does.
+        shell: bash
+        run: |
+          if [[ -n "$BASE" ]]; then
+            git fetch --depth=1 origin "$BASE"
+            bun scripts/check-version.ts "$BASE" | tee -a "$GITHUB_OUTPUT"
+          else
+            bun scripts/check-version.ts | tee -a "$GITHUB_OUTPUT"
+          fi
+
+  check:
+    needs: version
+    if: github.event_name == 'pull_request' || needs.version.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: platform/package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run lint
+      - run: bun run format:check
+      - run: bun run test
+
+  build:
+    needs: version
+    if: needs.version.outputs.build == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            runner: ubuntu-24.04
+          - target: linux-arm64
+            runner: ubuntu-24.04-arm
+          - target: darwin-x64
+            runner: macos-15-intel
+          - target: darwin-arm64
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: platform/package.json
+      # Installs sharp's native addon for this runner's platform, which the binary embeds.
+      - run: bun install --frozen-lockfile
+      - run: bun run build
+      - run: bun scripts/smoke-test.ts dist/logspace
+      # Named as `logspace upgrade` looks for it.
+      - run: mv dist/logspace dist/logspace-${{ matrix.target }}
+      - uses: actions/upload-artifact@v7
+        with:
+          name: logspace-${{ matrix.target }}
+          path: platform/dist/logspace-${{ matrix.target }}
+          if-no-files-found: error
+
+  release:
+    needs: [version, check, build]
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && needs.version.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ needs.version.outputs.version }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "$TAG is released already"
+            exit 0
+          fi
+          sha256sum -- logspace-* > SHA256SUMS
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "$TAG" --generate-notes -- logspace-* SHA256SUMS

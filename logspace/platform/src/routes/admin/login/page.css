@@ -1,0 +1,12 @@
+/*
+ * The login form (see page.tsx).
+ */
+@layer components {
+  .admin-login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    max-width: 20rem;
+  }
+}
