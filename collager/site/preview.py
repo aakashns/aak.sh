@@ -11,6 +11,10 @@ ROOT = Path(__file__).resolve().parent / "public"
 
 
 class PreviewHandler(SimpleHTTPRequestHandler):
+    def end_headers(self):
+        self.send_header("X-Robots-Tag", "noindex, nofollow")
+        super().end_headers()
+
     def send_head(self):
         supplied = self.headers.get("Authorization", "").encode("latin1")
         if not hmac.compare_digest(supplied, self.server.authorization):

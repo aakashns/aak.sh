@@ -1,3 +1,4 @@
+import { frames } from "./frames.js";
 const $ = (id) => document.getElementById(id);
 const icons = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 .5c0 2-2.5 2.1-2.5 4M12 17h.01"/>',
@@ -8,6 +9,8 @@ const icons = {
   sliders:
     '<path d="M3 7h5m5 0h8M3 17h10m5 0h3"/><circle cx="10.5" cy="7" r="2.5"/><circle cx="15.5" cy="17" r="2.5"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
+  share:
+    '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4m-6.8 7 6.8 4"/>',
   download: '<path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/>',
 };
 document.querySelectorAll("[data-icon]").forEach((el) => {
@@ -33,8 +36,8 @@ const samples = ["village", "fruit", "coast", "italy", "lake", "forest"];
 const sampleImages = [];
 const personal = Array(6).fill(null);
 let count = 3,
-  frame = "Film",
-  color = 0,
+  frame = "Wildflower",
+  color = 1,
   demo = true,
   busy = false,
   target = null;
@@ -77,10 +80,7 @@ function drawFilmDetails(ink) {
 function draw() {
   ctx.fillStyle = palette[color][1];
   ctx.fillRect(0, 0, W, H);
-  const margin = frame === "Film" ? 38 : frame === "Print" ? 96 : 35;
-  const top = frame === "Film" ? 106 : margin;
-  const bottom = frame === "Print" ? 190 : top;
-  const gap = frame === "Clean" ? 20 : 28;
+  const { margin, top = margin, bottom = top, gap = 28, paint } = frames[frame];
   const cols = count === 6 ? 3 : 2;
   const rows = count === 2 ? 1 : 2;
   const width = (W - 2 * margin - (cols - 1) * gap) / cols;
@@ -117,6 +117,12 @@ function draw() {
       ctx.textAlign = "left";
     }
   }
+  if (paint) {
+    ctx.save();
+    ctx.scale(W / 600, H / 450);
+    paint(ctx, color === 0);
+    ctx.restore();
+  }
   if (frame === "Film") drawFilmDetails(color === 0 ? "#e2ae66" : "#514237");
 }
 
@@ -147,14 +153,16 @@ for (const n of [2, 3, 4, 6]) {
     },
   );
 }
-for (const name of ["Clean", "Film", "Print"]) {
+for (const [name, style] of Object.entries(frames)) {
   choose(
     $("frames"),
     name,
     name,
-    '<span aria-hidden="true" class="frame-icon ' +
-      name.toLowerCase() +
-      '"></span>',
+    style.icon
+      ? '<span aria-hidden="true" class="motif">' + style.icon + "</span>"
+      : '<span aria-hidden="true" class="frame-icon ' +
+          name.toLowerCase() +
+          '"></span>',
     (value) => {
       frame = value;
     },
@@ -226,6 +234,7 @@ function refresh() {
   $("add-label").textContent =
     !demo && filled === count ? "Replace photos" : "Add photos";
   $("download").disabled = busy || filled !== count;
+  prepareShare();
   $("photo-note").textContent = busy
     ? "Preparing your photos…"
     : demo
@@ -305,20 +314,61 @@ $("files").onchange = async () => {
 };
 $("add").onclick = () => pick(null);
 $("help").onclick = () => $("guide").showModal();
+function download(blob) {
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "collager-" + count + "-photos.png";
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(link.href), 60000);
+}
+
 $("download").onclick = () => {
   canvas.toBlob((blob) => {
-    if (!blob) {
-      notify("Could not save the image. Please try again.");
-      return;
-    }
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "collager-" + count + "-photos.png";
-    document.body.append(link);
-    link.click();
-    link.remove();
-    setTimeout(() => URL.revokeObjectURL(link.href), 60000);
+    if (blob) download(blob);
+    else notify("Could not save the image. Please try again.");
   }, "image/png");
+};
+
+// Prepare the file before the tap so mobile browsers retain user activation.
+let shareRevision = 0,
+  shareTimer,
+  shareFile;
+function prepareShare() {
+  const revision = ++shareRevision;
+  clearTimeout(shareTimer);
+  shareFile = null;
+  $("share").disabled = $("download").disabled;
+  if ($("share").disabled || !navigator.canShare) return;
+  $("share").disabled = true;
+  shareTimer = setTimeout(
+    () =>
+      canvas.toBlob((blob) => {
+        if (revision !== shareRevision) return;
+        if (blob)
+          shareFile = new File([blob], "collager-" + count + "-photos.png", {
+            type: "image/png",
+          });
+        $("share").disabled = false;
+      }, "image/png"),
+    80,
+  );
+}
+
+$("share").onclick = async () => {
+  try {
+    if (shareFile && navigator.canShare?.({ files: [shareFile] })) {
+      await navigator.share({ files: [shareFile] });
+    } else {
+      if (shareFile) download(shareFile);
+      else $("download").click();
+      notify("This browser saves the PNG. Open it in Downloads to share.");
+    }
+  } catch (error) {
+    if (error.name !== "AbortError")
+      notify("Sharing is unavailable. Tap Download collage to save your PNG.");
+  }
 };
 
 refresh();

@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://collager.aak.sh/sitemap.xml

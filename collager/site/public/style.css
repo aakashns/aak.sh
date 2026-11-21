@@ -590,3 +590,23 @@ dialog p {
     scroll-margin-top: 12px;
   }
 }
+.motif {
+  height: 26px;
+  line-height: 26px;
+  font:
+    26px/26px Georgia,
+    serif;
+}
+.export #share,
+dialog #install {
+  background: #242426;
+  color: var(--text);
+  border: 1px solid #474749;
+  margin-top: 8px;
+}
+dialog #install {
+  margin-bottom: 10px;
+}
+dialog [hidden] {
+  display: none !important;
+}

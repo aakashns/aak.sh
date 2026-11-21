@@ -4,10 +4,51 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <title>Collager — Collage studio</title>
+    <title>Collager — Free Photo Collage Maker</title>
+    <meta
+      name="description"
+      content="Combine 2, 3, 4, or 6 photos into a collage with decorative frames. Create it privately on your device, then download or share a high-resolution PNG."
+    />
+    <link rel="canonical" href="https://collager.aak.sh/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Collager" />
+    <meta property="og:url" content="https://collager.aak.sh/" />
+    <meta property="og:title" content="Collager — Free Photo Collage Maker" />
+    <meta
+      property="og:description"
+      content="Turn favorite photos into a framed collage, right on your phone."
+    />
+    <meta
+      property="og:image"
+      content="https://collager.aak.sh/share-card.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Collager with a travel collage in a wildflower frame"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="app.webmanifest" crossorigin="use-credentials" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch.png" />
+    <meta name="apple-mobile-web-app-title" content="Collager" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Collager",
+        "url": "https://collager.aak.sh/",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
     <link rel="icon" href="mark.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="style.css" />
     <script type="module" src="studio.js"></script>
+    <script type="module" src="install.js"></script>
   </head>
   <body>
     <header>
@@ -81,8 +122,10 @@
           </div>
           <div class="export">
             <button id="download">
-              <i data-icon="download"></i>Download collage</button
-            ><small>High-resolution PNG</small>
+              <i data-icon="download"></i>Download collage
+            </button>
+            <button id="share"><i data-icon="share"></i>Share collage</button>
+            <small>High-resolution PNG</small>
           </div>
         </section>
       </div>
@@ -98,11 +141,13 @@
           a thumbnail to replace one.
         </li>
         <li>
-          Pick a frame and color, then tap <strong>Download collage</strong> to
-          save your PNG.
+          Pick a frame and color. Tap <strong>Share collage</strong> to send it
+          or <strong>Download collage</strong> to save your PNG.
         </li>
       </ol>
       <p>Your photos stay on your device.</p>
+      <button id="install" type="button">Add to Home Screen</button>
+      <p id="install-help" hidden></p>
       <form method="dialog"><button>Got it</button></form>
     </dialog>
   </body>
