@@ -15,10 +15,10 @@ What it does so far:
 - A menu of everything you can do, on Ctrl+K
 - Copy or export a post as markdown, which is how this one got here
 
-It's early, and it's being built in the open, a small piece at a time. The [changelog](https://github.com/aakashns/writui/releases) lists every release. To try it on macOS or Linux:
+It's early, and it's being built in the open, a small piece at a time. The [changelog](https://github.com/aakashns/aak.sh/releases?q=writui-v&expanded=true) lists every release. To try it on macOS or Linux:
 
 ```
-curl -fsSL https://writui.com/install.sh | bash
+curl -fsSL https://writui.aak.sh/install.sh | bash
 ```
 
 More soon.

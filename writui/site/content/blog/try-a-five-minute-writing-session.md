@@ -20,7 +20,7 @@ we'll follow:
 On macOS or Linux, paste this into your terminal and press Enter:
 
 ```sh
-curl -fsSL https://writui.com/install.sh | bash
+curl -fsSL https://writui.aak.sh/install.sh | bash
 ```
 
 Follow any instructions the installer prints, then open the app:
@@ -29,7 +29,7 @@ Follow any instructions the installer prints, then open the app:
 writui
 ```
 
-On Windows, follow the [build instructions](https://github.com/aakashns/writui#windows)
+On Windows, follow the [build instructions](https://github.com/aakashns/aak.sh/tree/main/writui#windows)
 first, then run `writui`.
 
 ## 2. Choose your password
@@ -119,13 +119,3 @@ without quitting, press Ctrl+O; unlocking brings you back to the same place.
 To keep a Markdown copy outside writui, open the menu and choose
 **Export as markdown**. Exported files are ordinary text files, so store
 them somewhere suitable for what you've written.
-
-## How did it go?
-
-[Tell us about your writing session](https://github.com/aakashns/writui/issues/new?template=writing-feedback.yml).
-What did you want to write? Did anything get in your way? Would you come
-back to it tomorrow? If you've already been using writui, we'd like to
-hear what makes you keep using it too.
-
-GitHub feedback is public, so describe your experience without including
-private writing or your password.

@@ -105,7 +105,7 @@ If both finish without errors, writui's tests pass on your computer.
 
 [Follow the illustrated guide](https://writui.aak.sh/blog/try-a-five-minute-writing-session/)
 to create your vault, write your first post, and keep a version to come
-back to. Then [tell us how it went](https://github.com/aakashns/aak.sh/issues/new?title=writui%3A%20).
+back to.
 
 ## Use
 
