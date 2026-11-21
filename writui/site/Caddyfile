@@ -1,0 +1,18 @@
+# Serves writui.aak.sh, assuming the repo is cloned to /srv/aak.sh.
+# Load every site from the main Caddyfile with: import /srv/aak.sh/*/site/Caddyfile
+# site/public is built, not committed: run writui/site/build.sh after pulling.
+writui.aak.sh {
+	root * /srv/aak.sh/writui/site/public
+	encode zstd gzip
+	file_server
+	handle_errors 404 {
+		rewrite * /404.html
+		file_server
+	}
+}
+
+# The old domain. Its DNS is on Cloudflare: point writui.com and www at this
+# server (DNS only, not proxied) so Caddy can get certificates for them.
+writui.com, www.writui.com {
+	redir https://writui.aak.sh{uri} permanent
+}

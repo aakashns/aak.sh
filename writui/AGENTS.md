@@ -1,0 +1,143 @@
+# writui
+
+Terminal-based, encrypted markdown writing app in Rust (ratatui). Built mainly
+for the creator's own daily writing, developed in the open.
+
+- Lives in `writui/` of the aak.sh monorepo since 0.20.0 (moved from
+  aakashns/writui, now archived). PRs, issues and releases are shared with
+  the other projects: look only at writui's.
+
+These notes are for any coding agent. `CLAUDE.md` only imports this file
+(for Claude Code), so edit this one.
+
+## When the creator says "continue"
+
+Each PR is usually done in a fresh conversation, so pick up the state from the
+repo and GitHub, not from memory:
+
+1. `git fetch --prune` and `gh pr list --state all --limit 10` to find the
+   latest writui PR.
+2. **Latest PR still open:** read the feedback (`gh pr view <n> --comments`,
+   plus review comments via `gh api repos/aakashns/aak.sh/pulls/<n>/comments`).
+   - Feedback to address → check out that branch, fix it, push, refresh the
+     screenshots if the UI changed, and reply on the PR with what changed.
+   - No feedback yet → tell the creator it's waiting on them to try and
+     merge it, with the Try it commands. Don't start the next PR on top of it
+     unless they ask.
+3. **Latest PR merged:** `git checkout main && git pull`, then:
+   - If the merged PR bumped the version, it was released automatically.
+     Check the Release run on `main` succeeded
+     (`gh run list --workflow writui-release.yml --branch main --limit 1`) and tell
+     the creator the release URL. If it failed, fixing it comes first.
+   - If the merged PR asked questions that weren't answered in its comments,
+     ask them now before they affect the next PR.
+   - Ask the creator what the next PR should be.
+4. Before ending a session, make sure the repo tells the next session
+   everything: open questions are in the PR description, and anything
+   decided in conversation is in this file.
+
+## Repo layout
+
+```
+src/          Rust app (single crate)
+site/         Zola project site: landing page, blog, changelog
+install.sh    one-line installer, attached to every release
+README.md     for people using writui; CONTRIBUTING.md for working on it
+../.github/workflows/writui-*.yml   CI and release (repo root)
+```
+
+## Rules
+
+- **The creator's real writing is sacred.** Debug builds use `./.dev-data/`, never
+  the real vault. Dev and throwaway vaults always use the shared password
+  **`writui-dev`** (debug builds show it on the unlock screen). Every schema
+  change is a migration; never drop or rewrite user data destructively. Back
+  up the vault before migrating; the backup is deleted only after the
+  migrated vault passes its integrity checks.
+- The creator doesn't know Rust. Explain changes in terms of behaviour, not
+  code.
+- Terminal agnostic: test assumptions against Alacritty, Ghostty, iTerm2. Use
+  only the 16 standard terminal colours.
+- Everything mouse-operable, everything also keyboard-accessible, shortcuts
+  shown in the hint bar.
+
+## Workflow
+
+> Let's use the pull request workflow for milestones. It's okay to do
+> multiple pull requests per milestone, if while working on the milestone you
+> feel the scope is too big. I don't want too much to change at once, I
+> don't want to lose control over what's happening.
+
+> also, remove the small pr rule, i think prs are getting too small, just say
+> prs should not be unreasonably large
+
+1. Branch off `main` for each PR. PRs shouldn't be unreasonably large; a
+   PR can cover a whole milestone, or several related items.
+2. Run `cargo fmt` (CI checks it). Verify with `cargo test`,
+   `cargo clippy --all-targets`, and by driving the
+   real app in tmux against a throwaway vault:
+   - `tmux new-session -d -s w -x 100 -y 30 "target/debug/writui --db /tmp/x/writui.db"`,
+     wait ~1.5s for it to start, then `tmux send-keys` and
+     `tmux capture-pane -p` (add `-e` to see styles).
+   - Mouse clicks can be sent as SGR sequences (1-based):
+     `tmux send-keys -t w -l $'\e[<0;COL;ROWM\e[<0;COL;ROWm'`.
+   - When a PR adds a migration, check it against a vault made by the
+     previous build: the data survives, and the backup is gone afterwards.
+   - When a PR changes the site (`site/`), look at it: from `site/`,
+     `zola build -o /tmp/sitebuild --force --base-url http://127.0.0.1:8123`,
+     serve that folder (`python3 -m http.server 8123`), and screenshot it
+     with Playwright's Chromium: `playwright screenshot --browser chromium
+     --viewport-size "1000,700" http://127.0.0.1:8123/ site.png`. Use the
+     globally installed `playwright`; if it (or its Chromium) is missing,
+     ask before installing anything. Headless Brave / Chrome don't work
+     here.
+   - Don't build an old commit into the shared `target/` (e.g. from a
+     worktree): cargo then leaves the stale binary in `target/debug/`. Use a
+     separate `CARGO_TARGET_DIR`, or `touch src/main.rs` before rebuilding.
+3. Open the PR with `gh pr create`. The description says what changed in
+   behavioural terms, has a **Try it** section with exact commands
+   (`gh pr checkout <n> && cargo run` — debug builds use `.dev-data/`, never
+   the real vault), and screenshots.
+   - Screenshots: write a VHS tape (`brew install vhs`) that drives the debug
+     binary against a throwaway `--db`, with `Screenshot` steps (and a GIF
+     `Output` for flows). VHS gotchas: one command per line, quote file
+     paths, wrap the launch command in `Hide` / `Show`, and there are no
+     `Home` / `End` keys (use arrows).
+   - Attach images with gh's built-in `--attach` (on `gh pr create`,
+     `pr edit`, `pr comment`): put the images and a body file in one folder,
+     reference them as `![alt](./name.png)` in the body, and run e.g.
+     `gh pr edit <n> --body-file body.md --attach ./name.png --attach ./flow.gif`
+     from that folder (add `-R aakashns/aak.sh`, since that folder isn't
+     the repo). gh uploads them and rewrites the references.
+4. The creator tries it locally and merges. Never merge PRs yourself.
+5. After a merge there's nothing to run: if the PR bumped the version,
+   `../.github/workflows/writui-release.yml` publishes the release from `main` on its
+   own. Check it succeeded and report the release URL. The creator upgrades
+   with `writui upgrade`, like any user.
+
+## Versions and releases
+
+The repo is public, and merging a PR that bumps `version` in `Cargo.toml`
+publishes a GitHub release of it, tagged `writui-vX.Y.Z`, with GitHub's
+generated notes: the PRs merged since the last writui release.
+Every PR that changes the app bumps the version (and `Cargo.lock`, via
+`cargo build`): minor for new behaviour, patch for fixes only (`0.1.0` →
+`0.2.0` / `0.1.1`). Docs-only PRs don't bump and don't release. Release
+builds are macOS and Linux only; Windows is build-from-source. The PR title is a line in the release notes, so make it
+read well to users, not just the creator. CI (`../.github/workflows/writui-ci.yml`) runs
+clippy and the tests on Linux and macOS for every PR; keep it green. Windows
+isn't in CI; the README's Windows section says how to run the checks there.
+
+`README.md` is for people using writui, who don't know or care that it's
+Rust: what it does, install, use, where the writing is kept. Keep it current
+when behaviour changes (e.g. how saving works). Anything about building or
+working on writui goes in `CONTRIBUTING.md`.
+
+> and an agent.md note to update the site appropraitely whenever new
+> features are added
+
+Whenever a PR adds a feature (or changes one the site mentions), update the
+site in the same PR: the landing page's points (`site/content/_index.md`),
+and the demo (`site/demo.tape`, re-recorded as its first lines say) if it no
+longer shows the app as it is. The creator's own blog posts are theirs:
+don't edit them.

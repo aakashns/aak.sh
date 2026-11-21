@@ -1,0 +1,103 @@
+# Publishes a writui GitHub release (tagged writui-vX.Y.Z) whenever main has
+# a version (in writui/Cargo.toml) that hasn't been released yet, so merging a
+# PR that bumps the version releases it. Merges that keep the version
+# (docs-only PRs) release nothing. Pull requests that touch this file run the
+# builds without publishing.
+#
+# The repo holds other projects' releases too, so writui's latest release is
+# the newest one tagged writui-v* (that's what install.sh and `writui
+# upgrade` look for). install.sh is attached to every release too.
+name: writui release
+
+on:
+  push:
+    branches: [main]
+    paths: [writui/**, .github/workflows/writui-release.yml]
+  pull_request:
+    paths: [.github/workflows/writui-release.yml]
+
+permissions:
+  contents: write
+
+# One release at a time; never cancel one halfway.
+concurrency:
+  group: writui-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release: ${{ steps.version.outputs.release }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' writui/Cargo.toml | head -1)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_EVENT_NAME" != push ]; then
+            echo "Pull request: build only"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code --tags origin "refs/tags/writui-v$version" >/dev/null; then
+            echo "writui-v$version is already released; nothing to do"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Releasing writui-v$version"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: check
+    if: needs.check.outputs.release == 'true' || github.event_name == 'pull_request'
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macos-arm64, target: aarch64-apple-darwin, os: macos-latest }
+          - { name: macos-x86_64, target: x86_64-apple-darwin, os: macos-latest }
+          # 22.04 rather than latest, so the binaries run on older glibc too.
+          - { name: linux-x86_64, target: x86_64-unknown-linux-gnu, os: ubuntu-22.04 }
+          - { name: linux-arm64, target: aarch64-unknown-linux-gnu, os: ubuntu-22.04-arm }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo build --release --locked --target ${{ matrix.target }}
+        working-directory: writui
+      - run: |
+          mkdir dist
+          cp "writui/target/${{ matrix.target }}/release/writui" "dist/writui-${{ matrix.name }}"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: writui-${{ matrix.name }}
+          path: dist/*
+
+  publish:
+    needs: [check, build]
+    if: needs.check.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      # All of history and the tags, to find the last writui release.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v5
+        with:
+          path: dist
+          pattern: writui-*
+          merge-multiple: true
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          (cd dist && sha256sum writui-* > SHA256SUMS)
+          cp writui/install.sh dist/
+          # GitHub's generated notes: the PRs merged since the last writui release.
+          prev=$(git describe --tags --abbrev=0 --match 'writui-v*' "$GITHUB_SHA")
+          gh release create "writui-v$VERSION" dist/* --target "$GITHUB_SHA" \
+            --title "writui $VERSION" --generate-notes --notes-start-tag "$prev"

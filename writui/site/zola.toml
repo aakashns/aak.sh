@@ -1,0 +1,19 @@
+# The writui project site: https://writui.aak.sh
+# Build it with `site/build.sh`, or preview it with `zola --root site serve`.
+# See CONTRIBUTING.md.
+base_url = "https://writui.aak.sh"
+title = "writui"
+description = "A writing app for the terminal. No nonsense. Markdown. Local. Encrypted."
+compile_sass = false
+build_search_index = false
+# Only the blog has a feed (blog/atom.xml), set in content/blog/_index.md.
+generate_feeds = false
+
+[markdown]
+smart_punctuation = true
+external_links_no_follow = false
+
+[extra]
+repo = "https://github.com/aakashns/aak.sh/tree/main/writui"
+releases = "https://github.com/aakashns/aak.sh/releases?q=writui-v&expanded=true"
+install = "curl -fsSL https://writui.aak.sh/install.sh | bash"
