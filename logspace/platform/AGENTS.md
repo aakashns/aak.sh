@@ -18,7 +18,7 @@ bun run build && bun scripts/smoke-test.ts dist/logspace
   installs; patch otherwise), and merging it releases that version. `scripts/check-version.ts`
   says what counts
 - Scripts that run on a server go in the binary as commands (servers have no Bun), except
-  `../website/public/install.sh`, which runs before there's a binary
+  `../site/public/install.sh`, which runs before there's a binary
 - Handlers read the request, call queries or one command, and pick a response; a change of more
   than one step is one command
 - Write services with `Context.Service` and a `layer` only for shared state, resources, or
