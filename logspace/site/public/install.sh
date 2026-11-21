@@ -69,13 +69,16 @@ else
   while :; do
     listing=$(curl -fsSL "$release_api?per_page=100&page=$page") ||
       fail "couldn't list LogSpace releases"
-    tag=$(printf '%s\n' "$listing" |
-      sed -nE 's/.*"tag_name": *"(logspace-v[0-9]+\.[0-9]+\.[0-9]+)".*/\1/p' | head -n 1)
+    tags=$(printf '%s\n' "$listing" |
+      grep -oE '"tag_name"[[:space:]]*:[[:space:]]*"[^"]+"' || true)
+    tag=$(printf '%s\n' "$tags" |
+      sed -nE 's/^"tag_name"[[:space:]]*:[[:space:]]*"(logspace-v[0-9]+\.[0-9]+\.[0-9]+)"$/\1/p' |
+      head -n 1)
     if [ -n "$tag" ]; then
       url="$releases/download/$tag"
       break
     fi
-    [ "$(printf '%s\n' "$listing" | grep -c '"tag_name"' || true)" -ge 100 ] ||
+    [ "$(printf '%s\n' "$tags" | grep -c . || true)" -ge 100 ] ||
       fail "couldn't find a LogSpace release"
     page=$((page + 1))
   done

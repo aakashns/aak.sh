@@ -148,7 +148,7 @@ let releaseServer = Bun.serve({
         let otherProjects = Array.from({ length: 100 }, (_, i) => ({
           tag_name: `writui-v100.0.${i}`,
         }))
-        return new Response(JSON.stringify(otherProjects, null, 2))
+        return Response.json(otherProjects)
       }
       return new Response(JSON.stringify([{ tag_name: `logspace-v${latest}` }], null, 2))
     }
