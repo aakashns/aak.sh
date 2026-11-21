@@ -1,14 +1,14 @@
 # Collager
 
-A single-page, local-first photo collage maker. Choose a layout for two, three, four, or six photos, pick a frame and color, and download or share a 2400 × 1800 PNG. Photos are cropped to fill their cells. The editor holds uploaded pictures in browser memory until you leave or reload.
+A single-page, local-first photo collage maker. Choose square (1:1), landscape (4:3), or portrait (3:4), then a layout for two, three, four, or six photos. Pick a frame and color and download or share a PNG with a 2400-pixel long edge. Photos are cropped to fill their cells. The editor holds uploaded pictures in browser memory until you leave or reload.
 
 ## Run a preview
 
-Set `COLLAGER_PREVIEW_PASSWORD` in your environment, then run `python3 site/preview.py` from this directory. Open `http://127.0.0.1:4183` and sign in as `collager` with that password. Use HTTPS when exposing the preview through a tunnel.
+Run `python3 site/preview.py` from this directory and open `http://127.0.0.1:4183`. Use HTTPS when exposing the preview through a tunnel.
 
 ## Publish
 
-Publish the contents of `site/public/` at `https://collager.aak.sh/` using any static host. The editor needs no API, database, or sign-in. The example in `site/Caddyfile` serves just those files. If publishing on another domain, update the absolute URLs in `index.html`, `sitemap.xml`, and `robots.txt`.
+Publish the contents of `site/public/` at `https://collager.aak.sh/` using any static host. The editor needs no API, database, or sign-in. For Caddy, deploy the `site/` directory to `/srv/aak.sh/collager/site/` and import `/srv/aak.sh/collager/site/Caddyfile` from the main Caddyfile. Reload Caddy after pointing the subdomain at the host. The site block serves `public/` directly. If publishing on another domain, update the absolute URLs in `index.html`, `sitemap.xml`, and `robots.txt`.
 
 On HTTPS, **Share collage** passes the PNG to the device share sheet when file sharing is available. **How to use → Add to Home Screen** opens the install prompt or gives browser-specific steps.
 

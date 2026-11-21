@@ -29,7 +29,7 @@
       content="Collager with a travel collage in a wildflower frame"
     />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="manifest" href="app.webmanifest" crossorigin="use-credentials" />
+    <link rel="manifest" href="app.webmanifest" />
     <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch.png" />
     <meta name="apple-mobile-web-app-title" content="Collager" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -88,8 +88,11 @@
               ></canvas>
             </div>
             <div class="metadata">
-              <span><i data-icon="landscape"></i>Landscape <em>/</em> 4:3</span
-              ><span>2400 × 1800 px</span>
+              <span
+                ><i class="shape-icon" aria-hidden="true" id="preview-icon"></i
+                ><span id="shape-name">Landscape</span><em>/</em
+                ><span id="ratio">4:3</span></span
+              ><span id="dimensions">2400 × 1800 px</span>
             </div>
           </section>
           <section class="photos card">
@@ -107,6 +110,15 @@
           <div class="panel-title">
             <h2><i data-icon="sliders"></i>Customize</h2>
             <a class="view-preview" href="#preview">View preview ↑</a>
+          </div>
+          <div class="group">
+            <h3 id="shape-label">Collage shape</h3>
+            <div
+              class="options shapes"
+              id="shapes"
+              role="group"
+              aria-labelledby="shape-label"
+            ></div>
           </div>
           <div class="group">
             <h3>Layout</h3>
@@ -135,7 +147,7 @@
     <dialog id="guide">
       <h2>Make a collage</h2>
       <ol>
-        <li>Choose a layout for 2, 3, 4, or 6 photos.</li>
+        <li>Choose a collage shape, then a layout for 2, 3, 4, or 6 photos.</li>
         <li>
           Tap <strong>Add photos</strong> to pick pictures from your phone. Tap
           a thumbnail to replace one.

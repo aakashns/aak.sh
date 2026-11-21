@@ -1,4 +1,4 @@
-// Artwork uses a 600 × 450 coordinate system, scaled to the export resolution.
+// Draw motifs at a uniform scale in every orientation.
 function ellipse(ctx, x, y, rx, ry, angle, fill) {
   ctx.fillStyle = fill;
   ctx.beginPath();
@@ -18,14 +18,14 @@ function blossom(ctx, x, y, size, petals, tint) {
   ctx.restore();
 }
 
-function wildflower(ctx, dark) {
+function wildflower(ctx, width, height, dark) {
   const stem = dark ? "#a5b580" : "#66734e";
   // Work clockwise so each stem turns naturally into the next corner.
   for (const [x, y, angle, length] of [
-    [0, 0, 0, 600],
-    [600, 0, 90, 450],
-    [600, 450, 180, 600],
-    [0, 450, 270, 450],
+    [0, 0, 0, width],
+    [width, 0, 90, height],
+    [width, height, 180, width],
+    [0, height, 270, height],
   ]) {
     ctx.save();
     ctx.translate(x, y);
@@ -66,25 +66,25 @@ function wildflower(ctx, dark) {
   }
 }
 
-function airmail(ctx) {
+function airmail(ctx, width, height) {
   ctx.save();
   ctx.beginPath();
-  ctx.rect(0, 0, 600, 450);
-  ctx.rect(10, 10, 580, 430);
+  ctx.rect(0, 0, width, height);
+  ctx.rect(10, 10, width - 20, height - 20);
   ctx.clip("evenodd");
   ctx.fillStyle = "#f7ebcd";
-  ctx.fillRect(0, 0, 600, 450);
+  ctx.fillRect(0, 0, width, height);
   ctx.transform(1, 0, -0.65, 1, 0, 0);
-  for (let x = 0; x < 940; x += 48) {
+  for (let x = 0; x < width + height * 0.65; x += 48) {
     ctx.fillStyle = "#b65846";
-    ctx.fillRect(x, 0, 15, 450);
+    ctx.fillRect(x, 0, 15, height);
     ctx.fillStyle = "#41647a";
-    ctx.fillRect(x + 24, 0, 15, 450);
+    ctx.fillRect(x + 24, 0, 15, height);
   }
   ctx.restore();
   // A cancellation mark crosses the corner of the photographic print.
   ctx.save();
-  ctx.translate(547, 406);
+  ctx.translate(width - 53, height - 44);
   ctx.rotate(-0.15);
   ctx.strokeStyle = ctx.fillStyle = "#263f4c";
   ctx.fillStyle = "#f5e6c7";
@@ -111,21 +111,21 @@ function airmail(ctx) {
   ctx.restore();
 }
 
-function deco(ctx, dark) {
-  const gold = ctx.createLinearGradient(0, 0, 600, 450);
+function deco(ctx, width, height, dark) {
+  const gold = ctx.createLinearGradient(0, 0, width, height);
   const tones = dark
     ? ["#bc8849", "#f7df95", "#ad793b", "#f8d99b"]
     : ["#735125", "#a27a39", "#684d2d", "#997037"];
   tones.forEach((tone, i) => gold.addColorStop(i / 3, tone));
   ctx.strokeStyle = ctx.fillStyle = gold;
   ctx.lineWidth = 1.4;
-  ctx.strokeRect(8, 8, 584, 434);
-  ctx.strokeRect(14, 14, 572, 422);
+  ctx.strokeRect(8, 8, width - 16, height - 16);
+  ctx.strokeRect(14, 14, width - 28, height - 28);
   for (const [x, y, sx, sy] of [
     [0, 0, 1, 1],
-    [600, 0, -1, 1],
-    [0, 450, 1, -1],
-    [600, 450, -1, -1],
+    [width, 0, -1, 1],
+    [0, height, 1, -1],
+    [width, height, -1, -1],
   ]) {
     ctx.save();
     ctx.translate(x, y);

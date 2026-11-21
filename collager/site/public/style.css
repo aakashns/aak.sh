@@ -263,6 +263,7 @@ h3 {
 .layouts {
   grid-template-columns: repeat(4, 1fr);
 }
+.shapes,
 .frames {
   grid-template-columns: repeat(3, 1fr);
 }
@@ -609,4 +610,49 @@ dialog #install {
 }
 dialog [hidden] {
   display: none !important;
+}
+
+.shape-icon {
+  display: inline-block;
+  height: 22px;
+  aspect-ratio: 4 / 3;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+}
+.shape-icon[data-shape="Square"] {
+  aspect-ratio: 1;
+}
+.shape-icon[data-shape="Portrait"] {
+  aspect-ratio: 3 / 4;
+}
+.metadata .shape-icon {
+  height: 10px;
+  border-width: 1px;
+  border-radius: 2px;
+}
+.mat[data-shape="Square"] {
+  aspect-ratio: 1.48;
+}
+.mat[data-shape="Square"] canvas {
+  width: 54%;
+}
+.mat[data-shape="Portrait"] {
+  aspect-ratio: 1.45;
+}
+.mat[data-shape="Portrait"] canvas {
+  width: 42%;
+}
+@media (max-width: 800px) {
+  .mat[data-shape="Square"] {
+    aspect-ratio: 1.12;
+  }
+  .mat[data-shape="Square"] canvas {
+    width: 74%;
+  }
+  .mat[data-shape="Portrait"] {
+    aspect-ratio: 1;
+  }
+  .mat[data-shape="Portrait"] canvas {
+    width: 61%;
+  }
 }
