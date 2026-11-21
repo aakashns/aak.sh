@@ -52,16 +52,12 @@ export function captionEditor(canvas, redraw) {
     let moved = false;
     button.onpointerdown = (event) => {
       if (!event.isPrimary || event.button !== 0) return;
-      const inverse = new DOMMatrix(
-        getComputedStyle(print).transform,
-      ).inverse();
       drag = {
         id: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
         x: caption.x,
         y: caption.y,
-        inverse,
       };
       moved = false;
       button.setPointerCapture(event.pointerId);
@@ -72,10 +68,8 @@ export function captionEditor(canvas, redraw) {
         dy = event.clientY - drag.startY;
       if (!moved && Math.hypot(dx, dy) < 4) return;
       moved = true;
-      // Undo the print's rotation before converting screen distance to canvas units.
-      const delta = new DOMPoint(dx, dy, 0, 0).matrixTransform(drag.inverse);
-      caption.x = drag.x + delta.x / canvas.clientWidth;
-      caption.y = drag.y + delta.y / canvas.clientHeight;
+      caption.x = drag.x + dx / canvas.clientWidth;
+      caption.y = drag.y + dy / canvas.clientHeight;
       redraw();
     };
     button.onlostpointercapture = () => {

@@ -80,7 +80,7 @@ function drawFilmDetails(ink) {
   }
 }
 
-// The buttons use the same cell bounds and rotation as the rendered photos.
+// Match the buttons to the rendered photo cells.
 const previewButtons = samples.map((_, i) => {
   const button = document.createElement("button");
   button.className = "preview-photo";
@@ -366,6 +366,26 @@ $("files").onchange = async () => {
 };
 $("add").onclick = () => pick(null);
 $("help").onclick = () => $("guide").showModal();
+const expanded = $("expanded-preview");
+const screen = $("preview-screen");
+const fullCanvas = $("full-canvas");
+$("expand-preview").onclick = () => {
+  fullCanvas.width = canvas.width;
+  fullCanvas.height = canvas.height;
+  fullCanvas.getContext("2d").drawImage(canvas, 0, 0);
+  expanded.showModal();
+  // The viewport-sized dialog also works on phones without native fullscreen.
+  if (document.fullscreenEnabled) screen.requestFullscreen().catch(() => {});
+};
+$("close-preview").onclick = () => expanded.close();
+document.addEventListener("fullscreenchange", () => {
+  if (!document.fullscreenElement && expanded.open) expanded.close();
+});
+expanded.addEventListener("close", () => {
+  if (document.fullscreenElement === screen)
+    document.exitFullscreen().catch(() => {});
+  fullCanvas.width = fullCanvas.height = 0;
+});
 function download(blob) {
   const link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
