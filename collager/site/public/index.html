@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <title>Collager — Free Photo Collage Maker</title>
+    <meta
+      name="description"
+      content="Combine 2, 3, 4, or 6 photos into a collage with decorative frames. Create it privately on your device, then download or share a high-resolution PNG."
+    />
+    <link rel="canonical" href="https://collager.aak.sh/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Collager" />
+    <meta property="og:url" content="https://collager.aak.sh/" />
+    <meta property="og:title" content="Collager — Free Photo Collage Maker" />
+    <meta
+      property="og:description"
+      content="Turn favorite photos into a framed collage, right on your phone."
+    />
+    <meta
+      property="og:image"
+      content="https://collager.aak.sh/share-card.jpg"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Collager with a travel collage in a wildflower frame"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="app.webmanifest" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch.png" />
+    <meta name="apple-mobile-web-app-title" content="Collager" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Collager",
+        "url": "https://collager.aak.sh/",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+    <link rel="icon" href="mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="studio.js"></script>
+    <script type="module" src="install.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="bar">
+        <h1 class="brand-heading">
+          <a class="brand" href="./"><img src="mark.svg" alt="" />collager</a>
+        </h1>
+        <button class="help" id="help">
+          <i data-icon="help"></i>How to use
+        </button>
+      </div>
+    </header>
+    <main>
+      <section id="preview" class="mat" aria-label="Collage preview">
+        <div class="preview-tools">
+          <button
+            id="add-text"
+            class="add"
+            type="button"
+            aria-label="Add text"
+            title="Add text"
+            aria-haspopup="dialog"
+          >
+            <b aria-hidden="true">T</b>
+          </button>
+          <button
+            class="add"
+            type="button"
+            id="expand-preview"
+            aria-label="Full-screen preview"
+            title="Full-screen preview"
+            aria-haspopup="dialog"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" />
+            </svg>
+          </button>
+        </div>
+        <div class="print">
+          <canvas
+            width="2400"
+            height="1800"
+            id="canvas"
+            aria-label="Live collage preview"
+          ></canvas>
+          <div
+            id="preview-photos"
+            role="group"
+            aria-label="Edit photos in the preview"
+          ></div>
+        </div>
+      </section>
+      <div class="editor">
+        <section class="settings">
+          <div class="section-title">
+            <h2><i data-icon="sliders"></i>Customize</h2>
+          </div>
+          <div class="group">
+            <h3 id="shape-label">Collage shape</h3>
+            <div
+              class="options shapes"
+              id="shapes"
+              role="group"
+              aria-labelledby="shape-label"
+            ></div>
+          </div>
+          <div class="group">
+            <h3>Layout</h3>
+            <div class="options layouts" id="layouts"></div>
+          </div>
+          <div class="group">
+            <h3>Frame style</h3>
+            <div class="options frames" id="frames"></div>
+          </div>
+          <div class="group colors">
+            <h3>Frame color <small id="color-name"></small></h3>
+            <div id="swatches"></div>
+          </div>
+        </section>
+        <section class="photos">
+          <div class="section-title">
+            <h2><i data-icon="images"></i>Your photos</h2>
+            <button id="add" class="add">
+              <i data-icon="plus"></i><span id="add-label">Add photos</span>
+            </button>
+          </div>
+          <div id="slots"></div>
+          <small id="photo-note"></small>
+          <div class="export">
+            <button id="download">
+              <i data-icon="download"></i>Download collage
+            </button>
+            <button id="share"><i data-icon="share"></i>Share collage</button>
+            <small>High-resolution PNG</small>
+          </div>
+        </section>
+      </div>
+      <p id="message" role="status" aria-live="polite"></p>
+    </main>
+    <input type="file" accept="image/*" multiple hidden id="files" />
+    <dialog id="expanded-preview" aria-label="Full-screen collage preview">
+      <div id="preview-screen">
+        <canvas id="full-canvas" aria-label="Your collage"></canvas>
+        <button
+          class="add"
+          type="button"
+          id="close-preview"
+          aria-label="Close full-screen preview"
+          title="Close preview"
+          autofocus
+        >
+          ×
+        </button>
+      </div>
+    </dialog>
+    <dialog id="text-editor" aria-labelledby="text-title">
+      <form id="text-form">
+        <h2 id="text-title">Add text</h2>
+        <label for="caption">Caption</label>
+        <input
+          id="caption"
+          type="text"
+          maxlength="100"
+          placeholder="A day to remember"
+          required
+          autofocus
+        />
+        <label for="text-color"
+          >Text color <input type="color" id="text-color" value="#ffffff"
+        /></label>
+        <p>Drag your text to move it. Tap it to edit.</p>
+        <div class="text-actions">
+          <button type="button" id="delete-text" hidden>Remove</button>
+          <button type="button" id="cancel-text">Cancel</button>
+          <button type="submit">Done</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="guide">
+      <h2>Make a collage</h2>
+      <ol>
+        <li>
+          Choose a shape and a layout for 2, 3, 4, or 6 photos. Pick a frame and
+          color.
+        </li>
+        <li>
+          Tap <strong>Add photos</strong> to pick pictures from your phone. Tap
+          a photo in the preview or a thumbnail to replace just that picture.
+        </li>
+        <li>
+          For a caption, tap <strong>Add text</strong>, choose a color, then
+          drag the text into place.
+        </li>
+        <li>
+          Tap <strong>Share collage</strong> to send it or
+          <strong>Download collage</strong> to save your PNG.
+        </li>
+      </ol>
+      <p>Your photos stay on your device.</p>
+      <button id="install" type="button">Add to Home Screen</button>
+      <p id="install-help" hidden></p>
+      <form method="dialog"><button>Got it</button></form>
+    </dialog>
+  </body>
+</html>

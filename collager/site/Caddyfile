@@ -1,0 +1,6 @@
+# Deploy collager/site/ to /srv/aak.sh/collager/site/ and import this site block.
+collager.aak.sh {
+	root * /srv/aak.sh/collager/site/public
+	encode zstd gzip
+	file_server
+}
