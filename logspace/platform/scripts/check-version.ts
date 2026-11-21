@@ -1,5 +1,5 @@
 // Checks package.json's version, which merging to main releases (see
-// .github/workflows/release.yml), and prints what CI should do, for $GITHUB_OUTPUT:
+// .github/workflows/logspace-release.yml), and prints what CI should do, for $GITHUB_OUTPUT:
 //
 //   version=0.4.1   package.json's version
 //   release=true    whether to release it (the version changed)
@@ -19,19 +19,20 @@ const PACKAGE = 'package.json'
 // What the binary is made of, from the repository's root, apart from the tests beside the code
 // (TESTS). package.json is in it too, apart from its version.
 const BINARY = [
-  'platform/src/',
-  'platform/db/',
-  'platform/public/',
-  'platform/bun.lock',
-  'platform/tsconfig.json',
-  'platform/scripts/build.ts',
+  'logspace/platform/src/',
+  'logspace/platform/db/',
+  'logspace/platform/public/',
+  'logspace/platform/bun.lock',
+  'logspace/platform/tsconfig.json',
+  'logspace/platform/scripts/build.ts',
 ]
 const TESTS = /\.(test|pw)\.ts$/
 // What tests the binary, which needs a build to check but not a release.
 const BINARY_TESTS = [
-  'platform/scripts/smoke-test.ts',
-  'platform/scripts/deploy-test.ts',
-  '.github/workflows/release.yml',
+  'logspace/platform/scripts/smoke-test.ts',
+  'logspace/platform/scripts/deploy-test.ts',
+  'logspace/site/public/install.sh',
+  '.github/workflows/logspace-release.yml',
 ]
 
 let root = fileURLToPath(new URL('../', import.meta.url))
@@ -42,10 +43,13 @@ if (!version) fail(`${PACKAGE}'s version should be a release's, like 0.1.0`)
 let release = true
 let build = true
 let base = process.argv[2]
-if (base) {
-  let baseFile = git('show', `${base}:./${PACKAGE}`)
-  // Before there were releases, there was no version.
-  let [major, minor, patch] = parseVersion(baseFile) ?? [0, 0, 0]
+const packagePath = `logspace/platform/${PACKAGE}`
+// The first monorepo release has no package in its base commit.
+if (base && git('ls-tree', '-r', base, '--', `:(top)${packagePath}`).trim()) {
+  let baseFile = git('show', `${base}:${packagePath}`)
+  let baseVersion = parseVersion(baseFile)
+  if (!baseVersion) fail(`${packagePath} has no valid version at ${base}`)
+  let [major, minor, patch] = baseVersion
   let changed = git('diff', '--name-only', base, 'HEAD').split('\n')
   let binaryChanged =
     changed.some((path) => !TESTS.test(path) && BINARY.some((input) => path.startsWith(input))) ||

@@ -1,6 +1,6 @@
 # Contributing
 
-Small, focused pull requests are welcome. Open an [issue](https://github.com/aakashns/logspace/issues) before a large change. Use [Bun](https://bun.com) 1.4.4 or later.
+Small, focused pull requests are welcome. Open an [issue](https://github.com/aakashns/aak.sh/issues) before a large change. Use [Bun](https://bun.com) 1.4.4 or later.
 
 ## Platform
 
@@ -297,9 +297,9 @@ and without JavaScript. Each test starts the app with its own temporary data and
 ## Website
 
 ```sh
-cd website
+cd site
 bun install
-bun run dev     # builds and serves logspace.app locally, rebuilding on change
+bun run dev     # builds and serves logspace.aak.sh locally, rebuilding on change
 bun run check   # typecheck and format check
 bun run test    # Playwright
 ```

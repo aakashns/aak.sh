@@ -2,14 +2,14 @@
 
 Self-host your personal website with blog posts, photos, and videos. Write and publish from your browser. Deploy to your own domain. Free and open source.
 
-[Website & demo](https://logspace.app) · [Changelog](https://github.com/aakashns/logspace/releases) · [Contributing](CONTRIBUTING.md)
+[Website & demo](https://logspace.aak.sh) · [Changelog](https://github.com/aakashns/aak.sh/releases?q=logspace-v&expanded=true) · [Contributing](CONTRIBUTING.md)
 
 ## Deploy
 
 You need a Linux server (Ubuntu or Debian, x64 or arm64), [Caddy](https://caddyserver.com/docs/install) installed, and a domain pointing to the server. Open ports 80 and 443; keep port 44100 private.
 
 ```sh
-curl -fsSL https://logspace.app/install.sh | sh
+curl -fsSL https://logspace.aak.sh/install.sh | sh
 sudo logspace deploy example.com www.example.com
 ```
 
@@ -66,4 +66,4 @@ Pages run no scripts but LogSpace's own, under a strict Content Security Policy,
 
 ## Contribute
 
-[Report a bug](https://github.com/aakashns/logspace/issues) or read [CONTRIBUTING.md](CONTRIBUTING.md) to work on the app or website. Licensed under [MIT](LICENSE). Includes [Datastar](https://data-star.dev), © Star Federation, and icons from [Phosphor Icons](https://phosphoricons.com), © 2023 Phosphor Icons, both MIT licensed.
+[Report a bug](https://github.com/aakashns/aak.sh/issues) or read [CONTRIBUTING.md](CONTRIBUTING.md) to work on the app or website. Licensed under [MIT](LICENSE). Includes [Datastar](https://data-star.dev), © Star Federation, and icons from [Phosphor Icons](https://phosphoricons.com), © 2023 Phosphor Icons, both MIT licensed.

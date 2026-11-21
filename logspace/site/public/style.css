@@ -1,4 +1,4 @@
-/* logspace.app: one narrow column, dark like the LogSpace demo. Two heading sizes, and two for
+/* logspace.aak.sh: one narrow column, dark like the LogSpace demo. Two heading sizes, and two for
    body text: 1rem, and 0.875rem for notes, code, and the footer. */
 
 @font-face {
@@ -10,7 +10,7 @@
 }
 
 :root {
-  --bg: #161616;
+  --bg: #000;
   --text: #e6e6e6;
   --muted: #a1a1a1;
   --faint: #2e2e2e;

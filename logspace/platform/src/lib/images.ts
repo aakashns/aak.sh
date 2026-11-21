@@ -40,7 +40,7 @@ export interface ProcessedSiteImage {
 export const ICON_FILES = ['favicon.ico', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png']
 
 // LogSpace's mark, for sites that haven't uploaded an icon: a pen nib on a dark gray circle, the
-// same icon as logspace.app's, drawn at 512 × 512. The nib is Phosphor Icons' pen-nib-fill (MIT
+// same icon as logspace.aak.sh's, drawn at 512 × 512. The nib is Phosphor Icons' pen-nib-fill (MIT
 // License, Copyright (c) 2023 Phosphor Icons).
 const DEFAULT_ICON = new Uint8Array(readFileSync(defaultIconPath))
 

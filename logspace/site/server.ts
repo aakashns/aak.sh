@@ -1,6 +1,5 @@
-// Builds the website and serves dist/ locally the way Cloudflare does in production: / is
-// index.html, unknown paths get 404.html with a 404 status, and public/_headers sets the
-// installer's content type. `bun --watch` restarts it when src/ changes, and it rebuilds itself
+// Builds the website and serves dist/ locally with the same index, 404, and installer
+// responses as Caddy. `bun --watch` restarts it when src/ changes, and it rebuilds itself
 // when public/ does.
 import { watch } from "node:fs";
 import { join, normalize } from "node:path";
@@ -25,7 +24,7 @@ const server = Bun.serve({
     let path = normalize(decodeURIComponent(new URL(request.url).pathname));
     if (path.endsWith("/")) path += "index.html";
     const file = Bun.file(join(root, path));
-    if (path.startsWith("/_") || !(await file.exists())) {
+    if (!(await file.exists())) {
       return new Response(notFound, { status: 404 });
     }
     const headers = path.endsWith(".sh")

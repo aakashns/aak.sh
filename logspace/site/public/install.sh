@@ -1,7 +1,7 @@
 #!/bin/sh
-# Installs LogSpace (https://github.com/aakashns/logspace) on Linux or macOS:
+# Installs LogSpace (https://logspace.aak.sh) on Linux or macOS:
 #
-#   curl -fsSL https://logspace.app/install.sh | sh
+#   curl -fsSL https://logspace.aak.sh/install.sh | sh
 #
 # Downloads the latest release for this machine, checks it against the release's SHA256SUMS, and
 # installs it at /usr/local/bin/logspace, with sudo if that folder needs it. Running it again
@@ -12,9 +12,10 @@
 #   LOGSPACE_INSTALL_DIR  install here instead of /usr/local/bin
 set -eu
 
-repo="https://github.com/aakashns/logspace"
-# Where releases are published. smoke-test.ts points it at pretend ones.
-releases="${LOGSPACE_RELEASES_URL:-$repo/releases}"
+repo="https://github.com/aakashns/aak.sh/tree/main/logspace"
+releases="https://github.com/aakashns/aak.sh/releases"
+legacy="https://github.com/aakashns/logspace/releases"
+release_api="${LOGSPACE_RELEASES_API_URL:-https://api.github.com/repos/aakashns/aak.sh/releases}"
 dir="${LOGSPACE_INSTALL_DIR:-/usr/local/bin}"
 
 fail() {
@@ -47,10 +48,37 @@ fi
 command -v curl >/dev/null || fail "curl is needed to download LogSpace"
 
 binary="logspace-$os-$arch"
-if [ -n "${LOGSPACE_VERSION:-}" ]; then
-  url="$releases/download/v${LOGSPACE_VERSION#v}"
+version=${LOGSPACE_VERSION:-}
+version=${version#v}
+if [ -n "${LOGSPACE_RELEASES_URL:-}" ]; then
+  if [ -n "$version" ]; then
+    url="$LOGSPACE_RELEASES_URL/download/v$version"
+  else
+    url="$LOGSPACE_RELEASES_URL/latest/download"
+  fi
+elif [ -n "$version" ]; then
+  printf '%s\n' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' ||
+    fail "not a release version: $version"
+  if printf '%s\n' "$version" | awk -F. '$1 > 0 || $2 > 7 || ($2 == 7 && $3 > 24) { newer = 1 } END { exit !newer }'; then
+    url="$releases/download/logspace-v$version"
+  else
+    url="$legacy/download/v$version"
+  fi
 else
-  url="$releases/latest/download"
+  page=1
+  while :; do
+    listing=$(curl -fsSL "$release_api?per_page=100&page=$page") ||
+      fail "couldn't list LogSpace releases"
+    tag=$(printf '%s\n' "$listing" |
+      sed -nE 's/.*"tag_name": *"(logspace-v[0-9]+\.[0-9]+\.[0-9]+)".*/\1/p' | head -n 1)
+    if [ -n "$tag" ]; then
+      url="$releases/download/$tag"
+      break
+    fi
+    [ "$(printf '%s\n' "$listing" | grep -c '"tag_name"' || true)" -ge 100 ] ||
+      fail "couldn't find a LogSpace release"
+    page=$((page + 1))
+  done
 fi
 
 tmp=$(mktemp -d)

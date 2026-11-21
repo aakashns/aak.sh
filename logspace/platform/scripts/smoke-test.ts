@@ -181,7 +181,7 @@ async function expectRun(
 
 try {
   let copy = path.join(dir, 'bin', 'logspace')
-  let installer = path.join(import.meta.dir, '../../website/public/install.sh')
+  let installer = path.join(import.meta.dir, '../../site/public/install.sh')
   let installEnv = (env: Record<string, string> = {}) => ({
     LOGSPACE_RELEASES_URL: releasesUrl,
     LOGSPACE_INSTALL_DIR: path.dirname(copy),

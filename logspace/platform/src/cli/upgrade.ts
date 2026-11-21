@@ -8,12 +8,11 @@ import { FetchHttpClient, HttpClient } from 'effect/http'
 import { DOMAINS_FILE } from './deploy.ts'
 import { fail, IS_BINARY, reportFailures, VERSION } from './shell.ts'
 
-// Where releases are published.
-const DEFAULT_RELEASES_URL = 'https://github.com/aakashns/logspace/releases'
-const releasesUrl = Config.String('LOGSPACE_RELEASES_URL').pipe(
-  Config.withDefault(DEFAULT_RELEASES_URL),
-  Config.map((url) => url || DEFAULT_RELEASES_URL),
-)
+const RELEASES_URL = 'https://github.com/aakashns/aak.sh/releases'
+const RELEASES_API = 'https://api.github.com/repos/aakashns/aak.sh/releases'
+const releasesUrl = Config.String('LOGSPACE_RELEASES_URL').pipe(Config.withDefault(''))
+const releasesApi = Config.String('LOGSPACE_RELEASES_API_URL').pipe(Config.withDefault(RELEASES_API))
+
 // The platforms there's a release binary for, logspace-<platform>-<arch>.
 const TARGETS = ['linux-x64', 'linux-arm64', 'darwin-x64', 'darwin-arm64']
 
@@ -29,7 +28,8 @@ export const upgrade = Effect.fn('upgrade')(
     // A string with a default can't fail to read.
     let releases = yield* Effect.orDie(releasesUrl)
 
-    let version = (requested ?? (yield* latestTag(releases))).replace(/^v/, '')
+    let tag = requested ?? (releases ? yield* latestTag(releases) : yield* latestLogspaceTag())
+    let version = tag.replace(/^(logspace-)?v/, '')
     if (!/^\d+\.\d+\.\d+$/.test(version)) return yield* fail(`Not a release: ${version}`)
     let order = compareVersions(version, VERSION)
     if (order === 0 || (order < 0 && requested === undefined)) {
@@ -59,7 +59,9 @@ export const upgrade = Effect.fn('upgrade')(
     }
 
     let asset = `logspace-${target}`
-    let releaseUrl = `${releases}/download/v${version}`
+    let releaseUrl = releases
+      ? `${releases}/download/v${version}`
+      : `${RELEASES_URL}/download/logspace-v${version}`
     yield* Console.log(`Downloading ${releaseUrl}/${asset}...`)
     let sums = new TextDecoder().decode(yield* download(`${releaseUrl}/SHA256SUMS`))
     // sha256sum writes "<hash>  <name>", or "<hash> *<name>" for a file it read as binary.
@@ -90,6 +92,30 @@ export const upgrade = Effect.fn('upgrade')(
   reportFailures,
   Effect.provide(FetchHttpClient.layer),
 )
+
+// The repository's latest release may belong to another project.
+const latestLogspaceTag = Effect.fnUntraced(function* () {
+  let api = yield* Effect.orDie(releasesApi)
+  for (let page = 1; ; page++) {
+    let url = `${api}?per_page=100&page=${page}`
+    let bytes = yield* download(url)
+    let releases = yield* Effect.try({
+      try: (): unknown => JSON.parse(new TextDecoder().decode(bytes)),
+      catch: () => fail(`Couldn't read the release list at ${url}`),
+    }).pipe(Effect.catch((error) => error))
+    if (!Array.isArray(releases)) return yield* fail(`Invalid release list at ${url}`)
+    for (let release of releases) {
+      let tag: unknown = release?.tag_name
+      if (
+        typeof tag === 'string' &&
+        /^logspace-v\d+\.\d+\.\d+$/.test(tag) &&
+        !release.prerelease &&
+        !release.draft
+      ) return tag
+    }
+    if (releases.length < 100) return yield* fail(`Couldn't find a LogSpace release at ${api}`)
+  }
+})
 
 // The latest release's tag, from where GitHub sends /releases/latest (/releases/tag/<tag>).
 const latestTag = Effect.fnUntraced(function* (releases: string) {

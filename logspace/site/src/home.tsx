@@ -1,8 +1,8 @@
 import { Document } from "./layout.tsx";
 import { Wordmark } from "./wordmark.tsx";
 
-const github = "https://github.com/aakashns/logspace";
-const url = "https://logspace.app/";
+const github = "https://github.com/aakashns/aak.sh/tree/main/logspace";
+const url = "https://logspace.aak.sh/";
 const title = "LogSpace — Self-host your personal website";
 const description = "Publish posts, photos, and videos on your own domain.";
 const install = `curl -fsSL ${url}install.sh | sh`;
@@ -88,7 +88,7 @@ export function Home() {
           <a href={`${github}#deploy`} target="_blank">
             Docs
           </a>
-          <a href={`${github}/releases`} target="_blank">
+          <a href="https://github.com/aakashns/aak.sh/releases?q=logspace-v&expanded=true" target="_blank">
             Changelog
           </a>
         </nav>

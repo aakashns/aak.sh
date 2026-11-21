@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
-const install = "curl -fsSL https://logspace.app/install.sh | sh";
+const install = "curl -fsSL https://logspace.aak.sh/install.sh | sh";
 
 test("landing page, links, and responsive layout", async ({ page }) => {
   const errors: string[] = [];
@@ -15,7 +15,7 @@ test("landing page, links, and responsive layout", async ({ page }) => {
   ).toHaveAccessibleName("LogSpace");
   await expect(page.getByRole("link", { name: "Changelog" })).toHaveAttribute(
     "href",
-    "https://github.com/aakashns/logspace/releases",
+    "https://github.com/aakashns/aak.sh/releases?q=logspace-v&expanded=true",
   );
   await expect(page.locator("#install-command")).toBeInViewport();
   expect(

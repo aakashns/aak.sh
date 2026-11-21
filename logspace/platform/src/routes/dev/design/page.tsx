@@ -431,7 +431,7 @@ function Menus(props: { scheme: Scheme }): Html {
             </DropdownMenuRadioItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem href="https://github.com/aakashns/logspace" inset>
+          <DropdownMenuItem href="https://github.com/aakashns/aak.sh/tree/main/logspace" inset>
             GitHub
           </DropdownMenuItem>
           <DropdownMenuItem href={`#${s}-heading`} inset disabled>

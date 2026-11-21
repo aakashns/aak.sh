@@ -3,15 +3,15 @@
 # leave it be (see platform/scripts/check-version.ts). Merging a bump to main publishes the binaries
 # as that version's GitHub release, which `logspace upgrade` installs; pushes to main that don't
 # bump it skip everything.
-name: Release
+name: LogSpace release
 
 on:
   push:
     branches: [main]
     # A bump changes package.json; the version job checks it was the version that changed.
-    paths: [platform/package.json]
+    paths: [logspace/platform/package.json]
   pull_request:
-    paths: [platform/**, '!platform/**/*.md', .github/workflows/release.yml]
+    paths: [logspace/platform/**, '!logspace/platform/**/*.md', logspace/site/public/install.sh, .github/workflows/logspace-release.yml]
   # Builds and releases the version, if it isn't released already.
   workflow_dispatch:
 
@@ -27,7 +27,7 @@ concurrency:
 
 defaults:
   run:
-    working-directory: platform
+    working-directory: logspace/platform
 
 jobs:
   # Decides what to run: a PR is checked against its base, and a push against main before it.
@@ -41,7 +41,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version-file: platform/package.json
+          bun-version-file: logspace/platform/package.json
       - name: Check the version
         id: version
         env:
@@ -64,7 +64,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version-file: platform/package.json
+          bun-version-file: logspace/platform/package.json
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run lint
@@ -91,7 +91,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version-file: platform/package.json
+          bun-version-file: logspace/platform/package.json
       # Installs sharp's native addon for this runner's platform, which the binary embeds.
       - run: bun install --frozen-lockfile
       - run: bun run build
@@ -101,7 +101,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: logspace-${{ matrix.target }}
-          path: platform/dist/logspace-${{ matrix.target }}
+          path: logspace/platform/dist/logspace-${{ matrix.target }}
           if-no-files-found: error
 
   release:
@@ -111,6 +111,7 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           path: dist
@@ -119,7 +120,7 @@ jobs:
         working-directory: dist
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: v${{ needs.version.outputs.version }}
+          TAG: logspace-v${{ needs.version.outputs.version }}
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             echo "$TAG is released already"
@@ -127,4 +128,4 @@ jobs:
           fi
           sha256sum -- logspace-* > SHA256SUMS
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "$TAG" --generate-notes -- logspace-* SHA256SUMS
+            --title "$TAG" --generate-notes -- logspace-* SHA256SUMS ../logspace/site/public/install.sh
