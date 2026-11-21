@@ -66,7 +66,14 @@
         <section id="preview" class="preview card" aria-label="Collage preview">
           <div class="panel-title">
             <h2><i data-icon="scan"></i>Preview</h2>
-            <span class="live"><b></b>Live preview</span>
+            <button
+              type="button"
+              id="add-text"
+              class="add"
+              aria-haspopup="dialog"
+            >
+              <b aria-hidden="true">T</b> Add text
+            </button>
           </div>
           <div class="mat">
             <div class="corner tl"></div>
@@ -144,6 +151,29 @@
       <p id="message" role="status" aria-live="polite"></p>
     </main>
     <input type="file" accept="image/*" multiple hidden id="files" />
+    <dialog id="text-editor" aria-labelledby="text-title">
+      <form id="text-form">
+        <h2 id="text-title">Add text</h2>
+        <label for="caption">Caption</label>
+        <input
+          id="caption"
+          type="text"
+          maxlength="100"
+          placeholder="A day to remember"
+          required
+          autofocus
+        />
+        <label for="text-color"
+          >Text color <input type="color" id="text-color" value="#ffffff"
+        /></label>
+        <p>Drag your text to move it. Tap it to edit.</p>
+        <div class="text-actions">
+          <button type="button" id="delete-text" hidden>Remove</button>
+          <button type="button" id="cancel-text">Cancel</button>
+          <button type="submit">Done</button>
+        </div>
+      </form>
+    </dialog>
     <dialog id="guide">
       <h2>Make a collage</h2>
       <ol>
@@ -154,6 +184,10 @@
         <li>
           Tap <strong>Add photos</strong> to pick pictures from your phone. Tap
           a photo in the preview or a thumbnail to replace just that picture.
+        </li>
+        <li>
+          For a caption, tap <strong>Add text</strong>, choose a color, then
+          drag the text into place.
         </li>
         <li>
           Tap <strong>Share collage</strong> to send it or

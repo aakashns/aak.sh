@@ -1,3 +1,4 @@
+import { captionEditor } from "./captions.js";
 import { frames } from "./frames.js";
 const $ = (id) => document.getElementById(id);
 const icons = {
@@ -89,6 +90,11 @@ const previewButtons = samples.map((_, i) => {
   return button;
 });
 
+const paintCaptions = captionEditor(canvas, () => {
+  draw();
+  prepareShare();
+});
+
 function draw() {
   const { width: W, height: H } = canvas;
   previewButtons.forEach((button, i) => {
@@ -150,6 +156,7 @@ function draw() {
     ctx.restore();
   }
   if (frame === "Film") drawFilmDetails(color === 0 ? "#e2ae66" : "#514237");
+  paintCaptions(ctx);
 }
 
 function choose(parent, value, label, markup, onSelect) {
