@@ -54,7 +54,7 @@ function notify(text) {
 }
 
 function photoAt(i) {
-  return demo ? sampleImages[i] : personal[i];
+  return personal[i] ?? (demo ? sampleImages[i] : null);
 }
 
 function drawFilmDetails(ink) {
@@ -80,8 +80,20 @@ function drawFilmDetails(ink) {
   }
 }
 
+// The buttons use the same cell bounds and rotation as the rendered photos.
+const previewButtons = samples.map((_, i) => {
+  const button = document.createElement("button");
+  button.className = "preview-photo";
+  button.onclick = () => pick(i);
+  $("preview-photos").append(button);
+  return button;
+});
+
 function draw() {
   const { width: W, height: H } = canvas;
+  previewButtons.forEach((button, i) => {
+    button.hidden = i >= count;
+  });
   ctx.fillStyle = palette[color][1];
   ctx.fillRect(0, 0, W, H);
   const { margin, top = margin, bottom = top, gap = 28, paint } = frames[frame];
@@ -96,6 +108,16 @@ function draw() {
       y = top + row * (height + gap);
     const cellHeight = count === 3 && i === 0 ? 2 * height + gap : height;
     const photo = photoAt(i);
+    const button = previewButtons[i];
+    button.style.left = (100 * x) / W + "%";
+    button.style.top = (100 * y) / H + "%";
+    button.style.width = (100 * width) / W + "%";
+    button.style.height = (100 * cellHeight) / H + "%";
+    button.disabled = busy;
+    button.setAttribute(
+      "aria-label",
+      (photo ? "Replace" : "Add") + " preview photo " + (i + 1),
+    );
     if (photo) {
       const scale = Math.max(width / photo.width, cellHeight / photo.height);
       const sw = width / scale,
@@ -147,7 +169,6 @@ function setShape(name) {
   const { width, height, ratio } = shapes[name];
   canvas.width = width;
   canvas.height = height;
-  canvas.parentElement.dataset.shape = name;
   $("preview-icon").dataset.shape = name;
   $("shape-name").textContent = name;
   $("ratio").textContent = ratio;
@@ -259,14 +280,15 @@ function refresh() {
     $("slots").append(slot);
   }
   $("add").disabled = busy;
-  $("add-label").textContent =
-    !demo && filled === count ? "Replace photos" : "Add photos";
+  $("add-label").textContent = personal.slice(0, count).every(Boolean)
+    ? "Replace photos"
+    : "Add photos";
   $("download").disabled = busy || filled !== count;
   prepareShare();
   $("photo-note").textContent = busy
     ? "Preparing your photos…"
-    : demo
-      ? "Sample photos · Add your own to get started."
+    : demo && !personal.some(Boolean)
+      ? "Sample photos · Tap a preview photo to replace it."
       : filled < count
         ? "Add " + (count - filled) + " more to finish your collage."
         : "Tap a photo to replace it.";
@@ -329,7 +351,7 @@ $("files").onchange = async () => {
       const index = destinations[loaded++];
       if (personal[index]) URL.revokeObjectURL(personal[index].src);
       personal[index] = photo;
-      demo = false;
+      if (target === null) demo = false;
     } catch {
       failed++;
     }

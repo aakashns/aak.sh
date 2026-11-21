@@ -73,12 +73,19 @@
             <div class="corner tr"></div>
             <div class="corner bl"></div>
             <div class="corner br"></div>
-            <canvas
-              width="2400"
-              height="1800"
-              id="canvas"
-              aria-label="Live collage preview"
-            ></canvas>
+            <div class="print">
+              <canvas
+                width="2400"
+                height="1800"
+                id="canvas"
+                aria-label="Live collage preview"
+              ></canvas>
+              <div
+                id="preview-photos"
+                role="group"
+                aria-label="Edit photos in the preview"
+              ></div>
+            </div>
           </div>
           <div class="metadata">
             <span
@@ -146,7 +153,7 @@
         </li>
         <li>
           Tap <strong>Add photos</strong> to pick pictures from your phone. Tap
-          a thumbnail to replace one.
+          a photo in the preview or a thumbnail to replace just that picture.
         </li>
         <li>
           Tap <strong>Share collage</strong> to send it or
