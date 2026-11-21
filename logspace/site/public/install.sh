@@ -13,7 +13,7 @@
 set -eu
 
 repo="https://github.com/aakashns/aak.sh/tree/main/logspace"
-releases="https://github.com/aakashns/aak.sh/releases"
+releases="${LOGSPACE_RELEASES_URL:-https://github.com/aakashns/aak.sh/releases}"
 legacy="https://github.com/aakashns/logspace/releases"
 release_api="${LOGSPACE_RELEASES_API_URL:-https://api.github.com/repos/aakashns/aak.sh/releases}"
 dir="${LOGSPACE_INSTALL_DIR:-/usr/local/bin}"
@@ -50,7 +50,7 @@ command -v curl >/dev/null || fail "curl is needed to download LogSpace"
 binary="logspace-$os-$arch"
 version=${LOGSPACE_VERSION:-}
 version=${version#v}
-if [ -n "${LOGSPACE_RELEASES_URL:-}" ]; then
+if [ -n "${LOGSPACE_RELEASES_URL:-}" ] && [ -z "${LOGSPACE_RELEASES_API_URL:-}" ]; then
   if [ -n "$version" ]; then
     url="$LOGSPACE_RELEASES_URL/download/v$version"
   else

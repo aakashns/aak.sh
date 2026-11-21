@@ -2,7 +2,7 @@
 
 Self-host your personal website with blog posts, photos, and videos. Write and publish from your browser. Deploy to your own domain. Free and open source.
 
-[Website & demo](https://logspace.aak.sh) · [Changelog](https://github.com/aakashns/aak.sh/releases?q=logspace-v&expanded=true) · [Contributing](CONTRIBUTING.md)
+[Website & demo](https://logspace.aak.sh) · [Changelog](https://github.com/aakashns/aak.sh/releases?q=logspace-v&expanded=true) · [Earlier releases](https://github.com/aakashns/logspace/releases) · [Contributing](CONTRIBUTING.md)
 
 ## Deploy
 

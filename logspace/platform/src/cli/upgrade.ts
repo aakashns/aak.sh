@@ -11,7 +11,7 @@ import { fail, IS_BINARY, reportFailures, VERSION } from './shell.ts'
 const RELEASES_URL = 'https://github.com/aakashns/aak.sh/releases'
 const RELEASES_API = 'https://api.github.com/repos/aakashns/aak.sh/releases'
 const releasesUrl = Config.String('LOGSPACE_RELEASES_URL').pipe(Config.withDefault(''))
-const releasesApi = Config.String('LOGSPACE_RELEASES_API_URL').pipe(Config.withDefault(RELEASES_API))
+const releasesApi = Config.String('LOGSPACE_RELEASES_API_URL').pipe(Config.withDefault(''))
 
 // The platforms there's a release binary for, logspace-<platform>-<arch>.
 const TARGETS = ['linux-x64', 'linux-arm64', 'darwin-x64', 'darwin-arm64']
@@ -28,7 +28,11 @@ export const upgrade = Effect.fn('upgrade')(
     // A string with a default can't fail to read.
     let releases = yield* Effect.orDie(releasesUrl)
 
-    let tag = requested ?? (releases ? yield* latestTag(releases) : yield* latestLogspaceTag())
+    let api = yield* Effect.orDie(releasesApi)
+    let namespaced = !releases || !!api
+    let tag =
+      requested ??
+      (namespaced ? yield* latestLogspaceTag(api || RELEASES_API) : yield* latestTag(releases))
     let version = tag.replace(/^(logspace-)?v/, '')
     if (!/^\d+\.\d+\.\d+$/.test(version)) return yield* fail(`Not a release: ${version}`)
     let order = compareVersions(version, VERSION)
@@ -59,9 +63,8 @@ export const upgrade = Effect.fn('upgrade')(
     }
 
     let asset = `logspace-${target}`
-    let releaseUrl = releases
-      ? `${releases}/download/v${version}`
-      : `${RELEASES_URL}/download/logspace-v${version}`
+    let prefix = namespaced ? 'logspace-v' : 'v'
+    let releaseUrl = `${releases || RELEASES_URL}/download/${prefix}${version}`
     yield* Console.log(`Downloading ${releaseUrl}/${asset}...`)
     let sums = new TextDecoder().decode(yield* download(`${releaseUrl}/SHA256SUMS`))
     // sha256sum writes "<hash>  <name>", or "<hash> *<name>" for a file it read as binary.
@@ -94,8 +97,7 @@ export const upgrade = Effect.fn('upgrade')(
 )
 
 // The repository's latest release may belong to another project.
-const latestLogspaceTag = Effect.fnUntraced(function* () {
-  let api = yield* Effect.orDie(releasesApi)
+const latestLogspaceTag = Effect.fnUntraced(function* (api: string) {
   for (let page = 1; ; page++) {
     let url = `${api}?per_page=100&page=${page}`
     let bytes = yield* download(url)
@@ -111,7 +113,8 @@ const latestLogspaceTag = Effect.fnUntraced(function* () {
         /^logspace-v\d+\.\d+\.\d+$/.test(tag) &&
         !release.prerelease &&
         !release.draft
-      ) return tag
+      )
+        return tag
     }
     if (releases.length < 100) return yield* fail(`Couldn't find a LogSpace release at ${api}`)
   }

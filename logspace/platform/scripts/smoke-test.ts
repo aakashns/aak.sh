@@ -143,11 +143,22 @@ let releaseServer = Bun.serve({
   hostname: '127.0.0.1',
   fetch(request) {
     let url = new URL(request.url)
+    if (url.pathname === '/release-api') {
+      if (url.searchParams.get('page') === '1') {
+        let otherProjects = Array.from({ length: 100 }, (_, i) => ({
+          tag_name: `writui-v100.0.${i}`,
+        }))
+        return new Response(JSON.stringify(otherProjects, null, 2))
+      }
+      return new Response(JSON.stringify([{ tag_name: `logspace-v${latest}` }], null, 2))
+    }
     if (url.pathname === '/releases/latest') {
       return Response.redirect(new URL(`/releases/tag/v${latest}`, url), 302)
     }
     let [, version = latest, file] =
-      /^\/releases\/(?:download\/v([^/]+)|latest\/download)\/(.+)$/.exec(url.pathname) ?? []
+      /^\/releases\/(?:download\/(?:logspace-)?v([^/]+)|latest\/download)\/(.+)$/.exec(
+        url.pathname,
+      ) ?? []
     let sum = releases.get(version)
     if (sum && file === 'SHA256SUMS') return new Response(`${sum}  ${asset}\n`)
     if (sum && file === asset) return new Response(bytes)
@@ -189,7 +200,15 @@ try {
   })
   let installed = new RegExp(`Installed LogSpace ${packageJson.version.replaceAll('.', '\\.')} at `)
   await expectRun(['sh', installer], 0, installed, 'install.sh installs it', installEnv())
-  await expectRun(['sh', installer], 0, installed, 'install.sh installs it again', installEnv())
+  let api = `http://127.0.0.1:${PORT + 1}/release-api`
+  let namespaced = { LOGSPACE_RELEASES_API_URL: api }
+  await expectRun(
+    ['sh', installer],
+    0,
+    installed,
+    'install.sh skips other projects and finds a LogSpace release on the next page',
+    installEnv(namespaced),
+  )
   let inode = (await fs.stat(copy)).ino
   await expectRun(
     ['sh', installer],
@@ -235,7 +254,13 @@ try {
   let upgraded = new RegExp(
     `Upgraded LogSpace ${packageJson.version.replaceAll('.', '\\.')} to 99\\.0\\.0`,
   )
-  await expectRun([copy, 'upgrade', '--yes'], 0, upgraded, 'upgrade replaces the binary', env)
+  await expectRun(
+    [copy, 'upgrade', '--yes'],
+    0,
+    upgraded,
+    'upgrade skips other projects and replaces the binary',
+    { ...env, ...namespaced },
+  )
   check((await fs.stat(copy)).ino !== inode, 'the upgrade replaced the binary')
   check((await fs.readdir(path.dirname(copy))).length === 1, 'the upgrade left no files behind')
 } finally {

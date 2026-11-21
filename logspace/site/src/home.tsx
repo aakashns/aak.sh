@@ -88,7 +88,10 @@ export function Home() {
           <a href={`${github}#deploy`} target="_blank">
             Docs
           </a>
-          <a href="https://github.com/aakashns/aak.sh/releases?q=logspace-v&expanded=true" target="_blank">
+          <a
+            href="https://github.com/aakashns/aak.sh/releases?q=logspace-v&expanded=true"
+            target="_blank"
+          >
             Changelog
           </a>
         </nav>
