@@ -2,7 +2,7 @@
 
 A writing app for the terminal. No nonsense. Markdown. Local. Encrypted.
 
-[![Writing in writui](site/static/demo.png)](https://writui.com)
+[![Writing in writui](site/static/demo.png)](https://writui.aak.sh)
 
 - **Private.** All your posts live in one file, encrypted with your password.
   Without the password nobody can read them.
@@ -27,7 +27,7 @@ writui is built in the open ([what's planned](docs/PLAN.md)). Remember:
 On macOS or Linux, paste this into a terminal:
 
 ```sh
-curl -fsSL https://writui.com/install.sh | bash
+curl -fsSL https://writui.aak.sh/install.sh | bash
 ```
 
 It downloads the latest writui for your computer, checks it, and puts it in
@@ -38,11 +38,11 @@ with `writui --version`.
 <details>
 <summary>Or download it yourself</summary>
 
-The install script is also attached to every release:
-`curl -fsSL https://github.com/aakashns/writui/releases/latest/download/install.sh | bash`.
+The install script is also attached to every release.
 
-Every [release](https://github.com/aakashns/writui/releases/latest) has a
-ready-to-run file for each computer:
+Every [writui release](https://github.com/aakashns/aak.sh/releases?q=writui-v&expanded=true)
+has a ready-to-run file for each computer (releases up to 0.20.0 are on
+[the old repo](https://github.com/aakashns/writui/releases)):
 
 | Computer                       | File                  |
 | ------------------------------ | --------------------- |
@@ -82,19 +82,19 @@ There's no ready-made Windows version, but you can build writui yourself:
 2. In a new PowerShell window (not Git Bash, whose Perl can't build it), run:
 
    ```sh
-   cargo install --locked --git https://github.com/aakashns/writui
+   cargo install --locked --git https://github.com/aakashns/aak.sh writui
    ```
 
 The build takes a few minutes. To upgrade, run the same command again.
 
 writui isn't tested on Windows automatically, or tried out there by hand
 regularly, so please
-[report anything odd](https://github.com/aakashns/writui/issues). To run its
+[report anything odd](https://github.com/aakashns/aak.sh/issues). To run its
 automated tests and checks yourself, in the same kind of PowerShell window:
 
 ```sh
-git clone https://github.com/aakashns/writui
-cd writui
+git clone https://github.com/aakashns/aak.sh
+cd aak.sh/writui
 cargo test
 cargo clippy --all-targets -- -D warnings
 ```
@@ -103,9 +103,9 @@ If both finish without errors, writui's tests pass on your computer.
 
 ## Try a five-minute writing session
 
-[Follow the illustrated guide](https://writui.com/blog/try-a-five-minute-writing-session/)
+[Follow the illustrated guide](https://writui.aak.sh/blog/try-a-five-minute-writing-session/)
 to create your vault, write your first post, and keep a version to come
-back to. Then [tell us how it went](https://github.com/aakashns/writui/issues/new?template=writing-feedback.yml).
+back to. Then [tell us how it went](https://github.com/aakashns/aak.sh/issues/new?title=writui%3A%20).
 
 ## Use
 
@@ -251,7 +251,7 @@ vault = "~/path/to/writui.db"
 ## Contributing
 
 Ideas and bug reports are welcome in
-[issues](https://github.com/aakashns/writui/issues). To build writui yourself
+[issues](https://github.com/aakashns/aak.sh/issues). To build writui yourself
 or work on it, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License

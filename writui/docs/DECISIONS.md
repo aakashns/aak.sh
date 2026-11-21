@@ -821,3 +821,30 @@ file is made again with the new key (sealing needs no fingerprint); if
 that fails it's turned off, and Settings says so. The dialog (three boxed
 password fields, stacked) is its own small screen, `tui::change_password`,
 since the general dialog only has one plain text field.
+
+## writui moves into the aak.sh monorepo
+
+After 0.20.0, writui moved from github.com/aakashns/writui into `writui/`
+in github.com/aakashns/aak.sh, the creator's repo for all their open source
+projects (creator's call). The import keeps writui's history and commit
+hashes, and its release tags are mirrored as `writui-v0.1.0` …
+`writui-v0.20.0`.
+
+- **Releases** are tagged `writui-vX.Y.Z`, since other projects release
+  from the same repo. GitHub's "latest release" may belong to another
+  project, so `install.sh` and `writui upgrade` take the newest release
+  tagged `writui-v*` from the releases API instead. `WRITUI_VERSION` up to
+  0.20.0 still installs from the old repo, which is archived but keeps its
+  releases. The workflows are `.github/workflows/writui-*.yml` at the repo
+  root, limited to changes in `writui/`, and the release notes only list
+  PRs and commits that change `writui/`.
+- **Bridge release:** installed copies up to 0.20.0 only check the old
+  repo. 0.21.0, the first release from aak.sh, is published on the old repo
+  too (same binaries), so `writui upgrade` there moves to it, and from then
+  on upgrades come from aak.sh. Then the old repo is archived.
+- **Site:** replaces Cloudflare Workers. writui.aak.sh is served by Caddy
+  like the other project sites (`site/Caddyfile`). The build isn't
+  committed: the server runs `site/build.sh` after pulling, with a pinned
+  Zola version so builds match. writui.com and www redirect to
+  writui.aak.sh, keeping the path, so the old install command keeps
+  working (`curl -L` follows the redirect).

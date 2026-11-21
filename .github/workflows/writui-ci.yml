@@ -1,9 +1,15 @@
-name: CI
+name: writui CI
 
 on:
   push:
     branches: [main]
+    paths: [writui/**, .github/workflows/writui-ci.yml]
   pull_request:
+    paths: [writui/**, .github/workflows/writui-ci.yml]
+
+defaults:
+  run:
+    working-directory: writui
 
 jobs:
   check:
@@ -19,6 +25,15 @@ jobs:
         with:
           components: clippy, rustfmt
       - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: writui
       - run: cargo fmt --check
       - run: cargo clippy --all-targets --locked -- -D warnings
       - run: cargo test --locked
+
+  site:
+    name: Build the site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: site/build.sh

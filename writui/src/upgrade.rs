@@ -1,5 +1,11 @@
 //! `writui upgrade`: replace this binary with the latest GitHub release.
 //!
+//! writui lives in the aak.sh repo, next to other projects, so its releases
+//! are tagged `writui-vX.Y.Z` and the latest is the newest release with such
+//! a tag (not GitHub's "latest release", which may be another project's).
+//! Versions up to 0.20.0 were released from github.com/aakashns/writui; its
+//! last release, 0.21.0, is the same as this repo's, to move them here.
+//!
 //! Downloads the same files as `install.sh` (the binary for this platform and
 //! `SHA256SUMS`), checks the binary against its checksum, and swaps it in
 //! with a rename, so writui is never left half-written. The vault isn't
@@ -17,7 +23,8 @@ use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 
-const REPO: &str = "aakashns/writui";
+const REPO: &str = "aakashns/aak.sh";
+const TAG_PREFIX: &str = "writui-v";
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Release binaries are about 10 MB; this only guards against nonsense.
@@ -27,6 +34,10 @@ const MAX_DOWNLOAD: u64 = 200 * 1024 * 1024;
 struct Release {
     tag_name: String,
     html_url: String,
+    #[serde(default)]
+    draft: bool,
+    #[serde(default)]
+    prerelease: bool,
 }
 
 pub fn run(yes: bool) -> Result<()> {
@@ -38,7 +49,7 @@ pub fn run(yes: bool) -> Result<()> {
     let Some(binary) = binary_name() else {
         bail!(
             "there are no ready-made writui builds for this system; see \
-             https://github.com/{REPO}#install"
+             https://github.com/{REPO}/tree/main/writui#install"
         );
     };
     let exe =
@@ -50,13 +61,16 @@ pub fn run(yes: bool) -> Result<()> {
         .build()
         .into();
 
-    let release: Release = agent
-        .get(format!("https://api.github.com/repos/{REPO}/releases/latest"))
+    // Newest first, so the first writui release is the latest one.
+    let releases: Vec<Release> = agent
+        .get(format!("https://api.github.com/repos/{REPO}/releases?per_page=100"))
         .header("Accept", "application/vnd.github+json")
         .call()
         .and_then(|mut response| response.body_mut().read_json())
         .context("checking GitHub for the latest release")?;
-    let latest = release.tag_name.trim_start_matches('v');
+    let Some((release, latest)) = latest_release(&releases) else {
+        bail!("couldn't find a writui release on GitHub; please try again later");
+    };
     if parse_version(latest)? <= parse_version(VERSION)? {
         println!("writui {VERSION} is up to date.");
         return Ok(());
@@ -82,6 +96,13 @@ pub fn run(yes: bool) -> Result<()> {
     replace(&exe, &bytes)?;
     println!("Upgraded {} to writui {latest}.", exe.display());
     Ok(())
+}
+
+/// The newest published writui release, and its version.
+fn latest_release(releases: &[Release]) -> Option<(&Release, &str)> {
+    releases.iter().filter(|release| !release.draft && !release.prerelease).find_map(|release| {
+        release.tag_name.strip_prefix(TAG_PREFIX).map(|version| (release, version))
+    })
 }
 
 /// The release file for this computer, as named by the release workflow.
@@ -181,6 +202,26 @@ mod tests {
         assert_eq!(parse_version("0.2.0").unwrap(), (0, 2, 0));
         assert!(parse_version("0.2").is_err());
         assert!(parse_version("0.2.0-beta").is_err());
+    }
+
+    #[test]
+    fn picks_the_newest_writui_release() {
+        let release = |tag: &str, prerelease| Release {
+            tag_name: tag.into(),
+            html_url: String::new(),
+            draft: false,
+            prerelease,
+        };
+        let releases = [
+            release("mailmenu-v2.0.0", false),
+            release("writui-v0.23.0", true),
+            release("writui-v0.22.0", false),
+            release("writui-v0.21.0", false),
+        ];
+        let (latest, version) = latest_release(&releases).unwrap();
+        assert_eq!(latest.tag_name, "writui-v0.22.0");
+        assert_eq!(version, "0.22.0");
+        assert!(latest_release(&releases[..1]).is_none());
     }
 
     #[test]

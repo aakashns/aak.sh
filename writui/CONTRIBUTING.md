@@ -1,8 +1,10 @@
 # Contributing to writui
 
 writui is built mainly for its author's own daily writing, and developed in
-the open. Bug reports and ideas are very welcome as
-[issues](https://github.com/aakashns/writui/issues). For anything bigger
+the open, in the [aak.sh](https://github.com/aakashns/aak.sh) repo with its
+author's other projects. Bug reports and ideas are very welcome as
+[issues](https://github.com/aakashns/aak.sh/issues) (start the title with
+"writui:"). For anything bigger
 than a small fix, please open an issue before a pull request, so we can
 agree on the approach first.
 
@@ -12,9 +14,11 @@ agree on the approach first.
 src/          the app (a single Rust crate)
 docs/         SPEC.md (what we're building), PLAN.md (milestones, what's
               next), DECISIONS.md (technical choices and why)
-site/         the project site, writui.com (Zola)
+site/         the project site, writui.aak.sh (Zola)
+scripts/      release notes
 install.sh    the one-line installer for macOS and Linux
-.github/      CI and release workflows
+
+../.github/workflows/writui-*.yml   CI and release workflows (at the repo root)
 ```
 
 `AGENTS.md` (which `CLAUDE.md` points to) describes the day-to-day workflow in detail: how PRs are put
@@ -73,20 +77,24 @@ Every PR that changes the app bumps `version` in `Cargo.toml`: minor for new
 behaviour, patch for fixes only. Merging a PR with a new version releases it
 automatically: GitHub Actions builds the macOS and Linux binaries and
 publishes them, with `install.sh` and notes listing the merged PRs, as a
-GitHub release. PRs that keep the version (docs only) release nothing.
+GitHub release tagged `writui-vX.Y.Z`. PRs that keep the version (docs only)
+release nothing. Releases up to 0.20.0 are on the old
+[aakashns/writui](https://github.com/aakashns/writui/releases) repo, from
+before writui moved here.
 
 ## The site
 
-[writui.com](https://writui.com) is built from `site/` with
-[Zola](https://www.getzola.org) (`brew install zola`) and served by
-Cloudflare Workers. Cloudflare's Git integration builds it with
-`site/build.sh` and deploys it with `npx wrangler deploy` (configured in
-`site/wrangler.jsonc`) on every push to `main`; pull requests get a preview
-link. To preview it locally:
+[writui.aak.sh](https://writui.aak.sh) is built from `site/` with
+[Zola](https://www.getzola.org) and served by Caddy (`site/Caddyfile`),
+like the repo's other project sites. The build isn't committed: on the
+server, `site/build.sh` builds it into `site/public` after each pull. It
+uses a pinned Zola version (downloading it if yours differs), and CI checks
+it builds. The old domain, writui.com, redirects there. To preview it
+locally:
 
 ```sh
 zola --root site serve      # then open http://127.0.0.1:1111
-site/build.sh               # or build it into site/public, as Cloudflare does
+site/build.sh               # or build it into site/public, as the server does
 ```
 
 - **Blog posts** are written in writui and exported as markdown
@@ -94,7 +102,7 @@ site/build.sh               # or build it into site/public, as Cloudflare does
   (Zola reads YAML front matter, and needs a `title` and `date`). To edit a
   published post, import it (Ctrl+O on the list), and export it back.
 - **Changelog** in the site's menu links to the
-  [GitHub releases](https://github.com/aakashns/writui/releases).
+  [writui's GitHub releases](https://github.com/aakashns/aak.sh/releases?q=writui-v&expanded=true).
 - **The logo** is `site/static/logo.svg` (and `favicon.svg`, the same on a
   dark rounded square). The PNG icons, `favicon.ico` and the social card
   `og.png` were rendered from them; re-render them if the logo changes.

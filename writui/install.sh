@@ -1,10 +1,10 @@
 #!/bin/sh
-# Install writui (https://github.com/aakashns/writui) on macOS or Linux:
+# Install writui (https://writui.aak.sh) on macOS or Linux:
 #
-#   curl -fsSL https://writui.com/install.sh | bash
+#   curl -fsSL https://writui.aak.sh/install.sh | bash
 #
-# writui.com serves this file from the repo; every release has it attached
-# too, at https://github.com/aakashns/writui/releases/latest/download/install.sh
+# writui.aak.sh serves this file from the repo (github.com/aakashns/aak.sh,
+# in writui/); every writui release has it attached too.
 #
 # Downloads the latest release for this computer, checks it against the
 # release's SHA256SUMS and installs it to ~/.local/bin/writui. Running it
@@ -14,7 +14,10 @@
 #   WRITUI_INSTALL_DIR  install here instead of ~/.local/bin
 set -eu
 
-repo="https://github.com/aakashns/writui"
+repo="https://github.com/aakashns/aak.sh"
+docs="$repo/tree/main/writui"
+# Releases up to 0.20.0 were published here, before writui moved to aak.sh.
+old_repo="https://github.com/aakashns/writui"
 dir="${WRITUI_INSTALL_DIR:-$HOME/.local/bin}"
 
 fail() {
@@ -25,14 +28,14 @@ fail() {
 case "$(uname -s)" in
   Darwin) os=macos ;;
   Linux) os=linux ;;
-  MINGW* | MSYS* | CYGWIN*) fail "on Windows, build writui from source: $repo#windows" ;;
-  *) fail "there's no writui build for $(uname -s); see $repo#install" ;;
+  MINGW* | MSYS* | CYGWIN*) fail "on Windows, build writui from source: $docs#windows" ;;
+  *) fail "there's no writui build for $(uname -s); see $docs#install" ;;
 esac
 
 case "$(uname -m)" in
   arm64 | aarch64) arch=arm64 ;;
   x86_64 | amd64) arch=x86_64 ;;
-  *) fail "there's no writui build for $(uname -m) processors; see $repo#install" ;;
+  *) fail "there's no writui build for $(uname -m) processors; see $docs#install" ;;
 esac
 
 # A shell running under Rosetta reports x86_64 on Apple Silicon Macs.
@@ -51,10 +54,18 @@ command -v curl >/dev/null || fail "curl is needed to download writui"
 
 binary="writui-$os-$arch"
 if [ -n "${WRITUI_VERSION:-}" ]; then
-  url="$repo/releases/download/v${WRITUI_VERSION#v}"
+  version=${WRITUI_VERSION#v}
 else
-  url="$repo/releases/latest/download"
+  # The repo has other projects' releases too: the newest one tagged
+  # writui-v* is the latest writui (GitHub lists releases newest first).
+  version=$(curl -fsSL "https://api.github.com/repos/aakashns/aak.sh/releases?per_page=100" |
+    grep -o '"tag_name": *"writui-v[0-9.]*"' | head -n 1 | sed 's/.*"writui-v//; s/"$//' || true)
+  [ -n "$version" ] || fail "couldn't find the latest writui release on GitHub; please try again later"
 fi
+case "$version" in
+  0.[0-9].* | 0.1[0-9].* | 0.20.*) url="$old_repo/releases/download/v$version" ;;
+  *) url="$repo/releases/download/writui-v$version" ;;
+esac
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT

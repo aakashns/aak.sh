@@ -1,25 +1,27 @@
-# Publishes a GitHub release whenever main has a version (in Cargo.toml) that
-# hasn't been released yet, so merging a PR that bumps the version releases
-# it. Merges that keep the version (docs-only PRs) release nothing. Pull
-# requests that touch this file run the builds without publishing.
+# Publishes a writui GitHub release (tagged writui-vX.Y.Z) whenever main has
+# a version (in writui/Cargo.toml) that hasn't been released yet, so merging a
+# PR that bumps the version releases it. Merges that keep the version
+# (docs-only PRs) release nothing. Pull requests that touch this file run the
+# builds without publishing.
 #
-# Binary names carry no version, so the latest one is always at
-# https://github.com/aakashns/writui/releases/latest/download/<name>
-# (install.sh is attached to every release too).
-name: Release
+# The repo holds other projects' releases too, so writui's latest release is
+# the newest one tagged writui-v* (that's what install.sh and `writui
+# upgrade` look for). install.sh is attached to every release too.
+name: writui release
 
 on:
   push:
     branches: [main]
+    paths: [writui/**, .github/workflows/writui-release.yml]
   pull_request:
-    paths: [.github/workflows/release.yml]
+    paths: [.github/workflows/writui-release.yml]
 
 permissions:
   contents: write
 
 # One release at a time; never cancel one halfway.
 concurrency:
-  group: release-${{ github.ref }}
+  group: writui-release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -32,16 +34,16 @@ jobs:
       - uses: actions/checkout@v5
       - id: version
         run: |
-          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' writui/Cargo.toml | head -1)
           echo "version=$version" >> "$GITHUB_OUTPUT"
           if [ "$GITHUB_EVENT_NAME" != push ]; then
             echo "Pull request: build only"
             echo "release=false" >> "$GITHUB_OUTPUT"
-          elif git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
-            echo "v$version is already released; nothing to do"
+          elif git ls-remote --exit-code --tags origin "refs/tags/writui-v$version" >/dev/null; then
+            echo "writui-v$version is already released; nothing to do"
             echo "release=false" >> "$GITHUB_OUTPUT"
           else
-            echo "Releasing v$version"
+            echo "Releasing writui-v$version"
             echo "release=true" >> "$GITHUB_OUTPUT"
           fi
 
@@ -65,12 +67,13 @@ jobs:
         with:
           targets: ${{ matrix.target }}
       - run: cargo build --release --locked --target ${{ matrix.target }}
+        working-directory: writui
       - run: |
           mkdir dist
-          cp "target/${{ matrix.target }}/release/writui" "dist/writui-${{ matrix.name }}"
+          cp "writui/target/${{ matrix.target }}/release/writui" "dist/writui-${{ matrix.name }}"
       - uses: actions/upload-artifact@v5
         with:
-          name: ${{ matrix.name }}
+          name: writui-${{ matrix.name }}
           path: dist/*
 
   publish:
@@ -85,6 +88,7 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           path: dist
+          pattern: writui-*
           merge-multiple: true
       - name: Create the release
         env:
@@ -92,7 +96,7 @@ jobs:
           VERSION: ${{ needs.check.outputs.version }}
         run: |
           (cd dist && sha256sum writui-* > SHA256SUMS)
-          cp install.sh dist/
-          .github/release-notes.sh "$VERSION" > notes.md
-          gh release create "v$VERSION" dist/* --target "$GITHUB_SHA" \
+          cp writui/install.sh dist/
+          writui/scripts/release-notes.sh "$VERSION" > notes.md
+          gh release create "writui-v$VERSION" dist/* --target "$GITHUB_SHA" \
             --title "writui $VERSION" --notes-file notes.md

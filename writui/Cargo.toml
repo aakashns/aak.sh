@@ -1,10 +1,11 @@
 [package]
 name = "writui"
-version = "0.20.0"
+version = "0.21.0"
 edition = "2024"
 description = "A terminal writing app. No nonsense. Markdown. Local. Encrypted."
 license = "MIT"
-repository = "https://github.com/aakashns/writui"
+repository = "https://github.com/aakashns/aak.sh"
+homepage = "https://writui.aak.sh"
 
 [dependencies]
 anyhow = "1.0.104"

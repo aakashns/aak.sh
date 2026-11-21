@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
-# Prints the release notes for a version: for each pull request merged since
-# the last release (with a merge commit or squashed), its title, then the
-# full message of each of its commits (without the Co-Authored-By lines).
+# Prints the release notes for a version: for each pull request that changed
+# writui/ since the last release (merged with a merge commit or squashed), its
+# title, then the full message of each of its commits that changed writui/
+# (without the Co-Authored-By lines). Other projects in the repo are left out.
 #
-#   .github/release-notes.sh 0.15.0 [ref]
+#   writui/scripts/release-notes.sh 0.21.0 [ref]
 #
 # `ref` (default HEAD) is what's being released. Needs the tags and the full
 # history (actions/checkout with fetch-depth: 0), and fetches squashed pull
-# requests' commits from GitHub.
+# requests' commits from GitHub. Releases up to 0.20.0 were published from
+# github.com/aakashns/writui, before writui moved into this repo; their tags
+# are here too, as writui-v0.20.0 etc.
 set -euo pipefail
 
 # Commit messages are wrapped at about 72 columns, and GitHub shows every
@@ -27,11 +30,11 @@ unwrap() {
 
 version=$1
 ref=${2:-HEAD}
-repo=https://github.com/aakashns/writui
-prev=$(git describe --tags --abbrev=0 "$ref^" 2>/dev/null || true)
+repo=https://github.com/aakashns/aak.sh
+prev=$(git describe --tags --abbrev=0 --match 'writui-v*' --exclude "writui-v$version" "$ref" 2>/dev/null || true)
 
 echo "## What's changed"
-for merge in $(git rev-list --first-parent --reverse "${prev:+$prev..}$ref"); do
+for merge in $(git rev-list --first-parent --reverse "${prev:+$prev..}$ref" -- writui); do
   subject=$(git log -1 --format=%s "$merge")
   pr=$(echo "$subject" | sed -n 's/^Merge pull request #\([0-9]*\) .*/\1/p')
   if [ -n "$pr" ]; then
@@ -48,9 +51,11 @@ for merge in $(git rev-list --first-parent --reverse "${prev:+$prev..}$ref"); do
     head=refs/writui-notes/pr-$pr
     git fetch -q origin "+pull/$pr/head:$head"
   fi
+  commits=$(git rev-list --no-merges --reverse "$merge^1..$head" ${prev:+"^$prev"} -- writui)
+  [ -n "$commits" ] || continue
   echo
   echo "### $title ([#$pr]($repo/pull/$pr))"
-  for commit in $(git rev-list --no-merges --reverse "$merge^1..$head"); do
+  for commit in $commits; do
     echo
     echo "**$(git log -1 --format=%s "$commit")**"
     body=$(git log -1 --format=%b "$commit" | grep -vi '^co-authored-by:' || true)
@@ -62,5 +67,5 @@ for merge in $(git rev-list --first-parent --reverse "${prev:+$prev..}$ref"); do
 done
 if [ -n "$prev" ]; then
   echo
-  echo "**Full changelog:** [$prev...v$version]($repo/compare/$prev...v$version)"
+  echo "**Full changelog:** [$prev...writui-v$version]($repo/compare/$prev...writui-v$version)"
 fi

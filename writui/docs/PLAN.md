@@ -22,9 +22,8 @@ a directory listing before doing more outreach. Learn where new writers
 get stuck and whether they return on another day.
 Keep promotion work in separate PRs from the app milestones below.
 
-The site is on Cloudflare Workers: writui.com serves it (and
-`install.sh`), and www redirects. Still to do by hand: turn off GitHub
-Pages for the repo (it's still enabled, with the writui.com domain).
+writui moved into the aak.sh monorepo (`writui/`) after 0.20.0. The site
+is at writui.aak.sh (served by Caddy), and writui.com redirects there.
 
 The creator's batch of list / editor ideas shipped in `0.12.0`, and the
 "Sort" dropdown and list tweaks in `0.13.0`, a Nerd Font setting,
@@ -39,7 +38,7 @@ list continuation and Cmd+C (also out of order; it replaces the closed
 PR #31's bold-title switch). `0.20.0` adds Change password in Settings
 (out of order too). Next:
 
-1. **Try online** (writui.com/try), below: the creator wants it next, and
+1. **Try online** (writui.aak.sh/try), below: the creator wants it next, and
    it must work on a phone. Probably two or three PRs, in the order listed.
 2. M6 (LLM chat sidebar) and on in order. The Settings screen exists now;
    add the rest of its settings as they come up.
@@ -125,7 +124,7 @@ The repo went public early (during M0), so most of this is already done.
 
 ## Try online
 
-writui in the browser at writui.com/try, phones included (see the spec's
+writui in the browser at writui.aak.sh/try, phones included (see the spec's
 "Try online").
 
 - [ ] Separate the screens from the terminal and the vault, so they can run
@@ -136,7 +135,7 @@ writui in the browser at writui.com/try, phones included (see the spec's
       swipe typing), extra-keys row (Esc, Ctrl, Tab, arrows), tap = click,
       touch scrolling
 - [ ] Every screen works at phone width (about 40–50 columns)
-- [ ] Published at writui.com/try, tested on a real iPhone and Android
+- [ ] Published at writui.aak.sh/try, tested on a real iPhone and Android
       phone, then linked from the landing page
 
 ## M6 — LLM chat sidebar

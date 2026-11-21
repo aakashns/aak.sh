@@ -1,4 +1,4 @@
-# The demo on writui.com's landing page. From the repo root, after
+# The demo on writui.aak.sh's landing page. From writui/, after
 # `cargo build`:
 #
 #   vhs site/demo.tape

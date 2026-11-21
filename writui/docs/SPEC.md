@@ -880,7 +880,8 @@ in [DECISIONS.md](DECISIONS.md); the build order lives in [PLAN.md](PLAN.md).
 **Details**
 
 - The site lives in `site/` in this repo, and is published at
-  **writui.com** (Cloudflare Workers).
+  **writui.aak.sh** (Caddy, like the other aak.sh project sites);
+  writui.com redirects there.
 - It looks like the app: light Inter text on a dark background, one narrow
   column. Pages: a landing page (what writui is, install, a short
   recording of it, then what it does) and the blog.
@@ -939,7 +940,7 @@ in [DECISIONS.md](DECISIONS.md); the build order lives in [PLAN.md](PLAN.md).
 
 **Details**
 
-- **writui.com/try** runs writui in the visitor's browser, with no server:
+- **writui.aak.sh/try** runs writui in the visitor's browser, with no server:
   the same screens, built for the web (Ratzilla, ratatui's web backend), as
   static files on the site.
 - It's a demo: no encryption or password, posts kept in that browser only
@@ -988,9 +989,9 @@ in [DECISIONS.md](DECISIONS.md); the build order lives in [PLAN.md](PLAN.md).
   arm64), with notes listing the merged PRs. The creator upgrades the same
   way every user does.
 - Install on macOS / Linux with one command:
-  `curl -fsSL https://writui.com/install.sh | bash`
-  (writui.com serves the repo's `install.sh`; every release has it
-  attached too, and the README gives that longer URL as well).
+  `curl -fsSL https://writui.aak.sh/install.sh | bash`
+  (writui.aak.sh serves the repo's `install.sh`; every release has it
+  attached too).
   Installs to `~/.local/bin`, never edits shell startup files (it prints the
   line to add instead).
 - Windows: no prebuilt binaries; the README explains building from source.
