@@ -100,25 +100,10 @@ svg {
   height: 18px;
 }
 main {
-  padding: 38px 0 48px;
+  padding: 24px 0 48px;
 }
-.intro {
-  margin: 0 0 26px;
-}
-.intro h1 {
-  font-size: clamp(36px, 4vw, 54px);
-  letter-spacing: -2.8px;
-  line-height: 1.07;
+.brand-heading {
   margin: 0;
-  font-weight: 650;
-}
-.intro h1 span {
-  color: var(--gold);
-}
-.intro p {
-  color: var(--muted);
-  margin: 10px 0 0;
-  font-size: 15px;
 }
 .workspace {
   display: grid;
@@ -126,10 +111,17 @@ main {
   gap: 22px;
   align-items: start;
 }
-.left {
+.editor {
   display: grid;
   gap: 18px;
   min-width: 0;
+}
+.preview {
+  position: sticky;
+  top: 12px;
+  z-index: 1;
+  container-type: inline-size;
+  align-self: start;
 }
 .card {
   background: var(--panel);
@@ -173,8 +165,9 @@ main {
   position: relative;
   isolation: isolate;
   display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   place-items: center;
-  aspect-ratio: 1.68;
+  height: min(60cqw, 68svh);
   background-color: #343d3b;
   background-image:
     linear-gradient(#c2dcc214 1px, transparent 1px),
@@ -214,8 +207,8 @@ main {
 }
 canvas {
   display: block;
-  width: 66%;
-  height: auto;
+  width: auto;
+  height: 82%;
   transform: rotate(-3deg);
   box-shadow: 2px 9px 14px #13171377;
 }
@@ -382,7 +375,9 @@ small {
   color: #fff;
 }
 .export {
-  padding: 21px 22px 17px;
+  margin-top: 16px;
+  border-top: 1px solid var(--edge);
+  padding-top: 16px;
   text-align: center;
 }
 .export button,
@@ -408,6 +403,9 @@ dialog button:hover {
   display: block;
   margin-top: 9px;
   font-size: 11px;
+}
+.group:last-child {
+  border-bottom: none;
 }
 .photos {
   padding: 0 20px 16px;
@@ -523,22 +521,26 @@ dialog p {
     gap: 14px;
   }
   main {
-    padding: 25px 0 30px;
+    padding: 14px 0 30px;
   }
-  .intro {
-    margin-bottom: 18px;
+  html {
+    scroll-padding-top: calc(var(--mobile-mat-height) + 78px);
+    --mobile-mat-height: min(55vw, 28svh);
   }
-  .intro p {
-    font-size: 14px;
+  .preview {
+    top: 0;
   }
-  .left {
+  .editor {
     gap: 14px;
   }
   .mat {
-    aspect-ratio: 1.45;
+    height: var(--mobile-mat-height);
   }
-  canvas {
-    width: 74%;
+  .preview .panel-title {
+    min-height: 38px;
+  }
+  .preview .metadata {
+    min-height: 28px;
   }
   .panel-title {
     min-height: 49px;
@@ -548,9 +550,7 @@ dialog p {
     padding: 16px 0;
     margin: 0 16px;
   }
-  .export {
-    padding: 18px 16px;
-  }
+
   .photos {
     padding: 0 16px 14px;
   }
@@ -575,22 +575,6 @@ dialog p {
   }
 }
 
-.view-preview {
-  display: none;
-}
-@media (max-width: 800px) {
-  .view-preview {
-    display: flex;
-    align-items: center;
-    min-height: 44px;
-    color: var(--gold);
-    font-size: 13px;
-    text-decoration: none;
-  }
-  .preview {
-    scroll-margin-top: 12px;
-  }
-}
 .motif {
   height: 26px;
   line-height: 26px;
@@ -629,30 +613,4 @@ dialog [hidden] {
   height: 10px;
   border-width: 1px;
   border-radius: 2px;
-}
-.mat[data-shape="Square"] {
-  aspect-ratio: 1.48;
-}
-.mat[data-shape="Square"] canvas {
-  width: 54%;
-}
-.mat[data-shape="Portrait"] {
-  aspect-ratio: 1.45;
-}
-.mat[data-shape="Portrait"] canvas {
-  width: 42%;
-}
-@media (max-width: 800px) {
-  .mat[data-shape="Square"] {
-    aspect-ratio: 1.12;
-  }
-  .mat[data-shape="Square"] canvas {
-    width: 74%;
-  }
-  .mat[data-shape="Portrait"] {
-    aspect-ratio: 1;
-  }
-  .mat[data-shape="Portrait"] canvas {
-    width: 61%;
-  }
 }

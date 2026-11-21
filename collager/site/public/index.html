@@ -53,46 +53,66 @@
   <body>
     <header>
       <div class="bar">
-        <a class="brand" href="./"><img src="mark.svg" alt="" />collager</a
-        ><button class="help" id="help">
+        <h1 class="brand-heading">
+          <a class="brand" href="./"><img src="mark.svg" alt="" />collager</a>
+        </h1>
+        <button class="help" id="help">
           <i data-icon="help"></i>How to use
         </button>
       </div>
     </header>
     <main>
-      <div class="intro">
-        <h1>Collage studio<span>.</span></h1>
-        <p>Pick a layout, add your photos, and make it yours.</p>
-      </div>
       <div class="workspace">
-        <div class="left">
-          <section
-            id="preview"
-            class="preview card"
-            aria-label="Collage preview"
-          >
+        <section id="preview" class="preview card" aria-label="Collage preview">
+          <div class="panel-title">
+            <h2><i data-icon="scan"></i>Preview</h2>
+            <span class="live"><b></b>Live preview</span>
+          </div>
+          <div class="mat">
+            <div class="corner tl"></div>
+            <div class="corner tr"></div>
+            <div class="corner bl"></div>
+            <div class="corner br"></div>
+            <canvas
+              width="2400"
+              height="1800"
+              id="canvas"
+              aria-label="Live collage preview"
+            ></canvas>
+          </div>
+          <div class="metadata">
+            <span
+              ><i class="shape-icon" aria-hidden="true" id="preview-icon"></i
+              ><span id="shape-name">Landscape</span><em>/</em
+              ><span id="ratio">4:3</span></span
+            ><span id="dimensions">2400 × 1800 px</span>
+          </div>
+        </section>
+        <div class="editor">
+          <section class="settings card">
             <div class="panel-title">
-              <h2><i data-icon="scan"></i>Preview</h2>
-              <span class="live"><b></b>Live preview</span>
+              <h2><i data-icon="sliders"></i>Customize</h2>
             </div>
-            <div class="mat">
-              <div class="corner tl"></div>
-              <div class="corner tr"></div>
-              <div class="corner bl"></div>
-              <div class="corner br"></div>
-              <canvas
-                width="2400"
-                height="1800"
-                id="canvas"
-                aria-label="Live collage preview"
-              ></canvas>
+            <div class="group">
+              <h3 id="shape-label">Collage shape</h3>
+              <div
+                class="options shapes"
+                id="shapes"
+                role="group"
+                aria-labelledby="shape-label"
+              ></div>
             </div>
-            <div class="metadata">
-              <span
-                ><i class="shape-icon" aria-hidden="true" id="preview-icon"></i
-                ><span id="shape-name">Landscape</span><em>/</em
-                ><span id="ratio">4:3</span></span
-              ><span id="dimensions">2400 × 1800 px</span>
+            <div class="group">
+              <h3>Layout</h3>
+              <div class="options layouts" id="layouts"></div>
+            </div>
+            <div class="group">
+              <h3>Frame style</h3>
+              <div class="options frames" id="frames"></div>
+            </div>
+            <div class="group colors">
+              <h3>Frame color <small id="color-name"></small></h3>
+              <div id="swatches"></div>
             </div>
           </section>
           <section class="photos card">
@@ -104,42 +124,15 @@
             </div>
             <div id="slots"></div>
             <small id="photo-note"></small>
+            <div class="export">
+              <button id="download">
+                <i data-icon="download"></i>Download collage
+              </button>
+              <button id="share"><i data-icon="share"></i>Share collage</button>
+              <small>High-resolution PNG</small>
+            </div>
           </section>
         </div>
-        <section class="settings card">
-          <div class="panel-title">
-            <h2><i data-icon="sliders"></i>Customize</h2>
-            <a class="view-preview" href="#preview">View preview ↑</a>
-          </div>
-          <div class="group">
-            <h3 id="shape-label">Collage shape</h3>
-            <div
-              class="options shapes"
-              id="shapes"
-              role="group"
-              aria-labelledby="shape-label"
-            ></div>
-          </div>
-          <div class="group">
-            <h3>Layout</h3>
-            <div class="options layouts" id="layouts"></div>
-          </div>
-          <div class="group">
-            <h3>Frame style</h3>
-            <div class="options frames" id="frames"></div>
-          </div>
-          <div class="group colors">
-            <h3>Frame color <small id="color-name"></small></h3>
-            <div id="swatches"></div>
-          </div>
-          <div class="export">
-            <button id="download">
-              <i data-icon="download"></i>Download collage
-            </button>
-            <button id="share"><i data-icon="share"></i>Share collage</button>
-            <small>High-resolution PNG</small>
-          </div>
-        </section>
       </div>
       <p id="message" role="status" aria-live="polite"></p>
     </main>
@@ -147,14 +140,17 @@
     <dialog id="guide">
       <h2>Make a collage</h2>
       <ol>
-        <li>Choose a collage shape, then a layout for 2, 3, 4, or 6 photos.</li>
+        <li>
+          Choose a shape and a layout for 2, 3, 4, or 6 photos. Pick a frame and
+          color.
+        </li>
         <li>
           Tap <strong>Add photos</strong> to pick pictures from your phone. Tap
           a thumbnail to replace one.
         </li>
         <li>
-          Pick a frame and color. Tap <strong>Share collage</strong> to send it
-          or <strong>Download collage</strong> to save your PNG.
+          Tap <strong>Share collage</strong> to send it or
+          <strong>Download collage</strong> to save your PNG.
         </li>
       </ol>
       <p>Your photos stay on your device.</p>
