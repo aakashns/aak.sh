@@ -3,6 +3,10 @@
 Terminal-based, encrypted markdown writing app in Rust (ratatui). Built mainly
 for the creator's own daily writing, developed in the open.
 
+- Lives in `writui/` of the aak.sh monorepo since 0.20.0 (moved from
+  aakashns/writui, now archived). PRs, issues and releases are shared with
+  the other projects: look only at writui's.
+
 These notes are for any coding agent. `CLAUDE.md` only imports this file
 (for Claude Code), so edit this one.
 
@@ -16,10 +20,10 @@ These notes are for any coding agent. `CLAUDE.md` only imports this file
 Each PR is usually done in a fresh conversation, so pick up the state from the
 repo and GitHub, not from memory:
 
-1. `git fetch --prune` and `gh pr list --state all --limit 5` to find the
-   latest PR.
+1. `git fetch --prune` and `gh pr list --state all --limit 10` to find the
+   latest writui PR.
 2. **Latest PR still open:** read the feedback (`gh pr view <n> --comments`,
-   plus review comments via `gh api repos/aakashns/writui/pulls/<n>/comments`).
+   plus review comments via `gh api repos/aakashns/aak.sh/pulls/<n>/comments`).
    - Feedback to address → check out that branch, fix it, push, refresh the
      screenshots if the UI changed, and reply on the PR with what changed.
    - No feedback yet → tell the creator it's waiting on them to try and
@@ -28,7 +32,7 @@ repo and GitHub, not from memory:
 3. **Latest PR merged:** `git checkout main && git pull`, then:
    - If the merged PR bumped the version, it was released automatically.
      Check the Release run on `main` succeeded
-     (`gh run list --workflow release.yml --branch main --limit 1`) and tell
+     (`gh run list --workflow writui-release.yml --branch main --limit 1`) and tell
      the creator the release URL. If it failed, fixing it comes first.
    - Tick what landed in `docs/PLAN.md` and update "Next up". Commit that as
      part of the next PR (never push to `main` directly).
@@ -47,9 +51,10 @@ src/          Rust app (single crate)
 presets/      built-in preview CSS, embedded into the binary
 site/         Zola project site: landing page, blog, changelog
 docs/         spec, plan, decisions
+scripts/      release notes
 install.sh    one-line installer, attached to every release
 README.md     for people using writui; CONTRIBUTING.md for working on it
-.github/      CI and release workflows
+../.github/workflows/writui-*.yml   CI and release (repo root)
 ```
 
 ## Rules
@@ -113,25 +118,26 @@ README.md     for people using writui; CONTRIBUTING.md for working on it
      `pr edit`, `pr comment`): put the images and a body file in one folder,
      reference them as `![alt](./name.png)` in the body, and run e.g.
      `gh pr edit <n> --body-file body.md --attach ./name.png --attach ./flow.gif`
-     from that folder (add `-R aakashns/writui`, since that folder isn't
+     from that folder (add `-R aakashns/aak.sh`, since that folder isn't
      the repo). gh uploads them and rewrites the references.
 4. The creator tries it locally and merges. Never merge PRs yourself.
 5. After a merge there's nothing to run: if the PR bumped the version,
-   `.github/workflows/release.yml` publishes the release from `main` on its
+   `../.github/workflows/writui-release.yml` publishes the release from `main` on its
    own. Check it succeeded and report the release URL. The creator upgrades
    with `writui upgrade`, like any user. Tick the items in `docs/PLAN.md`.
 
 ## Versions and releases
 
 The repo is public, and merging a PR that bumps `version` in `Cargo.toml`
-publishes a GitHub release of it. Its notes (`.github/release-notes.sh`)
-list each PR merged since the last release: its title, then the full
+publishes a GitHub release of it, tagged `writui-vX.Y.Z`. Its notes
+(`scripts/release-notes.sh`) list each PR that changed `writui/` since the
+last release: its title, then the full
 message of each of its commits, so write commit messages for users too.
 Every PR that changes the app bumps the version (and `Cargo.lock`, via
 `cargo build`): minor for new behaviour, patch for fixes only (`0.1.0` →
 `0.2.0` / `0.1.1`). Docs-only PRs don't bump and don't release. Release
 builds are macOS and Linux only; Windows is build-from-source. The PR title becomes a heading in the release notes, so make it
-read well to users, not just the creator. CI (`.github/workflows/ci.yml`) runs
+read well to users, not just the creator. CI (`../.github/workflows/writui-ci.yml`) runs
 clippy and the tests on Linux and macOS for every PR; keep it green. Windows
 isn't in CI; the README's Windows section says how to run the checks there.
 
