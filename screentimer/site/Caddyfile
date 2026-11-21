@@ -1,5 +1,5 @@
 # Serves screentimer.aak.sh, assuming the repo is cloned to /srv/aak.sh.
-# Load every site from the main Caddyfile with: import /srv/aak.sh/*/site/Caddyfile
+# Not imported: copy this block into the server's main Caddyfile, and update it there when it changes.
 # Only site/public/ is served; everything else in site/ stays private.
 screentimer.aak.sh {
 	root * /srv/aak.sh/screentimer/site/public
