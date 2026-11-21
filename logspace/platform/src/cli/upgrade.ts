@@ -111,8 +111,8 @@ const latestLogspaceTag = Effect.fnUntraced(function* (api: string) {
       if (
         typeof tag === 'string' &&
         /^logspace-v\d+\.\d+\.\d+$/.test(tag) &&
-        !release.prerelease &&
-        !release.draft
+        release.prerelease === false &&
+        release.draft === false
       )
         return tag
     }

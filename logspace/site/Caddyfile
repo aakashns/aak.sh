@@ -5,8 +5,8 @@ logspace.aak.sh {
 	encode zstd gzip
 	header /install.sh Content-Type "text/plain; charset=utf-8"
 	file_server
-	handle_errors 404 {
-		rewrite * /404.html
+	handle_errors {
+		rewrite * /{err.status_code}.html
 		file_server
 	}
 }

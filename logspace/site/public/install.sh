@@ -47,6 +47,45 @@ fi
 
 command -v curl >/dev/null || fail "curl is needed to download LogSpace"
 
+# Read the GitHub releases array with awk so the installer needs no extra JSON tool.
+# Tokenize quoted strings as a whole, and only read fields on the release objects.
+# Return the first stable LogSpace tag, or the number of releases for pagination.
+stable_release_or_count() {
+  awk '
+    {
+      while (match($0, /"([^"\\]|\\.)*"|[][{}:,]|true|false|null|-?[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?/)) {
+        token = substr($0, RSTART, RLENGTH)
+        $0 = substr($0, RSTART + RLENGTH)
+        if (token == "[" || token == "{") {
+          depth++
+          if (depth == 2) tag = draft = prerelease = ""
+          key = ""
+        } else if (token == "]" || token == "}") {
+          if (depth == 2 && token == "}") {
+            count++
+            if (draft == "false" && prerelease == "false" && tag ~ /^"logspace-v[0-9]+\.[0-9]+\.[0-9]+"$/) {
+              stable = substr(tag, 2, length(tag) - 2)
+              exit
+            }
+          }
+          depth--
+        } else if (depth == 2) {
+          if (token == ":") {
+            key = previous
+          } else {
+            if (key == "\"tag_name\"") tag = token
+            if (key == "\"draft\"") draft = token
+            if (key == "\"prerelease\"") prerelease = token
+            key = ""
+          }
+        }
+        previous = token
+      }
+    }
+    END { if (stable) print stable; else print count + 0 }
+  '
+}
+
 binary="logspace-$os-$arch"
 version=${LOGSPACE_VERSION:-}
 version=${version#v}
@@ -69,17 +108,11 @@ else
   while :; do
     listing=$(curl -fsSL "$release_api?per_page=100&page=$page") ||
       fail "couldn't list LogSpace releases"
-    tags=$(printf '%s\n' "$listing" |
-      grep -oE '"tag_name"[[:space:]]*:[[:space:]]*"[^"]+"' || true)
-    tag=$(printf '%s\n' "$tags" |
-      sed -nE 's/^"tag_name"[[:space:]]*:[[:space:]]*"(logspace-v[0-9]+\.[0-9]+\.[0-9]+)"$/\1/p' |
-      head -n 1)
-    if [ -n "$tag" ]; then
-      url="$releases/download/$tag"
-      break
-    fi
-    [ "$(printf '%s\n' "$tags" | grep -c . || true)" -ge 100 ] ||
-      fail "couldn't find a LogSpace release"
+    selection=$(printf '%s\n' "$listing" | stable_release_or_count)
+    case "$selection" in
+      logspace-v*) url="$releases/download/$selection"; break ;;
+      *) [ "$selection" -ge 100 ] || fail "couldn't find a stable LogSpace release" ;;
+    esac
     page=$((page + 1))
   done
 fi

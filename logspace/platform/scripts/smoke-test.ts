@@ -150,7 +150,18 @@ let releaseServer = Bun.serve({
         }))
         return Response.json(otherProjects)
       }
-      return new Response(JSON.stringify([{ tag_name: `logspace-v${latest}` }], null, 2))
+      let logspaceReleases = [
+        { tag_name: 'logspace-v100.0.0', prerelease: true, draft: false },
+        { tag_name: 'logspace-v100.0.1', prerelease: false, draft: true },
+        {
+          tag_name: `logspace-v${latest}`,
+          prerelease: false,
+          draft: false,
+          assets: [{ tag_name: 'logspace-v100.0.2', draft: true }],
+          body: 'A release note with {"tag_name":"logspace-v100.0.3","prerelease":true}',
+        },
+      ]
+      return new Response(JSON.stringify(logspaceReleases, null, 2))
     }
     if (url.pathname === '/releases/latest') {
       return Response.redirect(new URL(`/releases/tag/v${latest}`, url), 302)
@@ -206,7 +217,7 @@ try {
     ['sh', installer],
     0,
     installed,
-    'install.sh skips other projects and finds a LogSpace release on the next page',
+    'install.sh finds a stable LogSpace release after other projects, prereleases, and drafts',
     installEnv(namespaced),
   )
   let inode = (await fs.stat(copy)).ino
