@@ -1,0 +1,17 @@
+# Copy these blocks into the server's main Caddyfile.
+# Build from /srv/aak.sh/logspace/site with bun install --frozen-lockfile and bun run build.
+logspace.aak.sh {
+	root * /srv/aak.sh/logspace/site/dist
+	encode zstd gzip
+	header /install.sh Content-Type "text/plain; charset=utf-8"
+	file_server
+	handle_errors {
+		rewrite * /{err.status_code}.html
+		file_server
+	}
+}
+
+# Point the old domains at this server before enabling the redirect.
+logspace.app, www.logspace.app {
+	redir https://logspace.aak.sh{uri} permanent
+}

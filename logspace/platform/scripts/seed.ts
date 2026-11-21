@@ -1,0 +1,17 @@
+// Fills the database and media storage that the environment names (DATABASE_PATH, MEDIA_DIR)
+// with the sample posts the tests use, replacing any posts already there, for trying the app
+// locally.
+//
+//   DATABASE_PATH=data/app.sqlite MEDIA_DIR=data/media bun scripts/seed.ts
+import { Effect, Layer } from 'effect'
+
+import { AppConfig } from '../src/lib/config.ts'
+import { AppLive } from '../src/server.ts'
+import { seedDatabase, seedMedia } from '../test/seed.ts'
+
+await Effect.runPromise(
+  Effect.andThen(seedMedia, seedDatabase).pipe(
+    Effect.provide(AppLive.pipe(Layer.provide(AppConfig.layer))),
+  ),
+)
+console.log('Seeded the sample posts')

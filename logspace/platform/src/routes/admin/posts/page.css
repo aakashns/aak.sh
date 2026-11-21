@@ -1,0 +1,37 @@
+/*
+ * /admin/posts's list of posts (see page.tsx).
+ */
+@layer components {
+  /* No lines between posts: each one's date sets it off from the one above. */
+  .post-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-inline: -0.75rem;
+  }
+
+  /* The whole row is the link to edit the post. */
+  .post-row {
+    display: block;
+    padding: 0.75rem;
+    border-radius: var(--radius-xl);
+    outline: none;
+    transition: background-color 150ms;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--muted);
+      }
+    }
+    &:focus-visible {
+      box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+    }
+  }
+
+  .post-summary {
+    margin-top: 0.125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
