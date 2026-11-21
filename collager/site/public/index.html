@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#000000" />
+    <title>Collager — Collage studio</title>
+    <link rel="icon" href="mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="studio.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="bar">
+        <a class="brand" href="./"><img src="mark.svg" alt="" />collager</a
+        ><button class="help" id="help">
+          <i data-icon="help"></i>How to use
+        </button>
+      </div>
+    </header>
+    <main>
+      <div class="intro">
+        <h1>Collage studio<span>.</span></h1>
+        <p>Pick a layout, add your photos, and make it yours.</p>
+      </div>
+      <div class="workspace">
+        <div class="left">
+          <section
+            id="preview"
+            class="preview card"
+            aria-label="Collage preview"
+          >
+            <div class="panel-title">
+              <h2><i data-icon="scan"></i>Preview</h2>
+              <span class="live"><b></b>Live preview</span>
+            </div>
+            <div class="mat">
+              <div class="corner tl"></div>
+              <div class="corner tr"></div>
+              <div class="corner bl"></div>
+              <div class="corner br"></div>
+              <canvas
+                width="2400"
+                height="1800"
+                id="canvas"
+                aria-label="Live collage preview"
+              ></canvas>
+            </div>
+            <div class="metadata">
+              <span><i data-icon="landscape"></i>Landscape <em>/</em> 4:3</span
+              ><span>2400 × 1800 px</span>
+            </div>
+          </section>
+          <section class="photos card">
+            <div class="panel-title">
+              <h2><i data-icon="images"></i>Your photos</h2>
+              <button id="add" class="add">
+                <i data-icon="plus"></i><span id="add-label">Add photos</span>
+              </button>
+            </div>
+            <div id="slots"></div>
+            <small id="photo-note"></small>
+          </section>
+        </div>
+        <section class="settings card">
+          <div class="panel-title">
+            <h2><i data-icon="sliders"></i>Customize</h2>
+            <a class="view-preview" href="#preview">View preview ↑</a>
+          </div>
+          <div class="group">
+            <h3>Layout</h3>
+            <div class="options layouts" id="layouts"></div>
+          </div>
+          <div class="group">
+            <h3>Frame style</h3>
+            <div class="options frames" id="frames"></div>
+          </div>
+          <div class="group colors">
+            <h3>Frame color <small id="color-name"></small></h3>
+            <div id="swatches"></div>
+          </div>
+          <div class="export">
+            <button id="download">
+              <i data-icon="download"></i>Download collage</button
+            ><small>High-resolution PNG</small>
+          </div>
+        </section>
+      </div>
+      <p id="message" role="status" aria-live="polite"></p>
+    </main>
+    <input type="file" accept="image/*" multiple hidden id="files" />
+    <dialog id="guide">
+      <h2>Make a collage</h2>
+      <ol>
+        <li>Choose a layout for 2, 3, 4, or 6 photos.</li>
+        <li>
+          Tap <strong>Add photos</strong> to pick pictures from your phone. Tap
+          a thumbnail to replace one.
+        </li>
+        <li>
+          Pick a frame and color, then tap <strong>Download collage</strong> to
+          save your PNG.
+        </li>
+      </ol>
+      <p>Your photos stay on your device.</p>
+      <form method="dialog"><button>Got it</button></form>
+    </dialog>
+  </body>
+</html>
