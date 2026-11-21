@@ -81,7 +81,7 @@ jobs:
     if: needs.check.outputs.release == 'true'
     runs-on: ubuntu-latest
     steps:
-      # All of history and the tags, for the release notes.
+      # All of history and the tags, to find the last writui release.
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
@@ -97,6 +97,7 @@ jobs:
         run: |
           (cd dist && sha256sum writui-* > SHA256SUMS)
           cp writui/install.sh dist/
-          writui/scripts/release-notes.sh "$VERSION" > notes.md
+          # GitHub's generated notes: the PRs merged since the last writui release.
+          prev=$(git describe --tags --abbrev=0 --match 'writui-v*' "$GITHUB_SHA")
           gh release create "writui-v$VERSION" dist/* --target "$GITHUB_SHA" \
-            --title "writui $VERSION" --notes-file notes.md
+            --title "writui $VERSION" --generate-notes --notes-start-tag "$prev"

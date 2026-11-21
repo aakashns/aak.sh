@@ -10,11 +10,6 @@ for the creator's own daily writing, developed in the open.
 These notes are for any coding agent. `CLAUDE.md` only imports this file
 (for Claude Code), so edit this one.
 
-- Product spec: `docs/SPEC.md` — quoted parts are the creator's own words; keep
-  them verbatim. Update the **Details** when decisions change.
-- Plan: `docs/PLAN.md` — milestones with checkboxes. Tick items as they land.
-- Technical decisions: `docs/DECISIONS.md` — append, don't rewrite.
-
 ## When the creator says "continue"
 
 Each PR is usually done in a fresh conversation, so pick up the state from the
@@ -34,24 +29,18 @@ repo and GitHub, not from memory:
      Check the Release run on `main` succeeded
      (`gh run list --workflow writui-release.yml --branch main --limit 1`) and tell
      the creator the release URL. If it failed, fixing it comes first.
-   - Tick what landed in `docs/PLAN.md` and update "Next up". Commit that as
-     part of the next PR (never push to `main` directly).
    - If the merged PR asked questions that weren't answered in its comments,
      ask them now before they affect the next PR.
-   - Start the next PR from "Next up".
+   - Ask the creator what the next PR should be.
 4. Before ending a session, make sure the repo tells the next session
-   everything: "Next up" in `docs/PLAN.md` is current, open questions are in
-   the PR description, and anything decided in conversation is in
-   `docs/SPEC.md` / `docs/DECISIONS.md` / this file.
+   everything: open questions are in the PR description, and anything
+   decided in conversation is in this file.
 
 ## Repo layout
 
 ```
 src/          Rust app (single crate)
-presets/      built-in preview CSS, embedded into the binary
 site/         Zola project site: landing page, blog, changelog
-docs/         spec, plan, decisions
-scripts/      release notes
 install.sh    one-line installer, attached to every release
 README.md     for people using writui; CONTRIBUTING.md for working on it
 ../.github/workflows/writui-*.yml   CI and release (repo root)
@@ -124,19 +113,17 @@ README.md     for people using writui; CONTRIBUTING.md for working on it
 5. After a merge there's nothing to run: if the PR bumped the version,
    `../.github/workflows/writui-release.yml` publishes the release from `main` on its
    own. Check it succeeded and report the release URL. The creator upgrades
-   with `writui upgrade`, like any user. Tick the items in `docs/PLAN.md`.
+   with `writui upgrade`, like any user.
 
 ## Versions and releases
 
 The repo is public, and merging a PR that bumps `version` in `Cargo.toml`
-publishes a GitHub release of it, tagged `writui-vX.Y.Z`. Its notes
-(`scripts/release-notes.sh`) list each PR that changed `writui/` since the
-last release: its title, then the full
-message of each of its commits, so write commit messages for users too.
+publishes a GitHub release of it, tagged `writui-vX.Y.Z`, with GitHub's
+generated notes: the PRs merged since the last writui release.
 Every PR that changes the app bumps the version (and `Cargo.lock`, via
 `cargo build`): minor for new behaviour, patch for fixes only (`0.1.0` →
 `0.2.0` / `0.1.1`). Docs-only PRs don't bump and don't release. Release
-builds are macOS and Linux only; Windows is build-from-source. The PR title becomes a heading in the release notes, so make it
+builds are macOS and Linux only; Windows is build-from-source. The PR title is a line in the release notes, so make it
 read well to users, not just the creator. CI (`../.github/workflows/writui-ci.yml`) runs
 clippy and the tests on Linux and macOS for every PR; keep it green. Windows
 isn't in CI; the README's Windows section says how to run the checks there.

@@ -1,19 +1,4 @@
-/* writui.aak.sh: light Inter on dark, one narrow column, like the app. */
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url("fonts/InterVariable.woff2") format("woff2");
-}
-@font-face {
-  font-family: "Inter";
-  font-style: italic;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url("fonts/InterVariable-Italic.woff2") format("woff2");
-}
+/* writui.aak.sh: the system font on black, one narrow column, like the app. */
 
 :root {
   --bg: #000;
@@ -30,11 +15,10 @@
 html {
   background: var(--bg);
   color: var(--text);
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-size: 18px;
   line-height: 1.65;
   -webkit-text-size-adjust: 100%;
-  font-feature-settings: "cv11";
 }
 
 body {

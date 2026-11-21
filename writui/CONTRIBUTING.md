@@ -12,10 +12,7 @@ agree on the approach first.
 
 ```
 src/          the app (a single Rust crate)
-docs/         SPEC.md (what we're building), PLAN.md (milestones, what's
-              next), DECISIONS.md (technical choices and why)
 site/         the project site, writui.aak.sh (Zola)
-scripts/      release notes
 install.sh    the one-line installer for macOS and Linux
 
 ../.github/workflows/writui-*.yml   CI and release workflows (at the repo root)
@@ -76,7 +73,7 @@ app, with screenshots for anything visible.
 Every PR that changes the app bumps `version` in `Cargo.toml`: minor for new
 behaviour, patch for fixes only. Merging a PR with a new version releases it
 automatically: GitHub Actions builds the macOS and Linux binaries and
-publishes them, with `install.sh` and notes listing the merged PRs, as a
+publishes them, with `install.sh` and GitHub's generated notes (the merged PRs), as a
 GitHub release tagged `writui-vX.Y.Z`. PRs that keep the version (docs only)
 release nothing. Releases up to 0.20.0 are on the old
 [aakashns/writui](https://github.com/aakashns/writui/releases) repo, from
