@@ -1,0 +1,98 @@
+# Publishes a GitHub release whenever main has a version (in Cargo.toml) that
+# hasn't been released yet, so merging a PR that bumps the version releases
+# it. Merges that keep the version (docs-only PRs) release nothing. Pull
+# requests that touch this file run the builds without publishing.
+#
+# Binary names carry no version, so the latest one is always at
+# https://github.com/aakashns/writui/releases/latest/download/<name>
+# (install.sh is attached to every release too).
+name: Release
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths: [.github/workflows/release.yml]
+
+permissions:
+  contents: write
+
+# One release at a time; never cancel one halfway.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release: ${{ steps.version.outputs.release }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_EVENT_NAME" != push ]; then
+            echo "Pull request: build only"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          elif git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
+            echo "v$version is already released; nothing to do"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Releasing v$version"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: check
+    if: needs.check.outputs.release == 'true' || github.event_name == 'pull_request'
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macos-arm64, target: aarch64-apple-darwin, os: macos-latest }
+          - { name: macos-x86_64, target: x86_64-apple-darwin, os: macos-latest }
+          # 22.04 rather than latest, so the binaries run on older glibc too.
+          - { name: linux-x86_64, target: x86_64-unknown-linux-gnu, os: ubuntu-22.04 }
+          - { name: linux-arm64, target: aarch64-unknown-linux-gnu, os: ubuntu-22.04-arm }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - run: cargo build --release --locked --target ${{ matrix.target }}
+      - run: |
+          mkdir dist
+          cp "target/${{ matrix.target }}/release/writui" "dist/writui-${{ matrix.name }}"
+      - uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.name }}
+          path: dist/*
+
+  publish:
+    needs: [check, build]
+    if: needs.check.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      # All of history and the tags, for the release notes.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v5
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.check.outputs.version }}
+        run: |
+          (cd dist && sha256sum writui-* > SHA256SUMS)
+          cp install.sh dist/
+          .github/release-notes.sh "$VERSION" > notes.md
+          gh release create "v$VERSION" dist/* --target "$GITHUB_SHA" \
+            --title "writui $VERSION" --notes-file notes.md
