@@ -3,7 +3,6 @@ import { frames } from "./frames.js";
 const $ = (id) => document.getElementById(id);
 const icons = {
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 .5c0 2-2.5 2.1-2.5 4M12 17h.01"/>',
-  scan: '<path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><rect x="7" y="7" width="10" height="10" rx="1"/>',
   images:
     '<rect x="6" y="3" width="15" height="15" rx="2"/><path d="M3 8v11a2 2 0 0 0 2 2h12M7 15l4-5 3 3 2-2 4 5"/><circle cx="16" cy="7" r="1"/>',
   sliders:
@@ -23,9 +22,9 @@ document.querySelectorAll("[data-icon]").forEach((el) => {
 const canvas = $("canvas");
 const ctx = canvas.getContext("2d");
 const shapes = {
-  Square: { width: 2400, height: 2400, ratio: "1:1" },
-  Landscape: { width: 2400, height: 1800, ratio: "4:3" },
-  Portrait: { width: 1800, height: 2400, ratio: "3:4" },
+  Square: { width: 2400, height: 2400 },
+  Landscape: { width: 2400, height: 1800 },
+  Portrait: { width: 1800, height: 2400 },
 };
 let shape = "Landscape";
 const palette = [
@@ -173,13 +172,9 @@ function choose(parent, value, label, markup, onSelect) {
 }
 function setShape(name) {
   shape = name;
-  const { width, height, ratio } = shapes[name];
+  const { width, height } = shapes[name];
   canvas.width = width;
   canvas.height = height;
-  $("preview-icon").dataset.shape = name;
-  $("shape-name").textContent = name;
-  $("ratio").textContent = ratio;
-  $("dimensions").textContent = width + " × " + height + " px";
 }
 for (const name of Object.keys(shapes)) {
   choose(

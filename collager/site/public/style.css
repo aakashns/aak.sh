@@ -43,8 +43,7 @@ button:disabled {
 header {
   border-bottom: 1px solid #27272a;
 }
-.bar,
-main {
+.bar {
   width: min(1192px, calc(100% - 80px));
   margin: auto;
 }
@@ -99,29 +98,46 @@ svg {
   width: 18px;
   height: 18px;
 }
-main {
-  padding: 24px 0 48px;
+html {
+  --preview-height: min(380px, 42svh);
+  scroll-padding-top: calc(var(--preview-height) + 12px);
 }
 .brand-heading {
   margin: 0;
 }
-.workspace {
-  display: grid;
-  grid-template-columns: minmax(0, 1.85fr) minmax(315px, 1fr);
-  gap: 22px;
-  align-items: start;
+main {
+  padding-bottom: 32px;
+}
+@media (min-width: 801px) {
+  .settings {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .settings .panel-title {
+    grid-column: 1 / -1;
+  }
+  .settings .group:nth-last-child(2) {
+    border-bottom: 0;
+  }
+  .export {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 8px;
+  }
+  .photos .export #share {
+    margin-top: 0;
+  }
+  .export small {
+    grid-column: 1 / -1;
+  }
 }
 .editor {
+  width: min(1000px, calc(100% - 80px));
+  margin: 22px auto 0;
   display: grid;
+  align-items: start;
   gap: 18px;
-  min-width: 0;
-}
-.preview {
-  position: sticky;
-  top: 12px;
-  z-index: 1;
-  container-type: inline-size;
-  align-self: start;
 }
 .card {
   background: var(--panel);
@@ -149,12 +165,14 @@ main {
   color: #c3beb9;
 }
 .mat {
-  position: relative;
+  position: sticky;
+  top: 0;
+  z-index: 1;
   isolation: isolate;
   display: grid;
   grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   place-items: center;
-  height: min(60cqw, 68svh);
+  height: var(--preview-height);
   background-color: #343d3b;
   background-image:
     linear-gradient(#c2dcc214 1px, transparent 1px),
@@ -165,32 +183,6 @@ main {
     22px 22px,
     auto;
   overflow: hidden;
-}
-.corner {
-  position: absolute;
-  width: 13px;
-  height: 13px;
-  color: #aabcb080;
-}
-.tl,
-.bl {
-  left: 17px;
-  border-left: 1px solid;
-}
-.tr,
-.br {
-  right: 17px;
-  border-right: 1px solid;
-}
-.tl,
-.tr {
-  top: 17px;
-  border-top: 1px solid;
-}
-.bl,
-.br {
-  bottom: 17px;
-  border-bottom: 1px solid;
 }
 .print {
   position: relative;
@@ -225,30 +217,6 @@ main {
   .preview-photo:hover {
     box-shadow: inset 0 0 0 2px #fffd;
   }
-}
-.metadata,
-.metadata span {
-  display: flex;
-  align-items: center;
-}
-.metadata {
-  min-height: 38px;
-  justify-content: space-between;
-  padding: 0 20px;
-  color: #b5b1b1;
-  font:
-    11px ui-monospace,
-    monospace;
-}
-.metadata span {
-  gap: 8px;
-}
-.metadata svg {
-  width: 14px;
-}
-.metadata em {
-  color: #646368;
-  font-style: normal;
 }
 .settings .panel-title {
   border-bottom: 1px solid var(--edge);
@@ -517,7 +485,7 @@ dialog p {
 }
 @media (max-width: 800px) {
   .bar,
-  main {
+  .editor {
     width: min(610px, calc(100% - 32px));
   }
   .bar {
@@ -530,31 +498,13 @@ dialog p {
     width: 29px;
     height: 29px;
   }
-  .workspace {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-  main {
-    padding: 14px 0 30px;
-  }
   html {
-    scroll-padding-top: calc(var(--mobile-mat-height) + 78px);
-    --mobile-mat-height: min(55vw, 28svh);
-  }
-  .preview {
-    top: 0;
+    --preview-height: min(55vw, 30svh);
   }
   .editor {
+    grid-template-columns: 1fr;
+    margin: 14px auto 0;
     gap: 14px;
-  }
-  .mat {
-    height: var(--mobile-mat-height);
-  }
-  .preview .panel-title {
-    min-height: 38px;
-  }
-  .preview .metadata {
-    min-height: 28px;
   }
   .panel-title {
     min-height: 49px;
@@ -571,9 +521,6 @@ dialog p {
   .help,
   .add {
     min-height: 44px;
-  }
-  .metadata {
-    padding: 0 14px;
   }
   .card {
     border-radius: 13px;
@@ -623,15 +570,16 @@ dialog [hidden] {
 .shape-icon[data-shape="Portrait"] {
   aspect-ratio: 3 / 4;
 }
-.metadata .shape-icon {
-  height: 10px;
-  border-width: 1px;
-  border-radius: 2px;
-}
 
 #add-text {
-  min-height: 36px;
-  gap: 7px;
+  position: absolute;
+  top: 10px;
+  right: max(10px, env(safe-area-inset-right));
+  z-index: 1;
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  box-shadow: 0 2px 6px #0004;
 }
 #add-text b {
   font:

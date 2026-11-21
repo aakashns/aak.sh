@@ -62,91 +62,75 @@
       </div>
     </header>
     <main>
-      <div class="workspace">
-        <section id="preview" class="preview card" aria-label="Collage preview">
+      <section id="preview" class="mat" aria-label="Collage preview">
+        <button
+          id="add-text"
+          class="add"
+          type="button"
+          aria-label="Add text"
+          title="Add text"
+          aria-haspopup="dialog"
+        >
+          <b aria-hidden="true">T</b>
+        </button>
+        <div class="print">
+          <canvas
+            width="2400"
+            height="1800"
+            id="canvas"
+            aria-label="Live collage preview"
+          ></canvas>
+          <div
+            id="preview-photos"
+            role="group"
+            aria-label="Edit photos in the preview"
+          ></div>
+        </div>
+      </section>
+      <div class="editor">
+        <section class="settings card">
           <div class="panel-title">
-            <h2><i data-icon="scan"></i>Preview</h2>
-            <button
-              type="button"
-              id="add-text"
-              class="add"
-              aria-haspopup="dialog"
-            >
-              <b aria-hidden="true">T</b> Add text
-            </button>
+            <h2><i data-icon="sliders"></i>Customize</h2>
           </div>
-          <div class="mat">
-            <div class="corner tl"></div>
-            <div class="corner tr"></div>
-            <div class="corner bl"></div>
-            <div class="corner br"></div>
-            <div class="print">
-              <canvas
-                width="2400"
-                height="1800"
-                id="canvas"
-                aria-label="Live collage preview"
-              ></canvas>
-              <div
-                id="preview-photos"
-                role="group"
-                aria-label="Edit photos in the preview"
-              ></div>
-            </div>
+          <div class="group">
+            <h3 id="shape-label">Collage shape</h3>
+            <div
+              class="options shapes"
+              id="shapes"
+              role="group"
+              aria-labelledby="shape-label"
+            ></div>
           </div>
-          <div class="metadata">
-            <span
-              ><i class="shape-icon" aria-hidden="true" id="preview-icon"></i
-              ><span id="shape-name">Landscape</span><em>/</em
-              ><span id="ratio">4:3</span></span
-            ><span id="dimensions">2400 × 1800 px</span>
+          <div class="group">
+            <h3>Layout</h3>
+            <div class="options layouts" id="layouts"></div>
+          </div>
+          <div class="group">
+            <h3>Frame style</h3>
+            <div class="options frames" id="frames"></div>
+          </div>
+          <div class="group colors">
+            <h3>Frame color <small id="color-name"></small></h3>
+            <div id="swatches"></div>
           </div>
         </section>
-        <div class="editor">
-          <section class="settings card">
-            <div class="panel-title">
-              <h2><i data-icon="sliders"></i>Customize</h2>
-            </div>
-            <div class="group">
-              <h3 id="shape-label">Collage shape</h3>
-              <div
-                class="options shapes"
-                id="shapes"
-                role="group"
-                aria-labelledby="shape-label"
-              ></div>
-            </div>
-            <div class="group">
-              <h3>Layout</h3>
-              <div class="options layouts" id="layouts"></div>
-            </div>
-            <div class="group">
-              <h3>Frame style</h3>
-              <div class="options frames" id="frames"></div>
-            </div>
-            <div class="group colors">
-              <h3>Frame color <small id="color-name"></small></h3>
-              <div id="swatches"></div>
-            </div>
-          </section>
-          <section class="photos card">
-            <div class="panel-title">
-              <h2><i data-icon="images"></i>Your photos</h2>
-              <button id="add" class="add">
-                <i data-icon="plus"></i><span id="add-label">Add photos</span>
-              </button>
-            </div>
-            <div id="slots"></div>
-            <small id="photo-note"></small>
-            <div class="export">
-              <button id="download">
-                <i data-icon="download"></i>Download collage
-              </button>
-              <button id="share"><i data-icon="share"></i>Share collage</button>
-              <small>High-resolution PNG</small>
-            </div>
-          </section>
-        </div>
+        <section class="photos card">
+          <div class="panel-title">
+            <h2><i data-icon="images"></i>Your photos</h2>
+            <button id="add" class="add">
+              <i data-icon="plus"></i><span id="add-label">Add photos</span>
+            </button>
+          </div>
+          <div id="slots"></div>
+          <small id="photo-note"></small>
+          <div class="export">
+            <button id="download">
+              <i data-icon="download"></i>Download collage
+            </button>
+            <button id="share"><i data-icon="share"></i>Share collage</button>
+            <small>High-resolution PNG</small>
+          </div>
+        </section>
       </div>
       <p id="message" role="status" aria-live="polite"></p>
     </main>
