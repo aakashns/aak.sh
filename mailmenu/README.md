@@ -1,8 +1,8 @@
 # MailMenu
 
-Website: https://mailmenu.aak.sh
+Check unread Gmail and the next 24 hours of Google Calendar from your Mac’s menu bar. Connect multiple accounts, preview a message, or join a meeting directly from the panel.
 
-A macOS menu bar app to track unread email and upcoming calendar events.
+**[Visit the MailMenu website at mailmenu.aak.sh](https://mailmenu.aak.sh/)**
 
 ![MailMenu showing unread mail and upcoming events for two accounts](docs/screenshot.jpg)
 
@@ -15,7 +15,9 @@ A macOS menu bar app to track unread email and upcoming calendar events.
 - Lists upcoming calendar events in the next 24 hours
 - Join video calls (Meet, Zoom, etc.) with one click
 - Opens at login, fetches fresh data every 2 minutes
-- Completely private and secure, data never leaves your laptop
+- Stores Google refresh tokens in the macOS Keychain
+
+To try the panel with sample accounts, use [demo mode](#demo-mode). Connecting your own inbox requires the Google setup below.
 
 ## Prerequisites
 

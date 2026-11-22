@@ -1,10 +1,22 @@
 # Collager
 
-A single-page, local-first photo collage maker. Choose square (1:1), landscape (4:3), or portrait (3:4), then a layout for two, three, four, or six photos. Pick a frame and color and download or share a PNG with a 2400-pixel long edge. Photos are cropped to fill their cells. The editor holds uploaded pictures in browser memory until you leave or reload.
+Turn two, three, four, or six photos into a framed collage in your browser. Your photos stay on your device.
 
-## Run a preview
+**[Make a collage at collager.aak.sh](https://collager.aak.sh/)**
 
-Run `python3 site/preview.py` from this directory and open `http://127.0.0.1:4183`. Use HTTPS when exposing the preview through a tunnel.
+![Collager showing a three-photo travel collage with a floral frame and the layout controls below](docs/editor.jpg)
+
+Start with the sample photos or add your own. Choose a square, landscape, or portrait canvas, pick a frame and color, then download a PNG with a 2400-pixel long edge. Save your collage before reloading or closing the tab.
+
+## Local development
+
+From the `collager/` directory, start the Python 3 preview server and open <http://127.0.0.1:4183>.
+
+```sh
+python3 site/preview.py
+```
+
+Edit the files in `site/public/` and reload the browser to see your changes. The same files are ready to publish without a build step. Use HTTPS when exposing the preview through a tunnel.
 
 ## Publish
 

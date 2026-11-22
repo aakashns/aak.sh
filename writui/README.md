@@ -1,8 +1,10 @@
 # writui
 
-A writing app for the terminal. No nonsense. Markdown. Local. Encrypted.
+A private Markdown writing app for your terminal. Open it where you left off, write with autosave, and keep named versions of a draft as it develops. Your posts live together in one encrypted file.
 
-[![Writing in writui](site/static/demo.png)](https://writui.aak.sh)
+**[Visit writui.aak.sh for the demo and writing guides](https://writui.aak.sh/)**
+
+![A Markdown draft open in the writui terminal editor](site/static/demo.png)
 
 - **Private.** All your posts live in one file, encrypted with your password.
   Without the password nobody can read them.
