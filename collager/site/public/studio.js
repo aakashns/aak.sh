@@ -172,6 +172,7 @@ function choose(parent, value, label, markup, onSelect) {
 function setShape(name) {
   shape = name;
   const { width, height } = shapes[name];
+  canvas.parentElement.style.setProperty("--print-ratio", width / height);
   canvas.width = width;
   canvas.height = height;
 }

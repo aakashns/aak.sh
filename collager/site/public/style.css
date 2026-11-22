@@ -182,12 +182,16 @@ main {
 }
 .mat > .print {
   position: relative;
+  width: min(100cqw, calc(100cqh * var(--print-ratio)));
+  aspect-ratio: var(--print-ratio);
   box-shadow: 2px 9px 14px #13171377;
 }
 #canvas {
   display: block;
-  max-width: 100cqw;
-  max-height: 100cqh;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 #preview-photos {
   position: absolute;
