@@ -1,17 +1,10 @@
 # Screen Timer
 
-Website: https://screentimer.aak.sh
+See how long your Mac’s screen has been on today. A translucent timer sits in the corner of your choice, lets clicks pass through, and fades when you move the pointer over it.
 
-<img width="701" height="229" alt="image" src="https://github.com/user-attachments/assets/1bd751ca-7edb-49e0-b7c6-3620f68f4f02" />
+**[Visit the Screen Timer website at screentimer.aak.sh](https://screentimer.aak.sh/)**
 
-<img width="701" height="245" alt="image" src="https://github.com/user-attachments/assets/6e960b97-489a-417a-8067-d0651a5e8c4b" />
-
-
-A macOS menu bar app that displays how long the screen has been on today, as a
-large semi-transparent `HH:MM` overlay in a corner of the screen.
-
-The overlay is click-through and fades out while the cursor is over it, so it
-never blocks the content or the interface underneath it.
+<img width="701" alt="Screen Timer showing 01:24 over a terminal window" src="docs/overlay.png">
 
 ## Requirements
 
@@ -63,6 +56,8 @@ osascript -e 'tell application "System Events" to delete login item "Screen Time
 silently on ad-hoc signed builds.
 
 ## Usage
+
+<img width="701" alt="Screen Timer’s Position menu with Bottom Right selected" src="docs/menu.png">
 
 The menu bar item opens a menu with:
 

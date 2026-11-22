@@ -1,8 +1,12 @@
 # LogSpace
 
-Self-host your personal website with blog posts, photos, and videos. Write and publish from your browser. Deploy to your own domain. Free and open source.
+Publish a personal blog on your own domain. Write a quick update, share a photo set, or post a video from your browser. Readers can visit individual posts or subscribe via RSS.
 
-[Website & demo](https://logspace.aak.sh) · [Changelog](https://github.com/aakashns/aak.sh/releases?q=logspace-v&expanded=true) · [Earlier releases](https://github.com/aakashns/logspace/releases) · [Contributing](CONTRIBUTING.md)
+**[Visit logspace.aak.sh for the demo and installation guide](https://logspace.aak.sh/)**
+
+![The public homepage of a sample LogSpace blog in dark mode](site/public/screenshots/home-dark.webp)
+
+[Changelog](https://github.com/aakashns/aak.sh/releases?q=logspace-v&expanded=true) · [Earlier releases](https://github.com/aakashns/logspace/releases) · [Contributing](CONTRIBUTING.md)
 
 ## Deploy
 
@@ -63,6 +67,18 @@ Relative paths are from the working directory. `/admin` stays off until `ADMIN_P
 ## Security
 
 Pages run no scripts but LogSpace's own, under a strict Content Security Policy, and what you write is escaped. The admin is one password, with sessions that last 30 days and end when you log out or change the password. Forms sent from other sites are refused. Uploads are typed by their extension and stored only under `MEDIA_DIR`, and unpublished posts' files aren't served. Link previews fetch only public addresses, and their images are re-encoded before they're served. [CONTRIBUTING.md](CONTRIBUTING.md#security) has the details.
+
+## Local development
+
+With Bun 1.4.4 or later, run the following from `logspace/` to start a temporary blog populated with sample posts.
+
+```sh
+cd platform
+bun install
+bun run dev:demo
+```
+
+The server prints the local address and admin password. Stop it with Ctrl-C to discard the demo data. See the [contributor guide](CONTRIBUTING.md) for tests, release builds, and website development.
 
 ## Contribute
 
