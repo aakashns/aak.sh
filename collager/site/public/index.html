@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#000000" />
+    <meta name="collager-version" content="1" />
     <title>Collager — Free Photo Collage Maker</title>
     <meta
       name="description"
@@ -56,9 +57,16 @@
         <h1 class="brand-heading">
           <a class="brand" href="./"><img src="mark.svg" alt="" />collager</a>
         </h1>
-        <button class="help" id="help">
-          <i data-icon="help"></i>How to use
-        </button>
+        <div class="header-actions">
+          <button class="header-action" id="update" type="button"
+            aria-label="Check for updates" title="Check for updates">
+            <i data-icon="refresh"></i>
+          </button>
+          <button class="header-action" id="help" type="button"
+            aria-label="How to use" title="How to use" aria-haspopup="dialog">
+            <i data-icon="help"></i>
+          </button>
+        </div>
       </div>
     </header>
     <main>
@@ -193,6 +201,14 @@
           <button type="button" id="cancel-text">Cancel</button>
           <button type="submit">Done</button>
         </div>
+      </form>
+    </dialog>
+    <dialog id="update-dialog" aria-labelledby="update-title" aria-describedby="update-note">
+      <h2 id="update-title">Update Collager?</h2>
+      <p id="update-note">A new version is ready. Reloading clears this collage. Download it first if you want to keep it.</p>
+      <form method="dialog" class="text-actions">
+        <button value="cancel" autofocus>Later</button>
+        <button id="reload-app" value="update">Update now</button>
       </form>
     </dialog>
     <dialog id="guide">

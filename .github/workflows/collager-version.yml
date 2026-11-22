@@ -1,0 +1,29 @@
+name: Collager version
+on:
+  pull_request:
+    paths: ["collager/site/public/**"]
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Require a new version for public app changes
+        shell: python
+        run: |
+          import pathlib
+          import re
+          import subprocess
+
+          path = "collager/site/public/index.html"
+          marker = r'<meta name="collager-version" content="(\d+)"'
+          base = subprocess.check_output(["git", "show", f"HEAD^1:{path}"], text=True)
+          previous = re.search(marker, base)
+          current = re.search(marker, pathlib.Path(path).read_text())
+          if not current or (previous and int(current[1]) <= int(previous[1])):
+              raise SystemExit(f"Increment collager-version in {path}.")

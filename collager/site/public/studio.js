@@ -1,8 +1,11 @@
 import { captionEditor } from "./captions.js";
 import { drawPhoto, enableCropGestures } from "./crops.js";
 import { frames } from "./frames.js";
+import { initUpdates } from "./updates.js";
+
 const $ = (id) => document.getElementById(id);
 const icons = {
+  refresh: '<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 8a7.5 7.5 0 0 1 12.4-2L20 9M4 15l2.1 3A7.5 7.5 0 0 0 18.5 16"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 .5c0 2-2.5 2.1-2.5 4M12 17h.01"/>',
   images:
     '<rect x="6" y="3" width="15" height="15" rx="2"/><path d="M3 8v11a2 2 0 0 0 2 2h12M7 15l4-5 3 3 2-2 4 5"/><circle cx="16" cy="7" r="1"/>',
@@ -365,6 +368,7 @@ $("files").onchange = async () => {
     notify("Added " + loaded + " photos. This layout is full.");
 };
 $("add").onclick = () => pick(null);
+initUpdates(notify);
 $("help").onclick = () => $("guide").showModal();
 const expanded = $("expanded-preview");
 const screen = $("preview-screen");

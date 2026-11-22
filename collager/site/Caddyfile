@@ -2,5 +2,6 @@
 collager.aak.sh {
 	root * /srv/aak.sh/collager/site/public
 	encode zstd gzip
+	header Cache-Control "no-cache"
 	file_server
 }
