@@ -2,7 +2,7 @@
 
 A private Markdown writing app for your terminal. Open it where you left off, write with autosave, and keep named versions of a draft as it develops. Your posts live together in one encrypted file.
 
-Website: writui.aak.sh
+Website: [writui.aak.sh](https://writui.aak.sh/)
 
 ![A Markdown draft open in the writui terminal editor](site/static/demo.png)
 
