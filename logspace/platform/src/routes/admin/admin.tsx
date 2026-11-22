@@ -21,6 +21,8 @@ export const adminPage = (
     loggedIn?: boolean | undefined
     // Whether it shows Cloudflare's Turnstile widget.
     turnstile?: boolean | undefined
+    // The navbar's contents, for a page with its own (see Document).
+    navbar?: Child | undefined
   },
 ) =>
   Effect.gen(function* () {
@@ -34,6 +36,7 @@ export const adminPage = (
         title={title}
         styles={options?.styles ?? ''}
         loggedIn={options?.loggedIn}
+        navbar={options?.navbar}
       >
         {content}
       </AdminPage>,

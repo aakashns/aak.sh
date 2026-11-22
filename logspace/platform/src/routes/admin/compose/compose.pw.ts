@@ -41,7 +41,7 @@ async function loadedImages(page: Page, selector: string, count: number) {
     .toBe(true)
 }
 
-test('a text post, previewed as it’s typed', async ({ page }) => {
+test('a text post', async ({ page }) => {
   await openComposer(page)
   await expect(page.getByLabel('Caption', { exact: true })).toBeFocused()
   await caption(page, 'A text post from the browser')
@@ -56,7 +56,6 @@ test('photos upload as they’re chosen, and one can be taken out', async ({ pag
   await caption(page, 'Two photos, then one')
   await upload(page, 'Add photos', [photo, secondPhoto])
   await loadedImages(page, '#composer-media img', 2)
-  await loadedImages(page, '#composer-preview img', 2)
   await page.getByRole('button', { name: 'Remove hike-2.jpg', exact: true }).click()
   await loadedImages(page, '#composer-media img', 1)
   await publish(page)
@@ -168,14 +167,15 @@ test('an edit changes nothing until it’s saved, and × goes back to /admin/pos
   const post = page.url()
 
   await page.goto(`${new URL(post).pathname.replace('/posts/', '/admin/posts/')}/edit`)
-  await expect(page.getByRole('heading', { name: 'Edit Post' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Edit Post', exact: true })).toBeVisible()
   await expect(page.getByLabel('Caption', { exact: true })).toHaveValue('Before the edit')
   await loadedImages(page, '#composer-media img', 2)
   await caption(page, 'After the edit')
   await page.getByRole('button', { name: 'Remove hike-2.jpg', exact: true }).click()
   await loadedImages(page, '#composer-media img', 1)
   // Closing it leaves the post as it was.
-  await page.getByRole('button', { name: 'Revert changes', exact: true }).click()
+  await page.getByRole('button', { name: 'Discard changes', exact: true }).click()
+  await page.getByRole('button', { name: 'Discard', exact: true }).click()
   await expect(page).toHaveURL(/\/admin\/posts$/)
   await page.goto(post)
   await expect(page.locator('main')).toContainText('Before the edit')

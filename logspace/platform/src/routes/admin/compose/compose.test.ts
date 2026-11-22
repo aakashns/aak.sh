@@ -75,16 +75,17 @@ describe('the composer', () => {
 
   it('starts a new post, as a plain form run by Datastar', async () => {
     let html = await (await app.adminFetch('/admin/posts/new')).text()
-    expect(html).toMatch(/<h1 class="page-title">New Post<\/h1>/)
+    expect(html).toMatch(/<h1>New Post<\/h1>/)
     expect(html).toMatch(
       /<form id="composer" method="post" action="\/admin\/posts" enctype="multipart\/form-data"/,
     )
     expect(html).toMatch(/<input type="hidden" name="post_id" value="[0-9a-z]{10}"/)
-    expect(html).toMatch(/<input type="file" name="image_uploads" accept="image\/\*" multiple/)
-    // Its × discards it; there's nothing to delete yet.
     expect(html).toMatch(
-      /<button [^>]*formaction="\/admin\/posts\/discard" aria-label="Discard post"/,
+      /<input type="file" form="composer" name="image_uploads" accept="image\/\*" multiple/,
     )
+    // Its back arrow asks before discarding it; there's nothing to delete yet.
+    expect(html).toMatch(/commandfor="discard-post" [^>]*aria-label="Discard post"/)
+    expect(html).toMatch(/<button [^>]*form="composer" formaction="\/admin\/posts\/discard"/)
     expect(html).not.toMatch(/delete-post/)
     let datastar = capture(html, /<script type="module" src="(\/assets\/datastar\.[0-9a-f]+\.js)"/)
     expect((await app.fetch(datastar)).status).toBe(200)
@@ -93,16 +94,15 @@ describe('the composer', () => {
   it('edits a published post, starting with its caption and media', async () => {
     let post = await samplePost('photos')
     let html = await (await app.adminFetch(`/admin/posts/${post.id}/edit`)).text()
-    expect(html).toMatch(/<h1 class="page-title">Edit Post<\/h1>/)
+    expect(html).toMatch(/<h1>Edit Post<\/h1>/)
     expect(html).toMatch(/<form id="composer" method="post" action="\/admin\/posts"/)
     expect(html).toContain(`<input type="hidden" name="post_id" value="${post.id}">`)
     expect(html).toContain(`>\n${post.caption}</textarea>`)
     for (let file of ['hike-1.jpg', 'hike-2.jpg', 'hike-3.jpg']) {
       expect(html).toContain(`<input type="hidden" name="photo" value="${file}">`)
     }
-    expect(html).toMatch(
-      /<button [^>]*formaction="\/admin\/posts\/discard" aria-label="Revert changes"/,
-    )
+    expect(html).toMatch(/commandfor="discard-post" [^>]*aria-label="Discard changes"/)
+    expect(html).toMatch(/commandfor="delete-post"/)
     expect(html).toMatch(/>\s*Save\s*<\/button>/)
     expect((await app.adminFetch('/admin/posts/nosuchpost/edit')).status).toBe(404)
   })
@@ -174,7 +174,7 @@ describe('the composer', () => {
     expect(await hasPostFile('composer04', 'clip.mp4')).toBe(false)
   })
 
-  it('previews the post as it’s written, without saving it', async () => {
+  it('shows the card for a link as it’s written, without saving it', async () => {
     let post = await samplePost('text')
     let events = await (
       await composerPost('/admin/posts/preview', [
@@ -182,10 +182,8 @@ describe('the composer', () => {
         ['caption', 'Hello https://remix.run'],
       ])
     ).text()
-    expect(events).toContain('data: selector #composer-preview\ndata: mode inner\n')
-    expect(events).toContain('Hello <a target="_blank" rel="noopener" href="https://remix.run">')
-    // An edit's preview keeps the post's date.
-    expect(events).toContain(`datetime="${post.date}"`)
+    expect(events).toContain('data: selector #composer-link\ndata: mode inner\n')
+    expect(events).toContain('<a href="https://remix.run" target="_blank" rel="noopener"')
     expect((await findPost(post.id))?.caption).toBe(post.caption)
   })
 
@@ -370,7 +368,7 @@ describe('the composer', () => {
       ['caption', ''],
     ])
     expect(edit.status).toBe(400)
-    expect(await edit.text()).toMatch(/<h1 class="page-title">Edit Post<\/h1>/)
+    expect(await edit.text()).toMatch(/<h1>Edit Post<\/h1>/)
     expect(await findPost(post.id)).toEqual(post)
   })
 

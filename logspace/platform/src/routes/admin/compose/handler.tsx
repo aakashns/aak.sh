@@ -3,7 +3,7 @@
 //
 // The composer works the same for both: the page holds the post, by its id, and nothing about it
 // is saved until it's posted. As you write, Datastar posts the form, and gets HTML for parts of
-// the page: the media when files are added or removed, and the preview as you type. Files chosen
+// the page: the media when files are added or removed, and the link card as you type. Files chosen
 // are saved under the post's id right away, with names of their own, so a published post's files
 // don't change until it's saved. Posting is a plain form submission, which saves the post, new or
 // published, and goes to it.
@@ -33,9 +33,10 @@ import {
   COMPOSE_PAGE_STYLES,
   COMPOSER_IDS,
   ComposePage,
+  ComposerNavbar,
   ComposerIssues,
+  ComposerLinkCard,
   ComposerMedia,
-  ComposerPreview,
   ComposerTools,
 } from './page.tsx'
 
@@ -102,6 +103,7 @@ const composePage = (
     adminPage(published ? 'Edit Post' : 'New Post', <ComposePage {...props} />, {
       styles: COMPOSE_PAGE_STYLES,
       status: issues ? 400 : 200,
+      navbar: <ComposerNavbar published={props.published} />,
     }),
   )
 
@@ -117,7 +119,7 @@ const editPost = adminOnly(() =>
   }),
 )
 
-// Files chosen are saved right away, and the media and preview are shown with them. The toolbar
+// Files chosen are saved right away, and the media and link card are shown with them. The toolbar
 // is sent again too, so its file inputs start empty. A file taken out is only left out of the
 // form: saving the post removes it, and so does closing the composer (discardComposer).
 const updateComposerMedia = adminOnly(() =>
@@ -142,7 +144,7 @@ const updateComposerMedia = adminOnly(() =>
       [COMPOSER_IDS.issues, <ComposerIssues issues={props.issues} />],
       [COMPOSER_IDS.media, <ComposerMedia {...props} />],
       [COMPOSER_IDS.tools, <ComposerTools />],
-      [COMPOSER_IDS.preview, <ComposerPreview {...props} />, 'inner'],
+      [COMPOSER_IDS.link, <ComposerLinkCard {...props} />, 'inner'],
     )
   }).pipe(
     Effect.catchTag('UploadTooLarge', () =>
@@ -160,13 +162,13 @@ const COMPOSER_TOO_LARGE =
   `That’s too big to upload: files can be up to ${megabytes(MAX_UPLOAD_FILE_SIZE)} each, and ` +
   `${megabytes(MAX_UPLOAD_TOTAL_SIZE)} at once. Choose fewer or smaller files.`
 
-// The preview, for what's typed. The composer doesn't ask for one while files are uploading.
+// The link card, for what's typed. The composer doesn't ask for one while files are uploading.
 const previewComposer = adminOnly(() =>
   Effect.gen(function* () {
     let { values, published } = yield* readComposer
     return patch([
-      COMPOSER_IDS.preview,
-      <ComposerPreview {...yield* composerProps(values, published)} />,
+      COMPOSER_IDS.link,
+      <ComposerLinkCard {...yield* composerProps(values, published)} />,
       'inner',
     ])
   }),

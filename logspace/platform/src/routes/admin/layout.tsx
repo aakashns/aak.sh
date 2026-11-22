@@ -17,15 +17,17 @@ export function AdminPage(props: {
   title: string
   styles: string
   loggedIn?: boolean | undefined
+  navbar?: Child | undefined
   children: Child
 }): Html {
-  let { page, path, title, styles, loggedIn = true, children } = props
+  let { page, path, title, styles, loggedIn = true, navbar, children } = props
   return (
     <Document
       page={page}
       meta={{ path, title, noindex: true }}
       styles={ADMIN_STYLES + styles}
       navActions={loggedIn ? <LogoutButton /> : null}
+      navbar={navbar}
     >
       {children}
     </Document>

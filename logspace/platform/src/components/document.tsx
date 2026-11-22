@@ -50,11 +50,14 @@ export interface DocumentProps {
   readonly styles: string
   // Extra navbar buttons, shown at the far right after the theme toggle.
   readonly navActions?: Child | undefined
+  // What the navbar holds instead of the site's title and buttons, for a page that's a tool of
+  // its own, like the composer.
+  readonly navbar?: Child | undefined
   readonly children?: Child | undefined
 }
 
 export function Document(props: DocumentProps): Html {
-  let { page, meta, preloadImage, styles, navActions, children } = props
+  let { page, meta, preloadImage, styles, navActions, navbar, children } = props
   // The admin pages are shown before the site is configured, so its required settings can be
   // missing. Then the title is the app's, URLs are relative to the page, and there's no RSS feed.
   let saved = page.site
@@ -142,14 +145,18 @@ export function Document(props: DocumentProps): Html {
           <body data-signals="{_shared: ''}">
             <header class="navbar">
               <div class="navbar-content">
-                <a href={urls.home()} class="navbar-title">
-                  <SiteLogo site={site} height="1.2rem" />
-                </a>
-                <div class="nav-actions">
-                  {page.admin ? <ComposeLink /> : null}
-                  <ThemeToggle />
-                  {navActions}
-                </div>
+                {navbar ?? (
+                  <>
+                    <a href={urls.home()} class="navbar-title">
+                      <SiteLogo site={site} height="1.2rem" />
+                    </a>
+                    <div class="nav-actions">
+                      {page.admin ? <ComposeLink /> : null}
+                      <ThemeToggle />
+                      {navActions}
+                    </div>
+                  </>
+                )}
               </div>
             </header>
             <main>{children}</main>

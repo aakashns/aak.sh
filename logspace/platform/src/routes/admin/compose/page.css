@@ -1,69 +1,93 @@
 /*
- * The composer (see page.tsx). Its delete dialog is components/ui's.
+ * The composer (see page.tsx): its navbar, and the post as its page shows it. Its buttons and
+ * dialogs are components/ui's, and its photos and video post.css's.
  */
 @layer components {
-  /*
-   * The composer keeps its own buttons and messages, rather than components/ui's: the close
-   * button, Post and its neighbours, and the list of issues.
-   */
-  .nav-button {
+  /* The back arrow and the page's name, at the navbar's left. */
+  .composer-title {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 9999px;
-    transition: background-color 150ms;
+    gap: 0.25rem;
+    min-width: 0;
+    margin-left: -0.5rem;
 
-    &:hover {
-      background-color: color-mix(in oklch, var(--foreground) 10%, transparent);
-    }
-    &:active {
-      background-color: color-mix(in oklch, var(--foreground) 18%, transparent);
-    }
-    &:focus-visible {
-      outline: 2px solid var(--ring);
-      outline-offset: 2px;
-    }
-    & svg {
-      width: 1.25rem;
-      height: 1.25rem;
+    & h1 {
+      overflow: hidden;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
   }
 
-  .button,
-  .destructive-button {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius-md);
-    font: inherit;
-    font-weight: 500;
+  .post-button {
+    margin-left: 0.25rem;
+  }
+
+  .composer-tools {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  /* The file picker's label, as a ghost icon button (see components/ui/button.css). */
+  .tool-button {
     cursor: pointer;
 
-    &:focus-visible {
+    &:has(:focus-visible) {
       outline: 2px solid var(--ring);
       outline-offset: 2px;
     }
   }
 
-  .button {
-    border: none;
-    background-color: var(--primary);
-    color: var(--primary-foreground);
+  .uploading {
+    display: flex;
+    align-items: center;
+    padding-inline: 0.5rem;
 
-    &:hover {
-      background-color: color-mix(in oklch, var(--primary) 90%, transparent);
+    &[hidden] {
+      display: none;
     }
   }
 
-  .destructive-button {
-    border: 1px solid var(--destructive);
-    background-color: transparent;
-    color: var(--destructive);
+  /* A ring that turns, like X's while it uploads. */
+  .spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--border);
+    border-top-color: var(--link);
+    border-radius: 9999px;
+    animation: spin 800ms linear infinite;
+  }
 
-    &:hover {
-      background-color: color-mix(in oklch, var(--destructive) 10%, transparent);
+  @keyframes spin {
+    to {
+      transform: rotate(1turn);
     }
+  }
+
+  /* Spaced like a post's own page (see routes/post/page.css). */
+  .composer-page {
+    padding-block: 2rem;
+  }
+
+  /*
+   * The parts the server re-renders are boxes of their own in the markup but not on the page,
+   * except the link card's, which is hidden when there's no card.
+   */
+  .composer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  #composer-issues,
+  #composer-media {
+    display: contents;
+  }
+
+  #composer-link:empty {
+    display: none;
   }
 
   .alert {
@@ -79,25 +103,7 @@
     }
   }
 
-  /*
-   * The composer, modeled on X's: the text grows as it's written,
-   * media shows under it, and the toolbar and Post button are along the bottom. The parts the
-   * server re-renders are boxes of their own in the markup but not on the page.
-   */
-  .composer {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    padding: 1rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-xl);
-  }
-
-  #composer-issues,
-  #composer-media {
-    display: contents;
-  }
-
+  /* Reads as the caption will (see .caption in post.css), and grows as it's written. */
   .composer-text {
     width: 100%;
     min-height: calc(3lh);
@@ -107,6 +113,7 @@
     color: inherit;
     font: inherit;
     line-height: 1.6;
+    overflow-wrap: anywhere;
     resize: none;
     field-sizing: content;
     outline: none;
@@ -116,75 +123,33 @@
     }
   }
 
-  /* Over everything, the header included, with a dashed outline inset from the window's edges. */
-  .drop-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 30;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    background-color: color-mix(in oklch, var(--background) 85%, transparent);
-    backdrop-filter: blur(4px);
-    color: var(--link);
-    font-weight: 500;
+  /*
+   * A photo's remove button sits at its top right, over the button that opens the lightbox, and
+   * isn't shown in the lightbox. A video's is over the video, the same way.
+   */
+  .carousel-slide > .remove-button {
+    justify-self: end;
+    align-self: start;
+    position: relative;
+    z-index: 1;
+    margin: 0.5rem;
 
-    &::before {
-      content: '';
-      position: absolute;
-      inset: 1rem;
-      border: 2px dashed var(--link);
-      border-radius: var(--radius-xl);
-    }
-    & > * {
-      pointer-events: none;
-    }
-    & svg {
-      width: 3rem;
-      height: 3rem;
-    }
-    &[hidden] {
+    .carousel:modal & {
       display: none;
     }
   }
 
-  /* One photo or a video at its own shape (up to a point), more in a grid of squares. */
-  .attachments {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-
-    &[data-count='1'] {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .attachment {
+  .composer-video {
     position: relative;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
 
-    & img,
-    & video {
-      display: block;
-      width: 100%;
-      height: auto;
-      max-height: 32rem;
-      object-fit: cover;
-    }
-    [data-count]:not([data-count='1']) > & img {
-      aspect-ratio: 1;
-      height: 100%;
+    & > .remove-button {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
     }
   }
 
   .remove-button {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -220,108 +185,37 @@
     }
   }
 
-  .composer-bar {
+  /* Over everything, the header included, with a dashed outline inset from the window's edges. */
+  .drop-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
     display: flex;
-    align-items: center;
-    gap: 0.25rem;
-
-    /* Tooltips open to the right here, where there's room, rather than the navbar's left. */
-    & [data-tooltip] {
-      right: auto;
-      left: 0;
-    }
-  }
-
-  .composer-tools {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    min-width: 0;
-  }
-
-  .tool-button {
-    display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 9999px;
+    gap: 0.75rem;
+    background-color: color-mix(in oklch, var(--background) 85%, transparent);
+    backdrop-filter: blur(4px);
     color: var(--link);
-    cursor: pointer;
-    transition: background-color 150ms;
+    font-weight: 500;
 
-    &:hover {
-      background-color: color-mix(in oklch, var(--link) 12%, transparent);
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 1rem;
+      border: 2px dashed var(--link);
+      border-radius: var(--radius-xl);
     }
-    &:has(:focus-visible) {
-      outline: 2px solid var(--ring);
-      outline-offset: 2px;
+    & > * {
+      pointer-events: none;
     }
     & svg {
-      width: 1.25rem;
-      height: 1.25rem;
+      width: 3rem;
+      height: 3rem;
     }
-  }
-
-  .uploading {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-left: 0.5rem;
-
     &[hidden] {
       display: none;
     }
-  }
-
-  /* A ring that turns, like X's while it uploads. */
-  .spinner {
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid var(--border);
-    border-top-color: var(--link);
-    border-radius: 9999px;
-    animation: spin 800ms linear infinite;
-  }
-
-  @keyframes spin {
-    to {
-      transform: rotate(1turn);
-    }
-  }
-
-  /* Pushed to the far end of the toolbar: Post, or for an edit, Delete and Save. */
-  .composer-bar > .actions {
-    margin-left: auto;
-  }
-
-  .post-button {
-    padding-inline: 1.25rem;
-
-    &:disabled {
-      opacity: 0.5;
-      cursor: default;
-    }
-  }
-
-  /* What goes with the media: a video's poster. */
-  .attachment-note {
-    margin-top: 0.5rem;
-  }
-
-  .composer-preview {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-
-    & h2 {
-      font-size: 1.25rem;
-      font-weight: 600;
-      line-height: 1.3;
-    }
-  }
-
-  .composer-empty {
-    padding: 1.5rem 1rem;
   }
 }

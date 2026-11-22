@@ -153,5 +153,4 @@ export async function openComposer(page: Page) {
 
 export async function caption(page: Page, text: string) {
   await page.getByLabel('Caption', { exact: true }).fill(text)
-  await expect(page.locator('#composer-preview')).toContainText(text)
 }

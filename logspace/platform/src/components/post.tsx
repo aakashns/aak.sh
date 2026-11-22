@@ -1,7 +1,7 @@
 // Pieces of a post shared by the feed and the post page.
 import type { Array as Arr } from 'effect'
 
-import { raw, type Html } from '#jsx/jsx-runtime'
+import { raw, type Child, type Html } from '#jsx/jsx-runtime'
 
 import { formatPostDate } from '../data/posts/format.ts'
 import {
@@ -52,16 +52,25 @@ export function Caption(props: { html: string }): Html {
   )
 }
 
-// What goes under the caption: photos, a video, or a link preview.
+// What goes under the caption: photos, a video, or a link preview. The composer puts its own
+// buttons over each photo with `photoControls`.
 export function PostMedia(props: {
   post: Post
   preview?: LinkPreview | undefined
   priority?: boolean | undefined
+  photoControls?: ((index: number) => Child) | undefined
 }): Html | null {
-  let { post, preview, priority } = props
+  let { post, preview, priority, photoControls } = props
   switch (post.type) {
     case 'photos':
-      return <PhotoCarousel id={`photos-${post.id}`} photos={post.photos} priority={priority} />
+      return (
+        <PhotoCarousel
+          id={`photos-${post.id}`}
+          photos={post.photos}
+          priority={priority}
+          controls={photoControls}
+        />
+      )
     case 'video':
       return <VideoPlayer video={post.video} />
     case 'text':
@@ -96,8 +105,9 @@ function PhotoCarousel(props: {
   id: string
   photos: Arr.NonEmptyReadonlyArray<Photo>
   priority?: boolean | undefined
+  controls?: ((index: number) => Child) | undefined
 }): Html {
-  let { id, photos, priority } = props
+  let { id, photos, priority, controls } = props
   let many = photos.length > 1
   let aspectRatio = many ? undefined : displayAspectRatio(photos[0])
   return (
@@ -128,6 +138,7 @@ function PhotoCarousel(props: {
                 aria-label="Open photo"
                 class="carousel-open"
               />
+              {controls?.(index)}
             </div>
           ))}
         </div>

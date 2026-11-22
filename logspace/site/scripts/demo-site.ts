@@ -101,5 +101,4 @@ export async function compose(page: Page, art: string, delay: number) {
     .locator('input[name="image_uploads"]')
     .setInputFiles(join(art, "long-way-home.png"));
   await expect(page.locator("#composer-media img")).toBeVisible();
-  await expect(page.locator("#composer-preview img")).toBeVisible();
 }
