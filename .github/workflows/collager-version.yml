@@ -27,3 +27,10 @@ jobs:
           current = re.search(marker, pathlib.Path(path).read_text())
           if not current or (previous and int(current[1]) <= int(previous[1])):
               raise SystemExit(f"Increment collager-version in {path}.")
+
+          public = pathlib.Path(path).parent
+          asset_url = re.compile(r"""["']([\w./-]+\.(?:js|css))(\?[^"']*)?["']""")
+          for source in [pathlib.Path(path), *public.rglob("*.js")]:
+              for url, query in asset_url.findall(source.read_text()):
+                  if query != f"?v={current[1]}":
+                      raise SystemExit(f"Use {url}?v={current[1]} in {source}.")
