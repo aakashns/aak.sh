@@ -10,7 +10,7 @@ Run `python3 site/preview.py` from this directory and open `http://127.0.0.1:418
 
 Publish the contents of `site/public/` at `https://collager.aak.sh/` using any static host. The editor needs no API, database, or sign-in. For Caddy, deploy the `site/` directory to `/srv/aak.sh/collager/site/` and import `/srv/aak.sh/collager/site/Caddyfile` from the main Caddyfile. Reload Caddy after pointing the subdomain at the host. The site block serves `public/` directly. If publishing on another domain, update the absolute URLs in `index.html`, `sitemap.xml`, and `robots.txt`.
 
-Increment `collager-version` in `site/public/index.html` for each release. Serve the public files with `Cache-Control: no-cache` so browsers revalidate them on reload. The header refresh button turns green when the deployed version differs from the open editor.
+Increment `collager-version` in `site/public/index.html` for each release and use the same number in the `?v=` query on local JavaScript and CSS references, including module imports. Serve the public files with `Cache-Control: no-cache` so browsers revalidate them on reload. The header refresh button turns green when the deployed version differs from the open editor.
 
 On HTTPS, **Share collage** passes the PNG to the device share sheet when file sharing is available. **How to use → Add to Home Screen** opens the install prompt or gives browser-specific steps.
 

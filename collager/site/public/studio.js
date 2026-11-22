@@ -1,7 +1,7 @@
-import { captionEditor } from "./captions.js";
-import { drawPhoto, enableCropGestures } from "./crops.js";
-import { frames } from "./frames.js";
-import { initUpdates } from "./updates.js";
+import { captionEditor } from "./captions.js?v=2";
+import { drawPhoto, enableCropGestures } from "./crops.js?v=2";
+import { frames } from "./frames.js?v=2";
+import { initUpdates } from "./updates.js?v=2";
 
 const $ = (id) => document.getElementById(id);
 const icons = {
