@@ -2,7 +2,7 @@
 
 Check unread Gmail and the next 24 hours of Google Calendar from your Mac’s menu bar. Connect multiple accounts, preview a message, or join a meeting directly from the panel.
 
-**[Visit the MailMenu website at mailmenu.aak.sh](https://mailmenu.aak.sh/)**
+Website: mailmenu.aak.sh
 
 ![MailMenu showing unread mail and upcoming events for two accounts](docs/screenshot.jpg)
 

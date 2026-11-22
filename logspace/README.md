@@ -2,7 +2,7 @@
 
 Publish a personal blog on your own domain. Write a quick update, share a photo set, or post a video from your browser. Readers can visit individual posts or subscribe via RSS.
 
-**[Visit logspace.aak.sh for the demo and installation guide](https://logspace.aak.sh/)**
+Website: logspace.aak.sh
 
 ![The public homepage of a sample LogSpace blog in dark mode](site/public/screenshots/home-dark.webp)
 
