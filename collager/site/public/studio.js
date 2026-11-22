@@ -1,4 +1,5 @@
 import { captionEditor } from "./captions.js";
+import { drawPhoto, enableCropGestures } from "./crops.js";
 import { frames } from "./frames.js";
 const $ = (id) => document.getElementById(id);
 const icons = {
@@ -80,11 +81,22 @@ function drawFilmDetails(ink) {
   }
 }
 
+let cropDrawPending = false;
+function scheduleCropDraw() {
+  if (cropDrawPending) return;
+  cropDrawPending = true;
+  requestAnimationFrame(() => {
+    cropDrawPending = false;
+    draw();
+    prepareShare();
+  });
+}
+
 // Match the buttons to the rendered photo cells.
 const previewButtons = samples.map((_, i) => {
   const button = document.createElement("button");
   button.className = "preview-photo";
-  button.onclick = () => pick(i);
+  enableCropGestures(button, () => photoAt(i), scheduleCropDraw, () => pick(i));
   $("preview-photos").append(button);
   return button;
 });
@@ -124,20 +136,7 @@ function draw() {
       (photo ? "Replace" : "Add") + " preview photo " + (i + 1),
     );
     if (photo) {
-      const scale = Math.max(width / photo.width, cellHeight / photo.height);
-      const sw = width / scale,
-        sh = cellHeight / scale;
-      ctx.drawImage(
-        photo,
-        (photo.width - sw) / 2,
-        (photo.height - sh) / 2,
-        sw,
-        sh,
-        x,
-        y,
-        width,
-        cellHeight,
-      );
+      drawPhoto(ctx, photo, x, y, width, cellHeight);
     } else {
       ctx.fillStyle = "#464749";
       ctx.fillRect(x, y, width, cellHeight);
@@ -290,10 +289,10 @@ function refresh() {
   $("photo-note").textContent = busy
     ? "Preparing your photos…"
     : demo && !personal.some(Boolean)
-      ? "Sample photos · Tap a preview photo to replace it."
+      ? "Sample photos · Drag to reposition, pinch to zoom, or tap to replace."
       : filled < count
         ? "Add " + (count - filled) + " more to finish your collage."
-        : "Tap a photo to replace it.";
+        : "Drag to reposition, pinch to zoom, or tap to replace.";
 }
 
 function loadImage(src) {
