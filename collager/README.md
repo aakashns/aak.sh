@@ -2,7 +2,7 @@
 
 Turn two, three, four, or six photos into a framed collage in your browser. Your photos stay on your device.
 
-Website: collager.aak.sh
+Website: [collager.aak.sh](https://collager.aak.sh/)
 
 ![Collager showing a three-photo travel collage with a floral frame and the layout controls below](docs/editor.jpg)
 
