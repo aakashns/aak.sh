@@ -99,7 +99,7 @@ svg {
   height: 18px;
 }
 html {
-  --preview-height: min(380px, 42svh);
+  --preview-height: min(540px, 54svh);
   scroll-padding-top: calc(var(--preview-height) + 12px);
 }
 .brand-heading {
@@ -166,7 +166,9 @@ main {
   display: grid;
   grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   place-items: center;
+  container-type: size;
   height: var(--preview-height);
+  padding: 14px max(64px, calc(env(safe-area-inset-right) + 54px));
   background-color: #343d3b;
   background-image:
     linear-gradient(#c2dcc214 1px, transparent 1px),
@@ -178,17 +180,14 @@ main {
     auto;
   overflow: hidden;
 }
-.print {
+.mat > .print {
   position: relative;
-  display: block;
-  width: auto;
-  height: 82%;
   box-shadow: 2px 9px 14px #13171377;
 }
 #canvas {
   display: block;
-  height: 100%;
-  width: auto;
+  max-width: 100cqw;
+  max-height: 100cqh;
 }
 #preview-photos {
   position: absolute;
@@ -489,7 +488,7 @@ dialog p {
     height: 29px;
   }
   html {
-    --preview-height: min(55vw, 30svh);
+    --preview-height: min(520px, 48svh);
   }
   .editor {
     grid-template-columns: 1fr;
@@ -668,6 +667,15 @@ dialog [hidden] {
 }
 html:has(#expanded-preview[open]) {
   overflow: hidden;
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .mat {
+    padding: 60px 12px 12px;
+  }
+  .preview-tools {
+    grid-auto-flow: column;
+  }
 }
 
 @media (orientation: landscape) and (max-height: 420px) {
