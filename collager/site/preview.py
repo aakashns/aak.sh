@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parent / "public"
 
 class PreviewHandler(SimpleHTTPRequestHandler):
     def end_headers(self):
+        self.send_header("Cache-Control", "no-cache")
         self.send_header("X-Robots-Tag", "noindex, nofollow")
         super().end_headers()
 

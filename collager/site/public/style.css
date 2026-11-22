@@ -67,7 +67,7 @@ header {
   width: 33px;
   height: 33px;
 }
-.help,
+.header-action,
 .add {
   display: inline-flex;
   align-items: center;
@@ -81,11 +81,23 @@ header {
   font-size: 13px;
   font-weight: 600;
 }
-.help {
+.header-actions {
+  display: flex;
+  gap: 4px;
+}
+.header-action[data-available] {
+  background: #183525;
+  border-color: #47875d;
+  color: #9be7b3;
+}
+.header-action {
+  width: 44px;
+  height: 44px;
+  padding: 0;
   border-color: transparent;
   color: #c5c2c2;
 }
-.help:hover,
+.header-action:hover,
 .add:hover,
 .slot:hover {
   background: #303033;
@@ -506,7 +518,7 @@ dialog p {
     padding: 16px 0;
   }
 
-  .help,
+  .header-action,
   .add {
     min-height: 44px;
   }
@@ -628,7 +640,8 @@ dialog [hidden] {
   display: flex;
   gap: 8px;
 }
-.text-actions button[type="button"] {
+.text-actions button[type="button"],
+.text-actions button[value="cancel"] {
   background: #29292c;
   color: var(--text);
 }
