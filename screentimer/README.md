@@ -2,7 +2,7 @@
 
 See how long your Mac’s screen has been on today. A translucent timer sits in the corner of your choice, lets clicks pass through, and fades when you move the pointer over it.
 
-**[Visit the Screen Timer website at screentimer.aak.sh](https://screentimer.aak.sh/)**
+Website: screentimer.aak.sh
 
 <img width="701" alt="Screen Timer showing 01:24 over a terminal window" src="docs/overlay.png">
 
