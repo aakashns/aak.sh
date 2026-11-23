@@ -4,6 +4,7 @@
   - site is deployed to `<project>.aak.sh`
   - project folder names MUST match their subdomains
   - prefer dark mode for project sites, with pure black background
+  - every site needs proper SEO: meta tags, social image, favicons, sitemap
 - AGENTS.md changes MUST be manually reviewed
   - always show proposed changes & ask for revisions
   - use crisp bullets. don't state obvious or easily discoverable facts
