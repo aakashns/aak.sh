@@ -79,9 +79,11 @@ const RESTORE_INDEX = 'el.firstElementChild.scrollLeft = el.dataset.index * el.c
 // Once the lightbox has opened, the browser picks copies of the photos for the whole screen
 // rather than for the content column.
 const FULL_SCREEN_SIZES = "el.querySelectorAll('img').forEach((img) => (img.sizes = '100vw'))"
-// Scrolls the track a photo back or forward (data-step), and it snaps to that photo.
+// Scrolls the track to the photo before or after the one shown (data-step). It's scrollTo rather
+// than scrollBy because Safari snaps a scrollBy in its direction, and on a phone the rounded
+// clientWidth lands it past the next photo, so a tap skipped one; scrollTo snaps to the nearest.
 const STEP =
-  'el.parentElement.firstElementChild.scrollBy({ left: el.dataset.step * el.parentElement.clientWidth })'
+  "el.parentElement.firstElementChild.scrollTo({ left: (+el.parentElement.style.getPropertyValue('--index') + +el.dataset.step) * el.parentElement.clientWidth })"
 // In the lightbox, the arrow key in the button's aria-keyshortcuts presses it.
 const STEP_BY_KEY =
   "evt.key === el.getAttribute('aria-keyshortcuts') && el.parentElement.matches(':modal') && (evt.preventDefault(), el.click())"
