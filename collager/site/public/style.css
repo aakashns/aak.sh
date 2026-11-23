@@ -132,18 +132,6 @@ main {
   .settings .group:nth-last-child(2) {
     border-bottom: 0;
   }
-  .export {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    gap: 8px;
-  }
-  .photos .export #share {
-    margin-top: 0;
-  }
-  .export small {
-    grid-column: 1 / -1;
-  }
 }
 .editor {
   width: min(1000px, calc(100% - 80px));
@@ -386,14 +374,17 @@ dialog button {
   font-weight: 700;
   font-size: 15px;
 }
+@media (min-width: 801px) {
+  .export button {
+    max-width: 240px;
+    margin-inline: auto;
+    height: 38px;
+    font-size: 14px;
+  }
+}
 .export button:hover,
 dialog button:hover {
   background: #ffd18b;
-}
-.export small {
-  display: block;
-  margin-top: 9px;
-  font-size: 11px;
 }
 .group:last-child {
   border-bottom: none;
@@ -540,7 +531,7 @@ dialog p {
     26px/26px Georgia,
     serif;
 }
-.export #share,
+.export .secondary,
 dialog #install {
   background: #242426;
   color: var(--text);
