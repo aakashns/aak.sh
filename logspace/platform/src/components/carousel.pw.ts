@@ -26,6 +26,10 @@ test('the arrows step through the photos, and the arrow keys do in the lightbox'
   let open = () => carousel.evaluate((el) => el.matches(':modal'))
   await carousel.getByRole('button', { name: 'Next photo' }).click()
   await expect.poll(index).toBe('1')
+  await carousel.getByRole('button', { name: 'Next photo' }).click()
+  await expect.poll(index).toBe('2')
+  await carousel.getByRole('button', { name: 'Previous photo' }).click()
+  await expect.poll(index).toBe('1')
   let frame = page.locator('.carousel-frame')
   let height = (await frame.boundingBox())?.height
 
