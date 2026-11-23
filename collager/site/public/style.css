@@ -374,6 +374,14 @@ dialog button {
   font-weight: 700;
   font-size: 15px;
 }
+@media (min-width: 801px) {
+  .export button {
+    max-width: 240px;
+    margin-inline: auto;
+    height: 38px;
+    font-size: 14px;
+  }
+}
 .export button:hover,
 dialog button:hover {
   background: #ffd18b;
