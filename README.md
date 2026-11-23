@@ -1,6 +1,6 @@
 # aak.sh
 
-A monorepo for my open source projects
+A monorepo for my open source projects, listed at [aak.sh](https://aak.sh) (from [www](www))
 
 - [collager](collager) - Create framed photo collages in your browser and save or share them as PNGs
 - [logspace](logspace) - Self-host your personal website with blog posts, photos, and videos
