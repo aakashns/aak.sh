@@ -1,0 +1,17 @@
+# Serves the aak.sh landing page, assuming the repo is cloned to /srv/aak.sh.
+# Not imported: copy these blocks into the server's main Caddyfile, and update them there when they change.
+# Only site/public/ is served; everything else in site/ stays private.
+aak.sh {
+	root * /srv/aak.sh/www/site/public
+	encode zstd gzip
+	header Cache-Control "no-cache"
+	file_server
+	# The page is the whole site, so unknown paths go home.
+	handle_errors 404 {
+		redir / temporary
+	}
+}
+
+www.aak.sh {
+	redir https://aak.sh{uri} permanent
+}
