@@ -1,0 +1,32 @@
+<!doctype html>
+<!-- The social card (public/social.png, 1200×630), in the page's colors, words and icons. render.sh renders it. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  html { background: #000; color: #ededed; font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { box-sizing: border-box; width: 1200px; height: 630px; margin: 0; padding: 72px 80px; display: flex; flex-direction: column; }
+  .mark { display: flex; align-items: center; gap: 18px; font: 500 34px/1 ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace; color: #8f8f8f; letter-spacing: .02em; }
+  .mark img { width: 64px; height: 64px; }
+  .mark b { font-weight: inherit; }
+  .mark span { color: #5c5c5c; }
+  h1 { margin: auto 0; font-size: 80px; line-height: 1.08; font-weight: 600; letter-spacing: -.035em; }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; gap: 14px; }
+  li { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 20px 0 16px; border: 1px solid #1c1c1c; border-radius: 18px; background: #0a0a0a; font-size: 19px; font-weight: 600; letter-spacing: -.01em; }
+  .icon { display: grid; place-items: center; width: 64px; height: 64px; border: 1px solid #222; border-radius: 15px; background: #141414; }
+  .icon svg { width: 34px; height: 34px; display: block; }
+</style>
+</head>
+<body>
+  <div class="mark"><img src="../public/icon.png" alt=""><b>aak<span>.</span>sh</b></div>
+  <h1>Open source projects<br>by Aakash N S</h1>
+  <ul>
+      <li><span class="icon"><svg viewBox="96 96 320 320" aria-hidden="true"><path fill="#dedede" d="M397.9 209.6 302.4 114C293.7 105.3 279.6 105.3 270.9 114L231.4 153.6L150.7 183.9C143.2 186.6 137.8 193.2 136.5 201L107.6 374.4C107.2 376.7 108.4 379.1 110.5 380.2C112.7 381.3 115.3 380.9 117 379.2L196.3 299.9C193.8 294.7 192.7 288.9 193.1 283.1C194.2 268.5 204.6 256.3 218.9 253C233.2 249.7 247.9 256.1 255.3 268.8C262.6 281.4 260.9 297.4 251 308.2C241 318.9 225.2 322 212 315.7L132.7 395C131 396.7 130.6 399.3 131.7 401.4C132.8 403.6 135.2 404.8 137.6 404.4L310.9 375.5C318.8 374.2 325.3 368.8 328.1 361.4L358.4 280.6L397.9 241.1C406.6 232.4 406.6 218.3 397.9 209.6V209.6ZM348.8 258.7 253.3 163.2 286.7 129.8 382.2 225.3 348.8 258.7Z"/></svg></span>LogSpace</li>
+      <li><span class="icon"><svg viewBox="4 4.5 24 24" fill="none" stroke="#e6e6e6" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 10l6 6-6 6"/><path d="M16 23h8" stroke="#7ee2a8"/></svg></span>rembox</li>
+      <li><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="#5b9bff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="m3.8 7.3 8.2 5.9 8.2-5.9"/></svg></span>MailMenu</li>
+      <li><span class="icon"><svg viewBox="10 10 44 44" fill="none" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 18 32.5 32 17.5 46" stroke="#e4e4e7"/><path d="M46.5 18v28" stroke="#86d39b"/></svg></span>writui</li>
+      <li><span class="icon"><svg viewBox="0 0 48 48" aria-hidden="true"><g fill="#f9bf64"><rect x="18" y="1" width="12" height="25" rx="6"/><rect x="18" y="1" width="12" height="25" rx="6" transform="rotate(45 24 24)"/><rect x="18" y="1" width="12" height="25" rx="6" transform="rotate(90 24 24)"/><rect x="18" y="1" width="12" height="25" rx="6" transform="rotate(135 24 24)"/><rect x="18" y="1" width="12" height="25" rx="6" transform="rotate(180 24 24)"/><rect x="18" y="1" width="12" height="25" rx="6" transform="rotate(225 24 24)"/><rect x="18" y="1" width="12" height="25" rx="6" transform="rotate(270 24 24)"/><rect x="18" y="1" width="12" height="25" rx="6" transform="rotate(315 24 24)"/></g><circle cx="24" cy="24" r="6" fill="#141414"/></svg></span>Collager</li>
+      <li><span class="icon"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><defs><linearGradient id="st" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3a6df0"/><stop offset=".55" stop-color="#9b51e0"/><stop offset="1" stop-color="#f0606e"/></linearGradient></defs><rect x="2.5" y="4" width="19" height="13" rx="2.2" fill="url(#st)"/><path d="M9 20.5h6M12 17v3.5" stroke="#bdbdbd" stroke-width="1.8"/><path d="M14.2 13.6h4" stroke="#fff" stroke-opacity=".7" stroke-width="1.6"/></svg></span>Screen Timer</li>
+  </ul>
+</body>
+</html>
