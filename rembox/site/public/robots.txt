@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rembox.aak.sh/sitemap.xml

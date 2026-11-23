@@ -1,0 +1,323 @@
+package cli
+
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/aakashns/aak.sh/rembox/cli/internal/release"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/release/releasetest"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/remote"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/version"
+)
+
+type testApp struct {
+	*App
+	stdout, stderr *bytes.Buffer
+	exe            string                    // fake installed binary
+	home           string                    // fake home folder
+	configDir      string                    // fake ~/.config/rembox (not created)
+	commands       [][]string                // every command run, as name and args
+	sudoArgs       []string                  // the last sudo command's
+	sshArgs        []string                  // the last ssh command's
+	onSudo         func(args []string) error // replaces the fake sudo, which removes its last arg
+	srv            *releasetest.Server
+
+	// The fake server that ssh reaches.
+	sshErr   error                                                      // what ssh returns, but for scripts
+	onScript func(script string, args []string, stdout io.Writer) error // replaces the fake server's scripts
+	scripts  []string                                                   // the scripts run, by name
+}
+
+// scriptIn is the name of the rembox script in ssh's args, or "".
+func scriptIn(args []string) string {
+	if slices.Contains(args, shellQuote(remote.Setup.Body)) {
+		return remote.Setup.Name
+	}
+	return ""
+}
+
+// tellUser is what setup.sh start does once you've answered its questions:
+// tells rembox your user and ssh's port, as if you took the defaults,
+// DEFAULT_USER and DEFAULT_PORT.
+func tellUser(args []string, stdout io.Writer) error {
+	if sa := scriptArgs(args); sa[0] == "start" {
+		fmt.Fprintf(stdout, "%suser=%s\a\r\n%sport=%s\a\r\n", marker, sa[1], marker, sa[2])
+	}
+	return nil
+}
+
+// newTestApp returns an App running as version current, installed at a temp
+// path, talking to a fake release server.
+func newTestApp(t *testing.T, current string) *testApp {
+	t.Helper()
+	old := version.Version
+	version.Version = current
+	t.Cleanup(func() { version.Version = old })
+
+	srv := releasetest.NewServer()
+	t.Cleanup(srv.Close)
+	rc := release.NewClient()
+	rc.BaseURL = srv.BaseURL()
+	rc.APIURL = ""
+	rc.HTTP.CheckRedirect = nil // the test server is plain HTTP
+
+	exe := filepath.Join(t.TempDir(), "rembox")
+	if err := os.WriteFile(exe, []byte("old binary"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	home := t.TempDir()
+	ta := &testApp{stdout: &bytes.Buffer{}, stderr: &bytes.Buffer{}, exe: exe, srv: srv,
+		home: home, configDir: filepath.Join(home, ".config", "rembox")}
+	ta.App = &App{
+		Stdin:      strings.NewReader(""),
+		Stdout:     ta.stdout,
+		Stderr:     ta.stderr,
+		Releases:   rc,
+		Executable: func() (string, error) { return exe, nil },
+		GOOS:       "linux",
+		GOARCH:     "amd64",
+		ConfigDir:  func() (string, error) { return ta.configDir, nil },
+		HomeDir:    func() (string, error) { return home, nil },
+		Username:   "ada",
+		GitConfig:  func(string) string { return "" },
+		NewPort:    func() int { return 23456 },
+		Command: func(stdout io.Writer, name string, args ...string) error {
+			ta.commands = append(ta.commands, append([]string{name}, args...))
+			switch name {
+			case "sudo":
+				ta.sudoArgs = args
+				if ta.onSudo != nil {
+					return ta.onSudo(args)
+				}
+				return os.Remove(args[len(args)-1]) // as if sudo rm had worked
+			case "ssh":
+				ta.sshArgs = args
+				script := scriptIn(args)
+				if script == "" {
+					return ta.sshErr
+				}
+				ta.scripts = append(ta.scripts, script)
+				if ta.onScript != nil {
+					return ta.onScript(script, args, stdout)
+				}
+				fmt.Fprintln(stdout, "(what setup.sh prints)")
+				return tellUser(args, stdout)
+			}
+			return fmt.Errorf("the tests don't fake %s", name)
+		},
+		Euid:      1000,
+		BackupDir: t.TempDir(),
+	}
+	return ta
+}
+
+// typing sets what the user types: a line for each answer.
+func (ta *testApp) typing(lines ...string) {
+	ta.Stdin = strings.NewReader(strings.Join(lines, "\n") + "\n")
+	ta.in = nil
+}
+
+func (ta *testApp) installed(t *testing.T) string {
+	t.Helper()
+	b, err := os.ReadFile(ta.exe)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(b)
+}
+
+func TestHelp(t *testing.T) {
+	for _, args := range [][]string{nil, {"help"}, {"-h"}, {"--help"}} {
+		ta := newTestApp(t, "0.1.0")
+		if code := ta.Run(args); code != 0 {
+			t.Errorf("rembox %v: exit %d", args, code)
+		}
+		for _, want := range []string{"Usage:", "setup", "list", "ssh", "remove", "help", "version", "upgrade", "implode"} {
+			if !strings.Contains(ta.stdout.String(), want) {
+				t.Errorf("rembox %v: output missing %q:\n%s", args, want, ta.stdout)
+			}
+		}
+	}
+}
+
+func TestCommandHelp(t *testing.T) {
+	for _, args := range [][]string{{"help", "upgrade"}, {"upgrade", "-h"}, {"upgrade", "--help"}} {
+		ta := newTestApp(t, "0.1.0")
+		if code := ta.Run(args); code != 0 {
+			t.Errorf("rembox %v: exit %d", args, code)
+		}
+		if !strings.HasPrefix(ta.stdout.String(), "Usage: rembox upgrade") {
+			t.Errorf("rembox %v: got %q", args, ta.stdout)
+		}
+	}
+}
+
+func TestVersion(t *testing.T) {
+	for _, args := range [][]string{{"version"}, {"-v"}, {"--version"}} {
+		ta := newTestApp(t, "1.2.3")
+		if code := ta.Run(args); code != 0 {
+			t.Errorf("rembox %v: exit %d", args, code)
+		}
+		if !strings.HasPrefix(ta.stdout.String(), "rembox 1.2.3") {
+			t.Errorf("rembox %v: got %q", args, ta.stdout)
+		}
+	}
+}
+
+func TestUsageErrors(t *testing.T) {
+	for _, args := range [][]string{{"bogus"}, {"--bogus"}, {"version", "extra"}, {"upgrade", "--bogus"}, {"help", "bogus"}} {
+		ta := newTestApp(t, "0.1.0")
+		if code := ta.Run(args); code != 2 {
+			t.Errorf("rembox %v: exit %d, want 2", args, code)
+		}
+		if !strings.Contains(ta.stderr.String(), "for usage") {
+			t.Errorf("rembox %v: stderr %q doesn't point to help", args, ta.stderr)
+		}
+	}
+}
+
+func TestUpgradeConfirmed(t *testing.T) {
+	ta := newTestApp(t, "0.1.0")
+	ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+	ta.typing("y")
+
+	if code := ta.Run([]string{"upgrade"}); code != 0 {
+		t.Fatalf("exit %d: %s", code, ta.stderr)
+	}
+	if got := ta.installed(t); got != "new binary" {
+		t.Errorf("installed binary = %q", got)
+	}
+	out := ta.stdout.String()
+	for _, want := range []string{"0.1.0 -> 0.2.0", "[y/N]", "Upgraded rembox to 0.2.0"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output missing %q:\n%s", want, out)
+		}
+	}
+}
+
+func TestUpgradeDeclined(t *testing.T) {
+	for _, answer := range []string{"n\n", "\n", "", "maybe\n"} {
+		ta := newTestApp(t, "0.1.0")
+		ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+		ta.Stdin = strings.NewReader(answer)
+
+		if code := ta.Run([]string{"upgrade"}); code != 0 {
+			t.Fatalf("answer %q: exit %d: %s", answer, code, ta.stderr)
+		}
+		if got := ta.installed(t); got != "old binary" {
+			t.Errorf("answer %q: binary was replaced", answer)
+		}
+		if ta.srv.Downloads() != 0 {
+			t.Errorf("answer %q: downloaded before confirmation", answer)
+		}
+	}
+}
+
+func TestUpgradeUpToDate(t *testing.T) {
+	for _, current := range []string{"0.2.0", "0.3.0-rc.1"} {
+		ta := newTestApp(t, current)
+		ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+
+		if code := ta.Run([]string{"upgrade"}); code != 0 {
+			t.Fatalf("%s: exit %d: %s", current, code, ta.stderr)
+		}
+		if strings.Contains(ta.stdout.String(), "[y/N]") || ta.srv.Downloads() != 0 {
+			t.Errorf("%s: offered or downloaded an upgrade:\n%s", current, ta.stdout)
+		}
+	}
+}
+
+func TestUpgradeDevBuild(t *testing.T) {
+	ta := newTestApp(t, "dev")
+	ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+
+	ta.typing("y")
+	if code := ta.Run([]string{"upgrade"}); code != 0 {
+		t.Fatalf("exit %d: %s", code, ta.stderr)
+	}
+	if !strings.Contains(ta.stdout.String(), "development build") {
+		t.Errorf("output doesn't mention development build:\n%s", ta.stdout)
+	}
+	if got := ta.installed(t); got != "new binary" {
+		t.Errorf("installed binary = %q", got)
+	}
+}
+
+func TestUpgradeTampered(t *testing.T) {
+	ta := newTestApp(t, "0.1.0")
+	ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+	ta.srv.SetFile("v0.2.0", "rembox-linux-amd64", []byte("evil binary"))
+
+	ta.typing("y")
+	if code := ta.Run([]string{"upgrade"}); code != 1 {
+		t.Fatalf("exit %d, want 1", code)
+	}
+	if !strings.Contains(ta.stderr.String(), "checksum mismatch") {
+		t.Errorf("stderr: %s", ta.stderr)
+	}
+	if got := ta.installed(t); got != "old binary" {
+		t.Error("tampered binary was installed")
+	}
+}
+
+func TestUpgradeNoReleases(t *testing.T) {
+	ta := newTestApp(t, "0.1.0")
+	if code := ta.Run([]string{"upgrade"}); code != 1 {
+		t.Fatalf("exit %d, want 1", code)
+	}
+	if !strings.Contains(ta.stderr.String(), "no releases") {
+		t.Errorf("stderr: %s", ta.stderr)
+	}
+}
+
+func TestUpgradeFollowsSymlink(t *testing.T) {
+	ta := newTestApp(t, "0.1.0")
+	ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+	link := filepath.Join(t.TempDir(), "rembox")
+	if err := os.Symlink(ta.exe, link); err != nil {
+		t.Fatal(err)
+	}
+	ta.Executable = func() (string, error) { return link, nil }
+
+	ta.typing("y")
+	if code := ta.Run([]string{"upgrade"}); code != 0 {
+		t.Fatalf("exit %d: %s", code, ta.stderr)
+	}
+	if got := ta.installed(t); got != "new binary" {
+		t.Errorf("target binary = %q", got)
+	}
+	if fi, err := os.Lstat(link); err != nil || fi.Mode()&os.ModeSymlink == 0 {
+		t.Error("symlink was replaced instead of its target")
+	}
+}
+
+func TestUpgradeUnwritable(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root can write anywhere")
+	}
+	ta := newTestApp(t, "0.1.0")
+	ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+	ta.typing("y")
+	dir := filepath.Dir(ta.exe)
+	if err := os.Chmod(dir, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(dir, 0o755) })
+
+	if code := ta.Run([]string{"upgrade"}); code != 1 {
+		t.Fatalf("exit %d, want 1", code)
+	}
+	if !strings.Contains(ta.stderr.String(), "sudo") {
+		t.Errorf("stderr doesn't suggest sudo: %s", ta.stderr)
+	}
+	if strings.Contains(ta.stdout.String(), "[y/N]") {
+		t.Error("asked for confirmation before finding it can't write")
+	}
+}
