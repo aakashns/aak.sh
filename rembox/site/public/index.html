@@ -13,7 +13,7 @@
       name="description"
       content="Turn any Ubuntu server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone."
     />
-    <link rel="canonical" href="https://rembox.aakashns.com/" />
+    <link rel="canonical" href="https://rembox.aak.sh/" />
     <!-- Link previews. site/images/render.sh makes social.png. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="rembox" />
@@ -22,8 +22,8 @@
       property="og:description"
       content="Turn any Ubuntu server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone."
     />
-    <meta property="og:url" content="https://rembox.aakashns.com/" />
-    <meta property="og:image" content="https://rembox.aakashns.com/social.png" />
+    <meta property="og:url" content="https://rembox.aak.sh/" />
+    <meta property="og:image" content="https://rembox.aak.sh/social.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="rembox: Set up and manage remote dev machines" />
@@ -33,13 +33,13 @@
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
         "name": "rembox",
-        "url": "https://rembox.aakashns.com/",
+        "url": "https://rembox.aak.sh/",
         "description": "Turn any Ubuntu server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone.",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "macOS, Linux, Windows (WSL)",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-        "license": "https://github.com/aakashns/rembox/blob/main/LICENSE",
-        "sameAs": "https://github.com/aakashns/rembox",
+        "license": "https://github.com/aakashns/aak.sh/blob/main/rembox/LICENSE",
+        "sameAs": "https://github.com/aakashns/aak.sh/tree/main/rembox",
         "author": { "@type": "Person", "name": "Aakash N S", "url": "https://aakashns.com" }
       }
     </script>
@@ -58,8 +58,8 @@
         <span class="wordmark"><span aria-hidden="true">&gt;_</span>rembox</span>
       </a>
       <nav aria-label="Main navigation">
-        <a href="https://github.com/aakashns/rembox" target="_blank">GitHub</a>
-        <a href="https://github.com/aakashns/rembox/releases" target="_blank">Changelog</a>
+        <a href="https://github.com/aakashns/aak.sh/tree/main/rembox" target="_blank">GitHub</a>
+        <a href="https://github.com/aakashns/aak.sh/releases?q=rembox-v" target="_blank">Changelog</a>
       </nav>
     </header>
 
@@ -72,7 +72,7 @@
 
       <p class="before-command">Run this on Mac, Linux, or WSL to install rembox:</p>
       <div class="command">
-        <pre><code id="install-command">curl -fsSL https://rembox.aakashns.com/install.sh | sh</code></pre>
+        <pre><code id="install-command">curl -fsSL https://rembox.aak.sh/install.sh | sh</code></pre>
         <!-- Shown by site.js. -->
         <button type="button" id="copy" hidden aria-label="Copy install command">Copy</button>
       </div>
@@ -202,7 +202,7 @@
         <p>
           You can re-run <code>rembox setup &lt;MACHINE&gt;</code> anytime to update or fix your setup.
           <code>rembox</code> prints every command it runs, check the
-          <a href="https://github.com/aakashns/rembox#server-scripts" target="_blank">server scripts</a>
+          <a href="https://github.com/aakashns/aak.sh/tree/main/rembox#server-scripts" target="_blank">server scripts</a>
           for details.
         </p>
       </section>
@@ -398,7 +398,7 @@
             Yes. Set <code>REMBOX_VERSION</code> (like <code>0.1.0</code>) or
             <code>REMBOX_INSTALL_DIR</code> (instead of <code>/usr/local/bin</code>) for the install
             script:
-            <pre class="block"><code>curl -fsSL https://rembox.aakashns.com/install.sh \
+            <pre class="block"><code>curl -fsSL https://rembox.aak.sh/install.sh \
   | REMBOX_VERSION=0.1.0 REMBOX_INSTALL_DIR="$HOME/.local/bin" sh</code></pre>
           </div>
         </details>
@@ -408,7 +408,7 @@
             Releases are built by GitHub Actions, and the install script and
             <code>rembox upgrade</code> check every download against its <code>SHA256SUMS</code>. To
             check a binary’s signed build attestation:
-            <pre class="block"><code>gh attestation verify "$(command -v rembox)" --repo aakashns/rembox</code></pre>
+            <pre class="block"><code>gh attestation verify "$(command -v rembox)" --repo aakashns/aak.sh</code></pre>
           </div>
         </details>
         <details>
@@ -416,9 +416,9 @@
           <div>
             First, run <code>rembox upgrade</code> to get the latest version, then run
             <code>rembox setup &lt;MACHINE&gt;</code> again. If it still goes wrong,
-            <a href="https://github.com/aakashns/rembox/issues/new" target="_blank">open an issue</a>
+            <a href="https://github.com/aakashns/aak.sh/issues/new" target="_blank">open an issue</a>
             on GitHub with what you ran and what it printed, or send a
-            <a href="https://github.com/aakashns/rembox/pulls" target="_blank">pull request</a>.
+            <a href="https://github.com/aakashns/aak.sh/pulls" target="_blank">pull request</a>.
           </div>
         </details>
       </section>
@@ -426,7 +426,7 @@
 
     <footer class="site">
       <span>
-        Free and <a href="https://github.com/aakashns/rembox" target="_blank">open source</a>
+        Free and <a href="https://github.com/aakashns/aak.sh/tree/main/rembox" target="_blank">open source</a>
         <span aria-hidden="true"> · </span>
         Built by <a href="https://aakashns.com" target="_blank">aakashns</a>
       </span>

@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aakashns/rembox/cli/internal/release"
-	"github.com/aakashns/rembox/cli/internal/release/releasetest"
-	"github.com/aakashns/rembox/cli/internal/remote"
-	"github.com/aakashns/rembox/cli/internal/version"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/release"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/release/releasetest"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/remote"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/version"
 )
 
 type testApp struct {
@@ -64,6 +64,7 @@ func newTestApp(t *testing.T, current string) *testApp {
 	t.Cleanup(srv.Close)
 	rc := release.NewClient()
 	rc.BaseURL = srv.BaseURL()
+	rc.APIURL = ""
 	rc.HTTP.CheckRedirect = nil // the test server is plain HTTP
 
 	exe := filepath.Join(t.TempDir(), "rembox")

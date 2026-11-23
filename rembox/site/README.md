@@ -1,6 +1,6 @@
 # rembox site
 
-[rembox.aakashns.com](https://rembox.aakashns.com): plain HTML in `public/`, with no build step,
+[rembox.aak.sh](https://rembox.aak.sh): plain HTML in `public/`, with no build step,
 and `public/install.sh`, the installer. [`Caddyfile`](Caddyfile) serves it.
 
 To preview it locally, with live reload: `npx live-server public --port=8788`
@@ -10,14 +10,10 @@ To preview it locally, with live reload: `npx live-server public --port=8788`
 
 ## Deploying
 
-The server serves the repo's `site/public` from `/srv/rembox`, which the `caddy` user can read
-(it can't read anything under `/root`). To set it up, as root, with a working copy in `/root/work`:
-
-```sh
-mv /root/work/rembox /srv/rembox && ln -s /srv/rembox /root/work/rembox
-chmod -R a+rX /srv/rembox/site/public
-sudo -u caddy cat /srv/rembox/site/public/index.html > /dev/null && echo readable
-```
-
-Then add [`Caddyfile`](Caddyfile)'s site block to `/etc/caddy/Caddyfile` and run
-`systemctl reload caddy`. To deploy changes, `git -C /srv/rembox pull`.
+Point rembox.aak.sh at the web server serving the other aak.sh sites. Pull main in
+`/srv/aak.sh` and check that Caddy can read `rembox/site/public/index.html`.
+Add the new host block from [Caddyfile](Caddyfile) to the active configuration,
+validate it with `caddy validate --config /etc/caddy/Caddyfile`, and reload Caddy.
+Verify the HTTPS homepage and installer. Then replace the old rembox.aakashns.com
+block with the redirect, validate and reload again. Check the old installer URL
+redirects to the same script, including any query string.

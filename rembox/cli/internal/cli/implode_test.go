@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aakashns/rembox/cli/internal/config"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/config"
 )
 
 // withConfig gives the test app some files in its config folder.

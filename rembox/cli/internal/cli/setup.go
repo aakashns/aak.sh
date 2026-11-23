@@ -16,8 +16,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/aakashns/rembox/cli/internal/config"
-	"github.com/aakashns/rembox/cli/internal/remote"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/config"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/remote"
 )
 
 const setupHelp = `Usage: rembox setup [NAME]

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aakashns/rembox/cli/internal/config"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/config"
 )
 
 func (ta *testApp) withServers(t *testing.T, names ...string) {

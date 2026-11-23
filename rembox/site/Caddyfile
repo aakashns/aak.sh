@@ -1,8 +1,6 @@
-# Serves rembox.aakashns.com from this repo's site/public, cloned to /srv/rembox on the server.
-# Caddy runs as the caddy user, which can't get into /root or home folders (mode 700 or 750), so
-# the site must live outside them, or every path is a 403. See README.md for setting it up.
-rembox.aakashns.com {
-	root * /srv/rembox/site/public
+# Serve the checked-out monorepo from /srv/aak.sh.
+rembox.aak.sh {
+	root * /srv/aak.sh/rembox/site/public
 	encode zstd gzip
 
 	header {
@@ -22,4 +20,8 @@ rembox.aakashns.com {
 		rewrite * /404.html
 		file_server
 	}
+}
+
+rembox.aakashns.com {
+	redir https://rembox.aak.sh{uri} permanent
 }

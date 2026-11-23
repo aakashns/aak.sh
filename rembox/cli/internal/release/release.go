@@ -2,9 +2,7 @@
 // a downloaded binary over the running one.
 //
 // Releases are built by `make dist` and published by
-// .github/workflows/release.yml. Each one has a plain binary per platform,
-// named without the version so that <BaseURL>/latest/download/<asset> always
-// works, and their checksums:
+// .github/workflows/rembox-release.yml. Each rembox-v tag has these assets:
 //
 //	rembox-darwin-arm64
 //	rembox-linux-amd64
@@ -20,6 +18,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -27,15 +26,16 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 	"time"
 
-	"github.com/aakashns/rembox/cli/internal/version"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/version"
 )
 
 // DefaultBaseURL is where releases are published. If that changes, change
 // install.sh too.
-const DefaultBaseURL = "https://github.com/aakashns/rembox/releases"
+const DefaultBaseURL = "https://github.com/aakashns/aak.sh/releases"
 
 // BaseURLEnv overrides DefaultBaseURL, so tests can point rembox and
 // install.sh at pretend releases.
@@ -52,6 +52,7 @@ var ErrNoReleases = errors.New("no releases have been published yet")
 
 // Client talks to the release server.
 type Client struct {
+	APIURL    string // when set, discover stable rembox-v releases in the monorepo
 	BaseURL   string // e.g. DefaultBaseURL, without a trailing slash
 	HTTP      *http.Client
 	UserAgent string
@@ -60,11 +61,16 @@ type Client struct {
 // NewClient returns a client for $REMBOX_RELEASES_URL, or DefaultBaseURL.
 func NewClient() *Client {
 	base := strings.TrimSuffix(os.Getenv(BaseURLEnv), "/")
+	api := os.Getenv("REMBOX_RELEASES_API_URL")
 	if base == "" {
 		base = DefaultBaseURL
+		if api == "" {
+			api = "https://api.github.com/repos/aakashns/aak.sh/releases"
+		}
 	}
 	return &Client{
 		BaseURL: base,
+		APIURL:  api,
 		HTTP: &http.Client{
 			Timeout:       2 * time.Minute,
 			CheckRedirect: httpsOnly,
@@ -89,12 +95,41 @@ func AssetName(goos, goarch string) string {
 	return fmt.Sprintf("rembox-%s-%s", goos, goarch)
 }
 
+var stableTag = regexp.MustCompile(`^rembox-v[0-9]+\.[0-9]+\.[0-9]+$`)
+
+// latestProjectRelease skips other projects and paginates until it finds a stable release.
+func (c *Client) latestProjectRelease(ctx context.Context) (string, error) {
+	for page := 1; ; page++ {
+		data, err := c.get(ctx, fmt.Sprintf("%s?per_page=100&page=%d", c.APIURL, page), 32<<20)
+		if err != nil {
+			return "", err
+		}
+		var releases []struct {
+			Tag        string `json:"tag_name"`
+			Draft      bool
+			Prerelease bool
+		}
+		if err := json.Unmarshal(data, &releases); err != nil {
+			return "", fmt.Errorf("reading releases: %w", err)
+		}
+		for _, r := range releases {
+			if !r.Draft && !r.Prerelease && stableTag.MatchString(r.Tag) {
+				return strings.TrimPrefix(r.Tag, "rembox-"), nil
+			}
+		}
+		if len(releases) < 100 {
+			return "", ErrNoReleases
+		}
+	}
+}
+
 // Latest returns the tag of the newest stable release, e.g. "v0.2.0".
 //
-// It reads the redirect from <BaseURL>/latest to <BaseURL>/tag/<tag> instead
-// of calling the GitHub API, which limits unauthenticated clients to 60
-// requests an hour.
+// Custom release mirrors without an API keep the original /latest redirect layout.
 func (c *Client) Latest(ctx context.Context) (string, error) {
+	if c.APIURL != "" {
+		return c.latestProjectRelease(ctx)
+	}
 	req, err := c.newRequest(ctx, c.BaseURL+"/latest")
 	if err != nil {
 		return "", err
@@ -132,6 +167,9 @@ func (c *Client) FetchBinary(ctx context.Context, tag, goos, goarch string) ([]b
 		return nil, fmt.Errorf("not a release tag: %q", tag)
 	}
 	asset := AssetName(goos, goarch)
+	if c.APIURL != "" {
+		tag = "rembox-" + tag
+	}
 	dir := c.BaseURL + "/download/" + url.PathEscape(tag) + "/"
 
 	sums, err := c.get(ctx, dir+"SHA256SUMS", maxChecksumsBytes)

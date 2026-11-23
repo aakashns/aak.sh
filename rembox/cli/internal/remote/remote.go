@@ -9,7 +9,7 @@ import (
 	"embed"
 	"strings"
 
-	"github.com/aakashns/rembox/cli/internal/version"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/version"
 )
 
 //go:embed *.sh
@@ -43,7 +43,7 @@ func load(name string, steps ...string) Script {
 func URL() string {
 	ref := "main" // development builds
 	if version.Valid(version.Version) && !strings.Contains(version.Version, "-") {
-		ref = "v" + version.Version
+		ref = "rembox-v" + version.Version
 	}
-	return "https://github.com/aakashns/rembox/tree/" + ref + "/cli/internal/remote"
+	return "https://github.com/aakashns/aak.sh/tree/" + ref + "/rembox/cli/internal/remote"
 }

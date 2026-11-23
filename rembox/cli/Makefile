@@ -1,6 +1,6 @@
 # Builds, checks and packages the rembox CLI. `make help` lists the targets.
 
-PKG       := github.com/aakashns/rembox/cli/internal/version
+PKG       := github.com/aakashns/aak.sh/rembox/cli/internal/version
 # The release builds pass VERSION=$(cat VERSION). Other builds are 0.2.0-dev, which `rembox
 # upgrade` treats as older than the 0.2.0 release.
 VERSION   ?= $(shell cat VERSION)-dev

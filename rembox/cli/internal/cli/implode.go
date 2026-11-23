@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/aakashns/rembox/cli/internal/config"
-	"github.com/aakashns/rembox/cli/internal/release"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/config"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/release"
 )
 
 const implodeHelp = `Usage: rembox implode
@@ -125,7 +125,7 @@ func runImplode(a *App, args []string) error {
 		}
 		fmt.Fprintf(a.Stdout, "Removed '%s' from ~/.ssh/config\n", includeLine(home, dir))
 	}
-	fmt.Fprintln(a.Stdout, a.paint(green, "rembox is gone.")+" To reinstall: curl -fsSL https://rembox.aakashns.com/install.sh | sh")
+	fmt.Fprintln(a.Stdout, a.paint(green, "rembox is gone.")+" To reinstall: curl -fsSL https://rembox.aak.sh/install.sh | sh")
 	return nil
 }
 

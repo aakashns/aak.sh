@@ -14,9 +14,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/aakashns/rembox/cli/internal/config"
-	"github.com/aakashns/rembox/cli/internal/release"
-	"github.com/aakashns/rembox/cli/internal/version"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/config"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/release"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/version"
 	"golang.org/x/term"
 )
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aakashns/rembox/cli/internal/config"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/config"
 )
 
 const removeHelp = `Usage: rembox remove NAME

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aakashns/rembox/cli/internal/release/releasetest"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/release/releasetest"
 )
 
 func newTestClient(t *testing.T) (*Client, *releasetest.Server) {
@@ -17,6 +17,7 @@ func newTestClient(t *testing.T) (*Client, *releasetest.Server) {
 	t.Cleanup(srv.Close)
 	c := NewClient()
 	c.BaseURL = srv.BaseURL()
+	c.APIURL = ""
 	c.HTTP.CheckRedirect = nil // the test server is plain HTTP
 	return c, srv
 }

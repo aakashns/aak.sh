@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://rembox.aakashns.com/sitemap.xml
+Sitemap: https://rembox.aak.sh/sitemap.xml

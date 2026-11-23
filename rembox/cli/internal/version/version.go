@@ -2,7 +2,7 @@
 //
 // Version, Commit and Date are set at link time by the Makefile, e.g.
 //
-//	-ldflags "-X github.com/aakashns/rembox/cli/internal/version.Version=0.2.0"
+//	-ldflags "-X github.com/aakashns/aak.sh/rembox/cli/internal/version.Version=0.2.0"
 package version
 
 import (

@@ -1,11 +1,11 @@
 # rembox - Set up and manage remote dev machines
 
-Docs: https://rembox.aakashns.com
+Docs: https://rembox.aak.sh
 
 Turn any Ubuntu or Debian server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone. Run this command to install `rembox` on Mac/Linux/WSL:
 
 ```sh
-curl -fsSL https://rembox.aakashns.com/install.sh | sh
+curl -fsSL https://rembox.aak.sh/install.sh | sh
 ```
 
 Run `rembox setup` to begin setting up a remote server.
@@ -13,7 +13,7 @@ Run `rembox setup` to begin setting up a remote server.
 ## Layout
 
 - [`cli/`](cli): the `rembox` command, in Go. `make help` lists the build, test and release targets.
-- [`site/`](site): rembox.aakashns.com, as plain HTML served by Caddy, and
+- [`site/`](site): rembox.aak.sh, as plain HTML served by Caddy, and
   [`site/public/install.sh`](site/public/install.sh), the installer.
 
 ## Server scripts
@@ -61,7 +61,9 @@ scripts. To try a change on a real server, use an [OrbStack](https://orbstack.de
 
 ## Releasing
 
-Every pull request bumps [`cli/VERSION`](cli/VERSION) (CI checks it). Merging to main runs
-[`release.yml`](.github/workflows/release.yml), which builds `rembox-<os>-<arch>` for macOS and
+Every REMBOX pull request bumps [`cli/VERSION`](cli/VERSION) (CI checks it). Merging to main runs
+[`release.yml`](../.github/workflows/rembox-release.yml), which builds `rembox-<os>-<arch>` for macOS and
 Linux (arm64 and amd64) with a `SHA256SUMS` and build attestations, publishes them as release
-`v<VERSION>`, then installs it on each platform to check it works.
+`rembox-v<VERSION>`, then installs it on each platform to check it works.
+
+[Earlier releases through v0.27.0](https://github.com/aakashns/rembox/releases) remain available for pinned installs. Older installations can run `rembox upgrade` to install the 0.27.1 bridge, then run it again to reach the latest monorepo release.

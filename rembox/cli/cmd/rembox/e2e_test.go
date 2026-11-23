@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -8,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aakashns/rembox/cli/internal/release"
-	"github.com/aakashns/rembox/cli/internal/release/releasetest"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/release"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/release/releasetest"
 )
 
 // installScript is the installer the website serves.
@@ -20,7 +23,7 @@ func buildRembox(t *testing.T, version string) []byte {
 	t.Helper()
 	out := filepath.Join(t.TempDir(), "rembox")
 	cmd := exec.Command("go", "build", "-o", out,
-		"-ldflags", "-X github.com/aakashns/rembox/cli/internal/version.Version="+version, ".")
+		"-ldflags", "-X github.com/aakashns/aak.sh/rembox/cli/internal/version.Version="+version, ".")
 	cmd.Env = append(os.Environ(), "CGO_ENABLED=0")
 	if b, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("go build: %v\n%s", err, b)
@@ -92,6 +95,33 @@ func TestInstallAndUpgrade(t *testing.T) {
 	if !strings.Contains(out, "Installed rembox 0.1.0") {
 		t.Fatalf("install.sh with REMBOX_VERSION output:\n%s", out)
 	}
+}
+
+// TestMonorepoChannel exercises the installer and the installed upgrader across
+// two pages of releases shared with other projects.
+func TestMonorepoChannel(t *testing.T) {
+	srv := releasetest.NewServer()
+	defer srv.Close()
+	srv.AddRelease("rembox-v0.27.1", runtime.GOOS, runtime.GOARCH, buildRembox(t, "0.27.1"))
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Query().Get("page") {
+		case "1":
+			other := `{"tag_name":"writui-v9.9.9","draft":false,"prerelease":false}`
+			fmt.Fprint(w, "["+strings.Repeat(other+",", 99)+other+"]")
+		case "2":
+			fmt.Fprint(w, `[{"tag_name":"rembox-v9.0.0","draft":false,"prerelease":true},{"tag_name":"rembox-v0.27.1","draft":false,"prerelease":false}]`)
+		default:
+			http.Error(w, "unexpected page", http.StatusBadRequest)
+		}
+	}))
+	defer api.Close()
+	dir := t.TempDir()
+	env := []string{"REMBOX_INSTALL_DIR=" + dir, "REMBOX_RELEASES_API_URL=" + api.URL}
+	run(t, srv, env, "", "sh", installScript)
+	if out := run(t, srv, env, "", filepath.Join(dir, "rembox"), "upgrade"); !strings.Contains(out, "0.27.1 is already the latest") {
+		t.Fatal(out)
+	}
+	run(t, srv, append(env, "REMBOX_VERSION=0.27.1"), "", "sh", installScript)
 }
 
 // TestInstallRejectsTampered checks install.sh refuses a binary that doesn't

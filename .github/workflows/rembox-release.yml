@@ -1,13 +1,14 @@
-# Every push to main runs the checks (ci.yml). If cli/VERSION isn't released yet, which it isn't
+# Every push to main runs the checks (ci.yml). If rembox/cli/VERSION isn't released yet, which it isn't
 # after merging a pull request (ci.yml makes each one bump it), it then publishes the binaries for
 # every platform, their SHA256SUMS, and build attestations as release v<VERSION>, which install.sh
 # and `rembox upgrade` download. Then it installs the release on each platform to check it works.
-name: Release
+name: rembox release
 
 on:
   push:
     branches: [main]
-  # Releases cli/VERSION, if it isn't released already.
+    paths: [rembox/**, .github/workflows/rembox-ci.yml, .github/workflows/rembox-release.yml]
+  # Releases rembox/cli/VERSION, if it isn't released already.
   workflow_dispatch:
 
 permissions:
@@ -20,6 +21,7 @@ concurrency:
 
 jobs:
   version:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     outputs:
       tag: ${{ steps.version.outputs.tag }}
@@ -30,19 +32,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          version=$(cat cli/VERSION)
+          version=$(cat rembox/cli/VERSION)
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
-            { echo "::error file=cli/VERSION::'$version' isn't a version like 1.2.3"; exit 1; }
-          echo "tag=v$version" >> "$GITHUB_OUTPUT"
-          if gh release view "v$version" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-            echo "v$version is released already"
+            { echo "::error file=rembox/cli/VERSION::'$version' isn't a version like 1.2.3"; exit 1; }
+          echo "tag=rembox-v$version" >> "$GITHUB_OUTPUT"
+          if gh release view "rembox-v$version" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            echo "rembox-v$version is released already"
             echo "release=false" >> "$GITHUB_OUTPUT"
           else
             echo "release=true" >> "$GITHUB_OUTPUT"
           fi
 
   check:
-    uses: ./.github/workflows/ci.yml
+    uses: ./.github/workflows/rembox-ci.yml
 
   release:
     needs: [version, check]
@@ -54,25 +56,25 @@ jobs:
       attestations: write
     defaults:
       run:
-        working-directory: cli
+        working-directory: rembox/cli
     env:
       TAG: ${{ needs.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version-file: cli/go.mod
-          cache-dependency-path: cli/go.mod
-      - run: make dist VERSION="${TAG#v}"
+          go-version-file: rembox/cli/go.mod
+          cache-dependency-path: rembox/cli/go.mod
+      - run: make dist VERSION="${TAG#rembox-v}"
       - uses: actions/attest-build-provenance@v4
         with:
-          subject-path: cli/dist/rembox-*
+          subject-path: rembox/cli/dist/rembox-*
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "$TAG" --generate-notes -- dist/rembox-* dist/SHA256SUMS
+            --title "$TAG" --latest=false --notes "REMBOX ${TAG#rembox-v}" -- dist/rembox-* dist/SHA256SUMS
 
   # Installs the new release with install.sh, as a user would, and checks it.
   smoke-test:
@@ -87,7 +89,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v7
-      - run: REMBOX_INSTALL_DIR="$RUNNER_TEMP/bin" sh site/public/install.sh
+      - run: REMBOX_VERSION="${TAG#rembox-v}" REMBOX_INSTALL_DIR="$RUNNER_TEMP/bin" sh rembox/site/public/install.sh
       - run: |
-          "$RUNNER_TEMP/bin/rembox" version | tee /dev/stderr | grep -q "^rembox ${TAG#v} "
+          "$RUNNER_TEMP/bin/rembox" version | tee /dev/stderr | grep -q "^rembox ${TAG#rembox-v} "
       - run: gh attestation verify "$RUNNER_TEMP/bin/rembox" --repo "$GITHUB_REPOSITORY"

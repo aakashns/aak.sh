@@ -4,7 +4,7 @@ package main
 import (
 	"os"
 
-	"github.com/aakashns/rembox/cli/internal/cli"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/cli"
 )
 
 func main() {

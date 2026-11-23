@@ -1,7 +1,7 @@
 #!/bin/sh
-# Installs rembox (https://github.com/aakashns/rembox) on macOS or Linux:
+# Installs rembox (https://github.com/aakashns/aak.sh/tree/main/rembox) on macOS or Linux:
 #
-#   curl -fsSL https://rembox.aakashns.com/install.sh | sh
+#   curl -fsSL https://rembox.aak.sh/install.sh | sh
 #
 # Downloads the latest release for this machine, checks it against the release's SHA256SUMS, and
 # installs it at /usr/local/bin/rembox, with sudo if that folder needs it. Running it again
@@ -13,12 +13,14 @@ set -eu
 
 # Everything is in main(), called on the last line, so a download cut short runs nothing.
 main() {
-  repo="https://github.com/aakashns/rembox"
+  repo="https://github.com/aakashns/aak.sh/tree/main/rembox"
   # Where releases are published. Tests point it at pretend ones (see cli/cmd/rembox/e2e_test.go).
-  releases="${REMBOX_RELEASES_URL:-$repo/releases}"
+  releases="${REMBOX_RELEASES_URL:-https://github.com/aakashns/aak.sh/releases}"
   # Downloads are HTTPS only, even after redirects, unless the tests' pretend releases aren't.
   protocols='=https'
   case "$releases" in http://*) protocols='=http,https' ;; esac
+  release_api="${REMBOX_RELEASES_API_URL:-https://api.github.com/repos/aakashns/aak.sh/releases}"
+  legacy="https://github.com/aakashns/rembox/releases"
   dir="${REMBOX_INSTALL_DIR:-/usr/local/bin}"
 
   case "$(uname -s)" in
@@ -41,15 +43,35 @@ main() {
   command -v curl >/dev/null || fail "curl is needed to download rembox"
 
   binary="rembox-$os-$arch"
-  if [ -n "${REMBOX_VERSION:-}" ]; then
-    version="${REMBOX_VERSION#v}"
-    # It goes into a URL, so only a plain version will do.
-    case "$version" in
-      *[!0-9A-Za-z.-]* | "") fail "not a version: $REMBOX_VERSION" ;;
-    esac
-    url="$releases/download/v$version"
+  version=${REMBOX_VERSION:-}
+  version=${version#v}
+  if [ -n "$version" ]; then
+    printf '%s\n' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || fail "not a version: $version"
+  fi
+  if [ -n "${REMBOX_RELEASES_URL:-}" ] && [ -z "${REMBOX_RELEASES_API_URL:-}" ]; then
+    if [ -n "$version" ]; then
+      url="$REMBOX_RELEASES_URL/download/v$version"
+    else
+      url="$REMBOX_RELEASES_URL/latest/download"
+    fi
+  elif [ -n "$version" ]; then
+    if printf '%s\n' "$version" | awk -F. '$1 > 0 || $2 > 27 || ($2 == 27 && $3 > 0) { newer = 1 } END { exit !newer }'; then
+      url="$releases/download/rembox-v$version"
+    else
+      url="$legacy/download/v$version"
+    fi
   else
-    url="$releases/latest/download"
+    page=1
+    while :; do
+      listing=$(curl -fsSL "$release_api?per_page=100&page=$page") ||
+        fail "couldn't list rembox releases"
+      selection=$(printf '%s\n' "$listing" | stable_release_or_count)
+      case "$selection" in
+        rembox-v*) url="$releases/download/$selection"; break ;;
+        *) [ "$selection" -ge 100 ] || fail "couldn't find a stable rembox release" ;;
+      esac
+      page=$((page + 1))
+    done
   fi
 
   tmp=$(mktemp -d)
@@ -107,6 +129,45 @@ fail() {
 
 download() {
   curl -fsSL --proto "$protocols" --proto-redir "$protocols" "$1" -o "$2"
+}
+
+# Read the GitHub releases array with awk so the installer needs no extra JSON tool.
+# Tokenize quoted strings as a whole, and only read fields on the release objects.
+# Return the first stable LogSpace tag, or the number of releases for pagination.
+stable_release_or_count() {
+  awk '
+    {
+      while (match($0, /"([^"\\]|\\.)*"|[][{}:,]|true|false|null|-?[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?/)) {
+        token = substr($0, RSTART, RLENGTH)
+        $0 = substr($0, RSTART + RLENGTH)
+        if (token == "[" || token == "{") {
+          depth++
+          if (depth == 2) tag = draft = prerelease = ""
+          key = ""
+        } else if (token == "]" || token == "}") {
+          if (depth == 2 && token == "}") {
+            count++
+            if (draft == "false" && prerelease == "false" && tag ~ /^"rembox-v[0-9]+\.[0-9]+\.[0-9]+"$/) {
+              stable = substr(tag, 2, length(tag) - 2)
+              exit
+            }
+          }
+          depth--
+        } else if (depth == 2) {
+          if (token == ":") {
+            key = previous
+          } else {
+            if (key == "\"tag_name\"") tag = token
+            if (key == "\"draft\"") draft = token
+            if (key == "\"prerelease\"") prerelease = token
+            key = ""
+          }
+        }
+        previous = token
+      }
+    }
+    END { if (stable) print stable; else print count + 0 }
+  '
 }
 
 main "$@"

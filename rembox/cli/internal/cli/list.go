@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"text/tabwriter"
 
-	"github.com/aakashns/rembox/cli/internal/config"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/config"
 )
 
 const listHelp = `Usage: rembox list

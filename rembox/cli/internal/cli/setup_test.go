@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aakashns/rembox/cli/internal/config"
-	"github.com/aakashns/rembox/cli/internal/remote"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/config"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/remote"
 )
 
 // withKey puts a private key (and its public key) at ~/.ssh/name and returns
@@ -112,7 +112,7 @@ func TestSetup(t *testing.T) {
 	files := `"$(cat lib.sh check.sh hostname.sh git.sh postgres.sh caddy.sh update.sh nat64.sh toolchains.sh agents.sh opentunnel.sh instructions.sh t3.sh user.sh sshd.sh firewall.sh zsh.sh fail2ban.sh swap.sh locale.sh restart.sh setup.sh)"`
 	if !strings.Contains(out, "\n$ ssh -t -p 22 -i "+key+" -o IdentitiesOnly=yes") ||
 		!strings.Contains(out, "root@203.0.113.10 bash -c "+files+" bash start ada 23456 22 box1\n"+
-			"  These scripts come with rembox; read them at https://github.com/aakashns/rembox/tree/v0.1.0/cli/internal/remote\n") ||
+			"  These scripts come with rembox; read them at https://github.com/aakashns/aak.sh/tree/rembox-v0.1.0/rembox/cli/internal/remote\n") ||
 		!strings.Contains(out, "ada@203.0.113.10 bash -c "+files+" bash home '' '' 23456\n") {
 		t.Errorf("output doesn't show the scripts' commands:\n%s", out)
 	}

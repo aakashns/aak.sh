@@ -9,8 +9,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/aakashns/rembox/cli/internal/config"
-	"github.com/aakashns/rembox/cli/internal/remote"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/config"
+	"github.com/aakashns/aak.sh/rembox/cli/internal/remote"
 )
 
 // sshArgs are the ssh arguments to run command on s, for setup. ssh
