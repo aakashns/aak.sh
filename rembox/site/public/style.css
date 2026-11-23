@@ -1,0 +1,414 @@
+/* rembox.aakashns.com: one narrow column, dark like a terminal. Two heading sizes, and two for body
+   text: 1rem, and 0.875rem for code, plus 0.75rem in the terminal. No web fonts. */
+
+:root {
+  --bg: #161616;
+  --text: #e6e6e6;
+  --muted: #a1a1a1;
+  --faint: #2e2e2e;
+  --surface: #1e1e1e;
+  --link: #5fb3f0;
+  --accent: #7ee2a8;
+  --mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --small: 0.875rem;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  font-size: 18px;
+  line-height: 1.65;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--muted);
+  text-underline-offset: 0.2em;
+}
+a:hover {
+  text-decoration-color: var(--text);
+}
+:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+h1 {
+  margin: 0 0 0.3em;
+  font-size: 2rem;
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+h2 {
+  margin: 0 0 0.5em;
+  font-size: 1.25rem;
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+/* Code in a heading, sized to the heading, not to body code. */
+h1 code,
+h2 code {
+  margin: 0 0.15em;
+  font-size: 0.9em;
+  letter-spacing: 0;
+}
+p,
+ul,
+ol,
+dl,
+pre,
+figure {
+  margin: 0 0 1.1em;
+}
+dd ol {
+  margin: 0.5em 0;
+  padding-left: 1.4em;
+}
+/* Just room for the numbers, so they line up with the heading. */
+ol.steps {
+  padding-left: 1.2em;
+}
+ol.steps > li + li {
+  margin-top: 0.6em;
+}
+ol.steps ul {
+  margin: 0.2em 0 0;
+  padding-left: 1.2em;
+  color: var(--muted);
+}
+strong {
+  font-weight: 600;
+}
+code,
+pre {
+  font-family: var(--mono);
+  font-size: var(--small);
+}
+/* Code in a sentence. */
+p code,
+dd code,
+li code,
+.faq details > div > code {
+  padding: 0.1em 0.3em;
+  white-space: nowrap;
+  background: var(--surface);
+  border-radius: 3px;
+}
+
+/* Header and footer */
+
+header.site {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5em 1.5em;
+  margin-bottom: 3.5rem;
+}
+header.site .name {
+  text-decoration: none;
+}
+.wordmark {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.wordmark span {
+  margin-right: 0.35em;
+  color: var(--accent);
+}
+header.site nav {
+  display: flex;
+  gap: 1.25em;
+}
+header.site nav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+header.site nav a:hover {
+  color: var(--text);
+}
+
+footer.site {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25em 1.5em;
+  margin-top: 3rem;
+  color: var(--muted);
+}
+
+/* Landing page */
+
+/* Line breaks only narrow screens take. */
+@media (min-width: 40rem) {
+  br.mobile {
+    display: none;
+  }
+}
+
+.lede {
+  margin-bottom: 2.25rem;
+  color: var(--muted);
+}
+
+.before-command {
+  margin-bottom: 0.5em;
+}
+.command {
+  display: flex;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 0.5em;
+  padding: 0.7em 0.7em 0.7em 1em;
+  background: var(--surface);
+  border: 1px solid var(--faint);
+  border-radius: 6px;
+}
+.command pre {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-x: auto;
+}
+.after-command {
+  color: var(--muted);
+}
+.command button {
+  flex: none;
+  padding: 0.2em 0.7em;
+  font: inherit;
+  font-size: var(--small);
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--faint);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.command button:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+/* The terminal that plays rembox setup (see site.js). */
+.term {
+  margin: 2.75rem 0 1.5rem;
+  overflow: hidden;
+  background: #0f0f0f;
+  border: 1px solid var(--faint);
+  border-radius: 8px;
+}
+.term-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0.25em 0.6em;
+  background: var(--surface);
+  border-bottom: 1px solid var(--faint);
+}
+.term-bar span {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.term-bar i {
+  width: 10px;
+  height: 10px;
+  background: var(--faint);
+  border-radius: 50%;
+}
+.term-bar button {
+  margin-left: auto;
+  padding: 0 0.5em;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--faint);
+  border-radius: 4px;
+  cursor: pointer;
+}
+/* Always takes its space, so the bar's height doesn't change; it shows when the terminal plays. */
+html:not(.animate) .term-bar button {
+  visibility: hidden;
+}
+.term-bar button:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+.term-screen {
+  padding: 0.8em 1em;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.term-screen b {
+  font-weight: 700;
+}
+.t-gap {
+  height: 1lh;
+}
+/* Wrapped checklist lines start under the text, not the mark. */
+.t-check {
+  padding-left: 4ch;
+  text-indent: -2ch;
+}
+.t-green {
+  color: var(--accent);
+}
+.t-dim {
+  color: var(--muted);
+}
+/* While playing, what hasn't shown yet keeps its space, so nothing moves. */
+.animate .term-screen [data-step]:not(.shown),
+.animate .term-screen .t-char:not(.shown) {
+  visibility: hidden;
+}
+/* An empty inline, so it takes no space and can't change where lines wrap. */
+.t-cursor {
+  position: relative;
+}
+.t-cursor::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 0.6em;
+  background: var(--text);
+  animation: t-blink 1s steps(1) infinite;
+}
+@keyframes t-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* Other commands: a plain block, one command per line. */
+pre.block {
+  padding: 0.7em 1em;
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--faint);
+  border-radius: 6px;
+}
+
+main > section:first-of-type {
+  margin-top: 2.5rem;
+}
+
+section + section {
+  margin-top: 3rem;
+}
+
+dl.commands dt {
+  margin-top: 1em;
+}
+dl.commands dt:first-child {
+  margin-top: 0;
+}
+dl.commands dd {
+  margin: 0.2em 0 0;
+  color: var(--muted);
+}
+/* FAQs: each question opens to its answer. */
+.faq details {
+  border-bottom: 1px solid var(--faint);
+}
+.faq summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 1em;
+  padding: 0.6em 0;
+  font-weight: 600;
+  list-style: none;
+  cursor: pointer;
+}
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+.faq summary::after {
+  content: "+";
+  flex: none;
+  color: var(--muted);
+  font-weight: 400;
+}
+.faq details[open] summary::after {
+  content: "−";
+}
+.faq details > div {
+  padding-bottom: 0.9em;
+  color: var(--muted);
+}
+.faq pre {
+  margin: 0.5em 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.sr-only,
+.skip-link:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+.skip-link:focus {
+  display: block;
+  padding: 0.5rem;
+}
+[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 39.9375rem) {
+  html {
+    font-size: 16px;
+  }
+  /* Words only wide screens show. */
+  span.desktop {
+    display: none;
+  }
+  header.site {
+    column-gap: 1em;
+    margin-bottom: 2.5rem;
+  }
+  header.site nav {
+    gap: 1em;
+  }
+  .command code {
+    font-size: 0.75rem;
+  }
+}

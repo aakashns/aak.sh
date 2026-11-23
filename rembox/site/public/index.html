@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>rembox — Set up and manage remote development machines</title>
+    <meta name="theme-color" content="#161616" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/style.css" />
+    <meta
+      name="description"
+      content="Turn any Ubuntu server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone."
+    />
+    <link rel="canonical" href="https://rembox.aakashns.com/" />
+    <!-- Link previews. site/images/render.sh makes social.png. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="rembox" />
+    <meta property="og:title" content="rembox — Set up and manage remote development machines" />
+    <meta
+      property="og:description"
+      content="Turn any Ubuntu server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone."
+    />
+    <meta property="og:url" content="https://rembox.aakashns.com/" />
+    <meta property="og:image" content="https://rembox.aakashns.com/social.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="rembox: Set up and manage remote dev machines" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "rembox",
+        "url": "https://rembox.aakashns.com/",
+        "description": "Turn any Ubuntu server into a locked-down box with secure SSH, developer tools, AI coding agents, and remote access from your phone.",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "macOS, Linux, Windows (WSL)",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "license": "https://github.com/aakashns/rembox/blob/main/LICENSE",
+        "sameAs": "https://github.com/aakashns/rembox",
+        "author": { "@type": "Person", "name": "Aakash N S", "url": "https://aakashns.com" }
+      }
+    </script>
+    <!-- Before the first paint, so the terminal (see site.js) starts empty instead of flashing. -->
+    <script>
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        document.documentElement.classList.add("animate");
+      }
+    </script>
+    <script src="/site.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site">
+      <a class="name" href="/" aria-label="rembox home">
+        <span class="wordmark"><span aria-hidden="true">&gt;_</span>rembox</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="https://github.com/aakashns/rembox" target="_blank">GitHub</a>
+        <a href="https://github.com/aakashns/rembox/releases" target="_blank">Changelog</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <h1>Set up and manage <br class="mobile" />remote dev machines</h1>
+      <p class="lede">
+        Turn any Ubuntu server into a locked-down box with secure SSH, developer tools, AI coding
+        agents, and remote access from your phone.
+      </p>
+
+      <p class="before-command">Run this on Mac, Linux, or WSL to install rembox:</p>
+      <div class="command">
+        <pre><code id="install-command">curl -fsSL https://rembox.aakashns.com/install.sh | sh</code></pre>
+        <!-- Shown by site.js. -->
+        <button type="button" id="copy" hidden aria-label="Copy install command">Copy</button>
+      </div>
+      <p class="after-command">Run <code>rembox setup</code> to begin<span class="desktop"> setting up a remote server</span>. <a href="#faq">Read FAQs</a></p>
+      <p id="copy-status" class="sr-only" role="status"></p>
+
+      <!-- site.js plays it: each [data-step] shows after waiting its value in ms; [data-type]
+           ones are typed. It's all laid out from the start, so the box never changes height. -->
+      <figure class="term" aria-label="Running rembox setup">
+        <div class="term-bar" aria-hidden="true">
+          <i></i><i></i><i></i>
+          <span>Terminal</span>
+          <button type="button" id="term-replay">Replay</button>
+        </div>
+        <div class="term-screen" id="term-screen">
+          <div><span data-step="0"><span class="t-green">$</span> </span><span data-step="700" data-type>rembox setup</span></div>
+          <div data-step="500"><b>Remote server IP address or hostname</b>: <span data-step="500" data-type>203.0.113.42</span></div>
+          <div data-step="300"><b>SSH port</b> <span class="t-dim">[default: 22]</span>: </div>
+          <div data-step="700"><b>User to log in as</b> <span class="t-dim">[default: root]</span>: </div>
+          <div data-step="700"><b>SSH private key</b> <span class="t-dim">[default: ~/.ssh/id_ed25519]</span>: </div>
+          <div data-step="700"><b>Name for this server</b>: <span data-step="500" data-type>alex-devbox</span></div>
+          <div class="t-gap"></div>
+          <div class="t-dim" data-step="600" data-type>…a few minutes later (intermediate output hidden)…</div>
+          <div class="t-gap"></div>
+          <div data-step="700"><span class="t-green">==&gt;</span> <b>alex-devbox is set up. To log in: rembox ssh alex-devbox</b></div>
+          <div class="t-gap"></div>
+          <div class="t-check" data-step="500"><span class="t-green">✓</span> Named the server alex-devbox, with 4 GiB of swap</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Upgraded 37 packages; security updates install daily</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed dev tools and Go 1.27.3</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Added your user, alex, with sudo and zsh</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> gh logged in to GitHub as alex; git commits as Alex Kim &lt;alex@example.com&gt;</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed bun 1.3.9, Node 26.2.0, Python 3.15.0 and Rust 1.99.0</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed Claude Code 2.4.1 and logged in</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed Codex 0.91.0 and logged in</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed OpenCode 1.4.2 and logged in</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed Pi 0.12.0</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Playwright 1.66.0, with Chromium</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> opentunnel 0.6.2, for dev server links</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Coding agents follow ~/.config/rembox/AGENTS.md</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> T3 Code 0.8.0, connected to your phone with T3 Connect as alex@example.com</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> ssh on port 47213 only, with keys and no root login; ufw and fail2ban on</div>
+        </div>
+      </figure>
+
+      <section aria-labelledby="setup">
+        <h2 id="setup">What does <code>rembox setup</code> do?</h2>
+        <ol class="steps">
+          <li>
+            <strong>Saves your server’s details and keeps it up to date</strong>
+            <ul>
+              <li>asks you for the server’s IP/host, SSH port, key file, and username</li>
+              <li>
+                saves it to <a href="https://man.openbsd.org/ssh_config" target="_blank"><code>~/.ssh/config</code></a>, so you can
+                connect with <code>ssh &lt;name&gt;</code>
+              </li>
+              <li>
+                logs in, upgrades all packages, and turns on
+                <a href="https://wiki.debian.org/UnattendedUpgrades" target="_blank">unattended-upgrades</a>
+              </li>
+              <li>
+                adds <a href="https://wiki.debian.org/Swap" target="_blank">swap</a> as big as the server’s memory (up to 4 GiB), if it
+                has none
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Locks down incoming network traffic and SSH access</strong>
+            <ul>
+              <li>
+                creates a non-root user with password protected <a href="https://www.sudo.ws/" target="_blank"><code>sudo</code></a> access
+              </li>
+              <li>moves <a href="https://www.openssh.com/" target="_blank">SSH</a> from 22 to a random port to counter automated attacks</li>
+              <li>
+                turns off password-based &amp; root SSH access, and turns on
+                <a href="https://github.com/fail2ban/fail2ban" target="_blank">fail2ban</a>
+              </li>
+              <li>
+                turns on the <a href="https://help.ubuntu.com/community/UFW" target="_blank">ufw</a> firewall to block all incoming
+                traffic except SSH
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Installs development tools and configures the shell</strong>
+            <ul>
+              <li>
+                installs <a href="https://git-scm.com/" target="_blank">git</a>, <a href="https://cli.github.com/" target="_blank">gh</a>,
+                <a href="https://github.com/BurntSushi/ripgrep" target="_blank">ripgrep</a>, <a href="https://github.com/sharkdp/fd" target="_blank">fd</a>,
+                <a href="https://github.com/junegunn/fzf" target="_blank">fzf</a>, <a href="https://jqlang.org/" target="_blank">jq</a>,
+                <a href="https://htop.dev/" target="_blank">htop</a>, <a href="https://zellij.dev/" target="_blank">Zellij</a>,
+                <a href="https://www.postgresql.org/" target="_blank">PostgreSQL</a>, and other dev tools
+              </li>
+              <li>
+                installs the latest <a href="https://nodejs.org/" target="_blank">Node</a> (with
+                <a href="https://viteplus.dev/" target="_blank">Vite+</a>), <a href="https://bun.sh/" target="_blank">bun</a>,
+                <a href="https://www.python.org/" target="_blank">Python</a> (with
+                <a href="https://docs.astral.sh/uv/" target="_blank">uv</a>), <a href="https://www.rust-lang.org/" target="_blank">Rust</a>
+                and <a href="https://go.dev/" target="_blank">Go</a>
+              </li>
+              <li>makes <a href="https://www.zsh.org/" target="_blank">zsh</a> your shell, with curated plugins to improve your workflow</li>
+              <li>
+                sets your name and email for <a href="https://git-scm.com/" target="_blank">git</a>, and logs
+                <a href="https://cli.github.com/" target="_blank">gh</a> in to GitHub with a code
+              </li>
+            </ul>
+          </li>
+          <li>
+            <strong>Installs AI coding agents and sets up remote access</strong>
+            <ul>
+              <li>
+                installs & sets up <a href="https://code.claude.com/" target="_blank">Claude Code</a>,
+                <a href="https://openai.com/codex/" target="_blank">Codex</a>, <a href="https://opencode.ai/" target="_blank">OpenCode</a>, and
+                <a href="https://pi.dev/" target="_blank">Pi</a> coding agents
+              </li>
+              <li>
+                installs <a href="https://playwright.dev/" target="_blank">Playwright</a> with Chromium, so agents can do browser testing
+              </li>
+              <li>
+                installs <a href="https://opentunnel.xyz/" target="_blank">opentunnel</a>, so agents can share dev server links on your phone
+              </li>
+              <li>
+                installs <a href="https://t3.codes/" target="_blank">T3 Code</a> and enables <a href="https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md" target="_blank">T3 Connect</a> to let you code from your phone
+              </li>
+            </ul>
+          </li>
+        </ol>
+        <p>
+          You can re-run <code>rembox setup &lt;MACHINE&gt;</code> anytime to update or fix your setup.
+          <code>rembox</code> prints every command it runs, check the
+          <a href="https://github.com/aakashns/rembox#server-scripts" target="_blank">server scripts</a>
+          for details.
+        </p>
+      </section>
+
+      <section aria-labelledby="commands">
+        <h2 id="commands">CLI Commands</h2>
+        <dl class="commands">
+          <dt><code>rembox setup [NAME]</code></dt>
+          <dd>
+            Sets up a server, <a href="#setup">as above</a>, or with NAME, sets one up again.
+          </dd>
+          <dt><code>rembox list</code></dt>
+          <dd>Lists the servers you’ve added, with the user, host, port and key rembox logs in with.</dd>
+          <dt><code>rembox ssh NAME [COMMAND...]</code></dt>
+          <dd>
+            Logs in to the server called NAME as configured, or runs a command on it.
+          </dd>
+          <dt><code>rembox tunnel NAME SERVER-PORT:LOCAL-PORT</code></dt>
+          <dd>Forwards SERVER-PORT on the chosen server to LOCAL-PORT on your machine.</dd>
+          <dt><code>rembox remove NAME</code></dt>
+          <dd>Removes a server’s login details and ssh alias; the server itself stays as it is.</dd>
+          <dt><code>rembox help [command]</code></dt>
+          <dd>Lists the commands, or explains one of them.</dd>
+          <dt><code>rembox version</code></dt>
+          <dd>Prints the version, and the commit it was built from.</dd>
+          <dt><code>rembox upgrade</code></dt>
+          <dd>Upgrades rembox to the latest release.</dd>
+          <dt><code>rembox implode</code></dt>
+          <dd>
+            Removes rembox, <code>~/.config/rembox</code>, and the line added to
+            <code>~/.ssh/config</code>.
+          </dd>
+        </dl>
+      </section>
+
+      <section class="faq" aria-labelledby="faq">
+        <h2 id="faq">Frequently Asked Questions</h2>
+        <details>
+          <summary>What do I need to do before installing rembox?</summary>
+          <div>
+            Generate an SSH key pair on your laptop with <code>ssh-keygen -t ed25519</code>, if you don’t have one.
+            Then rent a cloud server from a provider like
+            <a href="https://www.hetzner.com/cloud/" target="_blank">Hetzner</a>,
+            <a href="https://www.digitalocean.com/products/droplets" target="_blank">DigitalOcean</a>, or
+            <a href="https://www.ovhcloud.com/en/vps/" target="_blank">OVH</a>, and add your
+            public key to it, as in
+            <a href="https://docs.hetzner.com/cloud/servers/getting-started/creating-a-server/" target="_blank">Hetzner’s guide</a>.
+          </div>
+        </details>
+        <details>
+          <summary>Where should I install rembox: my laptop or the remote server?</summary>
+          <div>
+            You should install rembox ONLY on your laptop/desktop (Mac, Linux, or WSL). rembox logs in to the server over ssh and sets it
+            up from there, so you don’t need to install anything on the server first.
+          </div>
+        </details>
+        <details>
+          <summary>What exactly does rembox install and set up on the server?</summary>
+          <div>
+            <p>Security</p>
+            <ul>
+              <li><a href="https://help.ubuntu.com/community/UFW" target="_blank">ufw</a> blocks every incoming connection except SSH.</li>
+              <li><a href="https://github.com/fail2ban/fail2ban" target="_blank">fail2ban</a> bans addresses that keep failing to log in.</li>
+              <li><a href="https://wiki.debian.org/UnattendedUpgrades" target="_blank">unattended-upgrades</a> installs security updates every day.</li>
+              <li><a href="https://www.sudo.ws/" target="_blank">sudo</a> is password-protected root for your user.</li>
+              <li><a href="https://wiki.debian.org/Locale" target="_blank">locales</a> adds your Mac’s locale, so programs don’t warn.</li>
+              <li><a href="https://www.freedesktop.org/software/systemd/man/latest/systemd-resolved.service.html" target="_blank">systemd-resolved</a>, on IPv6-only servers, looks up names with public NAT64 resolvers, to reach sites like GitHub.</li>
+            </ul>
+            <p>Dev tools</p>
+            <ul>
+              <li><a href="https://packages.debian.org/stable/build-essential" target="_blank">build-essential</a> is gcc, g++, make, and the headers they need.</li>
+              <li><a href="https://git-scm.com/" target="_blank">git</a> is version control.</li>
+              <li><a href="https://cli.github.com/" target="_blank">gh</a> is GitHub’s command line, from GitHub’s apt repo, not the distro’s.</li>
+              <li><a href="https://curl.se/" target="_blank">curl</a> fetches a URL.</li>
+              <li><a href="https://www.gnu.org/software/wget/" target="_blank">wget</a> downloads a file, and retries if it fails.</li>
+              <li><a href="https://infozip.sourceforge.net/Zip.html" target="_blank">zip</a> packs files into a .zip.</li>
+              <li><a href="https://infozip.sourceforge.net/UnZip.html" target="_blank">unzip</a> unpacks a .zip.</li>
+              <li><a href="https://jqlang.org/" target="_blank">jq</a> reads and edits JSON.</li>
+              <li><a href="https://github.com/BurntSushi/ripgrep" target="_blank">ripgrep</a> searches through files. The command is rg.</li>
+              <li><a href="https://github.com/sharkdp/fd" target="_blank">fd</a> finds files by name.</li>
+              <li><a href="https://htop.dev/" target="_blank">htop</a> is a live view of processes, CPU, and memory.</li>
+              <li><a href="https://www.nano-editor.org/" target="_blank">nano</a> is a simple text editor.</li>
+              <li><a href="https://man-db.nongnu.org/" target="_blank">man</a> shows manual pages.</li>
+              <li><a href="https://packages.debian.org/stable/dnsutils" target="_blank">dnsutils</a> is dig and nslookup.</li>
+              <li><a href="https://www.postgresql.org/" target="_blank">PostgreSQL</a> is a local-only database server; your user is a psql superuser.</li>
+              <li><a href="https://caddyserver.com/" target="_blank">Caddy</a> is a web server with automatic HTTPS, from Caddy’s apt repo.</li>
+              <li><a href="https://ffmpeg.org/" target="_blank">ffmpeg</a> converts and edits audio and video.</li>
+              <li><a href="https://fukuchi.org/works/qrencode/" target="_blank">qrencode</a> draws the QR code for T3 Code’s phone app.</li>
+            </ul>
+            <p>Shell</p>
+            <ul>
+              <li><a href="https://www.zsh.org/" target="_blank">zsh</a> is your login shell.</li>
+              <li><a href="https://github.com/zdharma-continuum/zinit" target="_blank">zinit</a> loads the plugins below.</li>
+              <li><a href="https://github.com/zsh-users/zsh-syntax-highlighting" target="_blank">zsh-syntax-highlighting</a> colors a command as you type it.</li>
+              <li><a href="https://github.com/zsh-users/zsh-autosuggestions" target="_blank">zsh-autosuggestions</a> suggests the rest of a command from your history.</li>
+              <li><a href="https://github.com/zsh-users/zsh-completions" target="_blank">zsh-completions</a> adds extra tab completions.</li>
+              <li><a href="https://github.com/ohmyzsh/ohmyzsh/tree/master/plugins/git" target="_blank">Oh My Zsh git</a> adds aliases like gst, gco, and ggpush.</li>
+              <li><a href="https://github.com/junegunn/fzf" target="_blank">fzf</a> is a fuzzy finder: Ctrl-R for history, Ctrl-T for files, Alt-C for folders.</li>
+              <li><a href="https://github.com/ajeetdsouza/zoxide" target="_blank">zoxide</a> jumps to folders you’ve used. z matches a name; zi picks one with fzf.</li>
+              <li><a href="https://zellij.dev/" target="_blank">Zellij</a> is a terminal workspace. An SSH login starts it locked; Ctrl+g unlocks it.</li>
+            </ul>
+            <p>Languages</p>
+            <ul>
+              <li><a href="https://viteplus.dev/" target="_blank">Vite+</a> installs and runs Node. The command is vp.</li>
+              <li><a href="https://nodejs.org/" target="_blank">Node</a> is the latest release, as Vite+’s default.</li>
+              <li><a href="https://bun.sh/" target="_blank">bun</a> is the latest release, in ~/.bun.</li>
+              <li><a href="https://docs.astral.sh/uv/" target="_blank">uv</a> installs Python.</li>
+              <li><a href="https://www.python.org/" target="_blank">Python</a> is the latest uv can install, as python and python3.</li>
+              <li><a href="https://rustup.rs/" target="_blank">rustup</a> installs and updates Rust.</li>
+              <li><a href="https://www.rust-lang.org/" target="_blank">Rust</a> is the latest stable, with cargo, clippy, and rustfmt.</li>
+              <li><a href="https://go.dev/" target="_blank">Go</a> is the latest release, in /usr/local/go.</li>
+            </ul>
+            <p>Coding agents. Setup asks before each of these. No skips that one.</p>
+            <ul>
+              <li><a href="https://code.claude.com/" target="_blank">Claude Code</a> is Anthropic’s coding agent. Logs in with a link.</li>
+              <li><a href="https://openai.com/codex/" target="_blank">Codex</a> is OpenAI’s coding agent. Logs in with a code, or an API key.</li>
+              <li><a href="https://opencode.ai/" target="_blank">OpenCode</a> is an open-source agent for many model providers.</li>
+              <li><a href="https://pi.dev/" target="_blank">Pi</a> is a small agent you can extend. Log in with /login.</li>
+            </ul>
+            <p>Browser testing</p>
+            <ul>
+              <li><a href="https://playwright.dev/" target="_blank">Playwright</a> runs browser tests for the agents.</li>
+              <li><a href="https://www.chromium.org/" target="_blank">Chromium</a> is the browser Playwright drives, plus the libraries it needs.</li>
+            </ul>
+            <p>Remote access</p>
+            <ul>
+              <li>
+                <a href="https://t3.codes/" target="_blank">T3 Code</a> runs in the background; your phone reaches it via
+                <a href="https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md" target="_blank">T3 Connect</a>.
+              </li>
+              <li><a href="https://opentunnel.xyz/" target="_blank">opentunnel</a> gives a dev server a public link, so you can test it on your phone.</li>
+            </ul>
+          </div>
+        </details>
+        <details>
+          <summary>What kinds of cloud servers does rembox work with?</summary>
+          <div>
+            Any Ubuntu or Debian server you can ssh into with a key, as root or a user with sudo, from
+            any provider. A fresh one works best, since rembox sets up the firewall and SSH its own way.
+          </div>
+        </details>
+        <details>
+          <summary>What are the minimum system requirements?</summary>
+          <div>
+            A 64-bit Intel, AMD, or ARM server with 2 GB of memory and 20 GB of free disk. For
+            coding agents and big builds, 4 GB and 40 GB work better. rembox adds swap, up to 4 GB,
+            for when memory runs low. IPv6-only servers work too: rembox has them reach IPv4-only
+            sites, like GitHub, through public NAT64.
+          </div>
+        </details>
+        <details>
+          <summary>Can I run rembox on a server I already use?</summary>
+          <div>
+            Yes. Each step checks the server first and changes only what needs changing. If ufw
+            already lets something in, like a web server on port 80, rembox asks whether to keep
+            each of those rules; any other incoming traffic but SSH gets blocked.
+          </div>
+        </details>
+        <details>
+          <summary>I can’t connect after the SSH port changed. What now?</summary>
+          <div>
+            Your cloud provider probably has a firewall of its own. Open the new port in it, then run
+            <code>rembox setup &lt;MACHINE&gt;</code> again to pick up where it left off.
+          </div>
+        </details>
+        <details>
+          <summary>How do I open a dev server running on the machine?</summary>
+          <div>
+            Ask the agent for an <a href="https://opentunnel.xyz/" target="_blank">opentunnel</a> link:
+            <code>opentunnel route add 3000</code> prints a public https link to port 3000 that you can open on your phone.
+            From your laptop, you can also run <code>rembox tunnel &lt;MACHINE&gt; 3000</code>, so
+            <code>localhost:3000</code> on your laptop reaches port 3000 on the server.
+          </div>
+        </details>
+        <details>
+          <summary>What does rembox keep on my laptop?</summary>
+          <div>
+            Only how to log in to each server, as a Host block in
+            <code>~/.config/rembox/ssh_config</code>, and one line in
+            <code>~/.ssh/config</code> that includes it. Nothing about the server itself.
+          </div>
+        </details>
+        <details>
+          <summary>How do I upgrade or uninstall rembox?</summary>
+          <div>
+            Run <code>rembox upgrade</code>, with sudo if it’s in <code>/usr/local/bin</code>. To
+            remove rembox and everything it keeps on your laptop, run <code>rembox implode</code>.
+          </div>
+        </details>
+        <details>
+          <summary>Can I install a specific version, or in another folder?</summary>
+          <div>
+            Yes. Set <code>REMBOX_VERSION</code> (like <code>0.1.0</code>) or
+            <code>REMBOX_INSTALL_DIR</code> (instead of <code>/usr/local/bin</code>) for the install
+            script:
+            <pre class="block"><code>curl -fsSL https://rembox.aakashns.com/install.sh \
+  | REMBOX_VERSION=0.1.0 REMBOX_INSTALL_DIR="$HOME/.local/bin" sh</code></pre>
+          </div>
+        </details>
+        <details>
+          <summary>How do I verify a release?</summary>
+          <div>
+            Releases are built by GitHub Actions, and the install script and
+            <code>rembox upgrade</code> check every download against its <code>SHA256SUMS</code>. To
+            check a binary’s signed build attestation:
+            <pre class="block"><code>gh attestation verify "$(command -v rembox)" --repo aakashns/rembox</code></pre>
+          </div>
+        </details>
+        <details>
+          <summary>Something went wrong, or I have an idea. What do I do?</summary>
+          <div>
+            First, run <code>rembox upgrade</code> to get the latest version, then run
+            <code>rembox setup &lt;MACHINE&gt;</code> again. If it still goes wrong,
+            <a href="https://github.com/aakashns/rembox/issues/new" target="_blank">open an issue</a>
+            on GitHub with what you ran and what it printed, or send a
+            <a href="https://github.com/aakashns/rembox/pulls" target="_blank">pull request</a>.
+          </div>
+        </details>
+      </section>
+    </main>
+
+    <footer class="site">
+      <span>
+        Free and <a href="https://github.com/aakashns/rembox" target="_blank">open source</a>
+        <span aria-hidden="true"> · </span>
+        Built by <a href="https://aakashns.com" target="_blank">aakashns</a>
+      </span>
+    </footer>
+  </body>
+</html>

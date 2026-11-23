@@ -1,0 +1,25 @@
+# Serves rembox.aakashns.com from this repo's site/public, cloned to /srv/rembox on the server.
+# Caddy runs as the caddy user, which can't get into /root or home folders (mode 700 or 750), so
+# the site must live outside them, or every path is a 403. See README.md for setting it up.
+rembox.aakashns.com {
+	root * /srv/rembox/site/public
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+	}
+	# So `curl ... | sh` and browsers both get the script as text, and fixes reach users quickly.
+	header /install.sh {
+		Content-Type "text/plain; charset=utf-8"
+		Cache-Control "public, max-age=300"
+	}
+
+	file_server
+
+	# Unknown paths get 404.html, still with a 404 status.
+	handle_errors 404 {
+		rewrite * /404.html
+		file_server
+	}
+}
