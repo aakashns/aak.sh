@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # Every pull request raises rembox/cli/VERSION, and merging it releases that version (release.yml).
+  # CLI and site changes raise rembox/cli/VERSION. Workflow-only repairs can retry a release.
   version:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
@@ -28,6 +28,10 @@ jobs:
           git fetch --depth=1 origin "$BASE"
           base=$(git show "$BASE:rembox/cli/VERSION" 2>/dev/null || echo 0.0.0)
           head=$(cat rembox/cli/VERSION)
+          if [[ "$head" == "$base" ]] && git diff --quiet "$BASE" HEAD -- rembox/; then
+            echo "No REMBOX files changed"
+            exit 0
+          fi
           [[ "$head" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
             { echo "::error file=rembox/cli/VERSION::'$head' isn't a version like 1.2.3"; exit 1; }
           highest=$(printf '%s\n%s\n' "$base" "$head" | sort -V | tail -1)
@@ -39,7 +43,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [ubuntu-24.04, macos-15]
+        # The release smoke test also installs the published Apple Silicon binary.
+        runner: [ubuntu-24.04, macos-15-intel]
     runs-on: ${{ matrix.runner }}
     defaults:
       run:
