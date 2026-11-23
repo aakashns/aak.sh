@@ -132,18 +132,6 @@ main {
   .settings .group:nth-last-child(2) {
     border-bottom: 0;
   }
-  .export {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    gap: 8px;
-  }
-  .photos .export #share {
-    margin-top: 0;
-  }
-  .export small {
-    grid-column: 1 / -1;
-  }
 }
 .editor {
   width: min(1000px, calc(100% - 80px));
@@ -540,7 +528,7 @@ dialog p {
     26px/26px Georgia,
     serif;
 }
-.export #share,
+.export .secondary,
 dialog #install {
   background: #242426;
   color: var(--text);

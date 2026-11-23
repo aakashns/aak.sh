@@ -1,7 +1,7 @@
-import { captionEditor } from "./captions.js?v=2";
-import { drawPhoto, enableCropGestures } from "./crops.js?v=2";
-import { frames } from "./frames.js?v=2";
-import { initUpdates } from "./updates.js?v=2";
+import { captionEditor } from "./captions.js?v=3";
+import { drawPhoto, enableCropGestures } from "./crops.js?v=3";
+import { frames } from "./frames.js?v=3";
+import { initUpdates } from "./updates.js?v=3";
 
 const $ = (id) => document.getElementById(id);
 const icons = {
@@ -14,6 +14,7 @@ const icons = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   share:
     '<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 10.5 6.8-4m-6.8 7 6.8 4"/>',
+  invite: '<circle cx="9" cy="7" r="3.5"/><path d="M2 20v-2a7 7 0 0 1 14 0v2M19 8v6m-3-3h6"/>',
   download: '<path d="M12 3v12m-5-5 5 5 5-5M4 15v5h16v-5"/>',
 };
 document.querySelectorAll("[data-icon]").forEach((el) => {
@@ -444,6 +445,29 @@ $("share").onclick = async () => {
   } catch (error) {
     if (error.name !== "AbortError")
       notify("Sharing is unavailable. Tap Download collage to save your PNG.");
+  }
+};
+
+$("invite").onclick = async () => {
+  const url = document.querySelector('link[rel="canonical"]').href;
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: "Collager",
+        text: "Make your own photo collage with Collager.",
+        url,
+      });
+      return;
+    } catch (error) {
+      if (error.name === "AbortError") return;
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(url);
+    notify("Invite link copied. Send it to a friend.");
+  } catch {
+    window.prompt("Copy this link to invite friends to Collager.", url);
   }
 };
 

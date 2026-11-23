@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <meta name="collager-version" content="2" />
+    <meta name="collager-version" content="3" />
     <title>Collager — Free Photo Collage Maker</title>
     <meta
       name="description"
@@ -47,9 +47,9 @@
       }
     </script>
     <link rel="icon" href="mark.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="style.css?v=2" />
-    <script type="module" src="studio.js?v=2"></script>
-    <script type="module" src="install.js?v=2"></script>
+    <link rel="stylesheet" href="style.css?v=3" />
+    <script type="module" src="studio.js?v=3"></script>
+    <script type="module" src="install.js?v=3"></script>
   </head>
   <body>
     <header>
@@ -154,11 +154,14 @@
           <div id="slots"></div>
           <small id="photo-note"></small>
           <div class="export">
-            <button id="download">
+            <button id="share"><i data-icon="share"></i>Share collage</button>
+            <button id="download" class="secondary">
               <i data-icon="download"></i>Download collage
             </button>
-            <button id="share"><i data-icon="share"></i>Share collage</button>
             <small>High-resolution PNG</small>
+            <button id="invite" class="secondary">
+              <i data-icon="invite"></i>Invite Friends
+            </button>
           </div>
         </section>
       </div>
