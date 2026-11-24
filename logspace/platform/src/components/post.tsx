@@ -75,15 +75,13 @@ const scrollToPhoto = (track: string, index: string) =>
   `${track}.scrollTo({ left: (${index}) * ${trackWidth(track)}, behavior: 'instant' })`
 
 const SHOW_INDEX = `el.parentElement.style.setProperty('--index', ${photoIndex('el')})`
-// The show-modal command carries the index of the photo the user pressed.
-const OPEN_AT_PHOTO =
-  "evt.command === 'show-modal' && (el.dataset.index = evt.source.dataset.index)"
-const SHOW_PHOTO = `evt.newState === 'open' && ${scrollToPhoto('el.firstElementChild', 'el.dataset.index')}`
-// Capture the live offset before the dialog is hidden, even if a scroll event is still pending.
-const NOTE_PHOTO = `evt.newState === 'closed' && (el.dataset.index = ${photoIndex('el.firstElementChild')})`
+// Position the viewer in the same task that opens it, before the browser paints it.
+const VIEWER_TRACK = 'el.firstElementChild'
+const OPEN_AT_PHOTO = `evt.command === 'show-modal' && (evt.preventDefault(), el.showModal(), ${scrollToPhoto(VIEWER_TRACK, 'evt.source.dataset.index')})`
 const FEED_TRACK = 'el.previousElementSibling.firstElementChild'
-// Leave the feed's scroll position alone unless the user picked a different photo in the viewer.
-const RETURN_TO_PHOTO = `+el.dataset.index !== ${photoIndex(FEED_TRACK)} && ${scrollToPhoto(FEED_TRACK, 'el.dataset.index')}`
+// Sync a changed selection before the dialog disappears. Leaving an unchanged feed track alone
+// also avoids disturbing its snap position when the browser restores focus.
+const RETURN_TO_PHOTO = `evt.newState === 'closed' && ${photoIndex(VIEWER_TRACK)} !== ${photoIndex(FEED_TRACK)} && ${scrollToPhoto(FEED_TRACK, photoIndex(VIEWER_TRACK))}`
 // scrollTo snaps to the nearest slide. Safari's directional scrollBy can skip a slide.
 const STEP = scrollToPhoto(
   'el.parentElement.firstElementChild',
@@ -118,9 +116,7 @@ function PhotoCarousel(props: {
         aria-label="Photos"
         class="carousel"
         data-on:command={many ? OPEN_AT_PHOTO : undefined}
-        data-on:toggle={many ? SHOW_PHOTO : undefined}
-        data-on:beforetoggle={many ? NOTE_PHOTO : undefined}
-        data-on:close={many ? RETURN_TO_PHOTO : undefined}
+        data-on:beforetoggle={many ? RETURN_TO_PHOTO : undefined}
       >
         <PhotoTrack photos={photos} />
         {many ? <CarouselNavigation count={photos.length} lightbox /> : null}
