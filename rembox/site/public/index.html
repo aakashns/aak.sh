@@ -276,6 +276,7 @@
               <li><a href="https://packages.debian.org/stable/build-essential" target="_blank">build-essential</a> is gcc, g++, make, and the headers they need.</li>
               <li><a href="https://git-scm.com/" target="_blank">git</a> is version control.</li>
               <li><a href="https://cli.github.com/" target="_blank">gh</a> is GitHub’s command line, from GitHub’s apt repo, not the distro’s.</li>
+              <li>The <a href="https://developers.cloudflare.com/cf/" target="_blank">Cloudflare CLI</a> (<code>cf</code>) manages Cloudflare resources, and <a href="https://podman.io/" target="_blank">Podman</a> runs containers.</li>
               <li><a href="https://curl.se/" target="_blank">curl</a> fetches a URL.</li>
               <li><a href="https://www.gnu.org/software/wget/" target="_blank">wget</a> downloads a file, and retries if it fails.</li>
               <li><a href="https://infozip.sourceforge.net/Zip.html" target="_blank">zip</a> packs files into a .zip.</li>
@@ -334,6 +335,18 @@
                 <a href="https://github.com/pingdotgg/t3code/blob/main/docs/user/remote-access.md" target="_blank">T3 Connect</a>.
               </li>
               <li><a href="https://opentunnel.xyz/" target="_blank">opentunnel</a> gives a dev server a public link, so you can test it on your phone.</li>
+            </ul>
+          </div>
+        </details>
+        <details>
+          <summary>How does rembox manage CPU, RAM, and disk space on the server?</summary>
+          <div>
+            <p>At 4 AM server time, rembox:</p>
+            <ul>
+              <li>Closes preview tunnels and stops project dev servers and containers.</li>
+              <li>Removes clean worktrees idle for 48 hours if GitHub confirms they have no open PRs. Your branches and local edits are kept.</li>
+              <li>Removes unused apt packages, clears package downloads, and trims archived logs to 200 MB.</li>
+              <li>Prunes dangling Podman images older than seven days. Containers and volumes are kept.</li>
             </ul>
           </div>
         </details>
