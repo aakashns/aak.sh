@@ -65,6 +65,13 @@ GitHub, through their NAT64 gateways. If it has IPv4, setup undoes that.
 To test a dev server on your phone, have an agent run 'opentunnel route add
 PORT', which prints a public https link to it.
 
+Every day at 4 AM, your time, a cleanup removes opentunnel's routes, stops
+dev servers, Playwright's browsers and Podman containers, and prunes caches. T3
+Code deletes worktrees once their pull request merges, or their thread is
+deleted or idle for 2 days, unless they have uncommitted changes. apt deletes
+its downloads and unused packages, and the journal stays under 500 MB. To run
+the cleanup now, on the server: systemctl --user start rembox-cleanup
+
 ssh asks you to check the server's host key again the first time it logs in
 on the new port. If it can't log in there, open the port in your cloud
 provider's firewall, if it has one, then run 'rembox setup NAME' again.
@@ -172,7 +179,7 @@ func runSetup(a *App, args []string) error {
 		return err
 	}
 	a.heading(fmt.Sprintf("Reconnecting to %s as %s, on port %d, to set up your shell, GitHub, toolchains, coding agents and T3 Code, then finish as root", s.Name, s.User, s.Port))
-	home := append([]string{"home", a.GitConfig("user.name"), a.GitConfig("user.email"), strconv.Itoa(port)}, a.Locales...)
+	home := append([]string{"home", a.GitConfig("user.name"), a.GitConfig("user.email"), strconv.Itoa(port), a.TimeZone}, a.Locales...)
 	err = a.runScript(s, asUser(s, "bash", "-c"), remote.Setup, out, home...)
 	out.flush()
 	if err := onNewPort(err); err != nil {
@@ -305,6 +312,31 @@ func sentLocales(env []string) []string {
 	}
 	slices.Sort(locales)
 	return slices.Compact(locales)
+}
+
+// zonePattern is a time zone's IANA name, like Asia/Kolkata, UTC or Etc/GMT+5.
+var zonePattern = regexp.MustCompile(`^[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z0-9_+-]+)*$`)
+
+// localTimeZone is this machine's time zone, as zoneName finds it, from TZ
+// and /etc/localtime.
+func localTimeZone() string {
+	link, _ := os.Readlink("/etc/localtime")
+	return zoneName(os.Getenv("TZ"), link)
+}
+
+// zoneName is the IANA name of a time zone, like Asia/Kolkata, from tz, the
+// TZ variable, if it holds one, or else from link, where /etc/localtime links
+// to: a file in a zoneinfo folder, like /var/db/timezone/zoneinfo/Asia/Kolkata
+// on macOS, or /usr/share/zoneinfo/Asia/Kolkata on Linux. It's "" if neither
+// names one.
+func zoneName(tz, link string) string {
+	if tz = strings.TrimPrefix(tz, ":"); zonePattern.MatchString(tz) {
+		return tz
+	}
+	if _, name, ok := strings.Cut(link, "zoneinfo/"); ok && zonePattern.MatchString(name) {
+		return name
+	}
+	return ""
 }
 
 // saveServer saves s, and says so.

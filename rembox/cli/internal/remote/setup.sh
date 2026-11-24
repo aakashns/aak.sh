@@ -10,6 +10,7 @@
 #     Caddy from Caddy's,
 #     installs the latest version of every
 #     package, has unattended-upgrades install security updates every day,
+#     and apt clean up after it, keeps the system journal small,
 #     reaches sites with only IPv4 through public NAT64, if the server has
 #     only IPv6, installs tools for development and the latest Go, asks for your user's
 #     name (DEFAULT_USER, if you don't give one; DEFAULT_USER may be empty) and
@@ -19,18 +20,20 @@
 #     it as well, and ufw, if it's on, to let it in. It prints lines telling
 #     rembox the name and the port; see add_user and ask_port.
 #
-#   setup.sh home GIT_NAME GIT_EMAIL PORT [LOCALE...]
+#   setup.sh home GIT_NAME GIT_EMAIL PORT TIMEZONE [LOCALE...]
 #     As USER, on PORT, which shows that both work: makes ~/work, for USER's
 #     projects, sets up zsh and Zellij for USER, logs gh in to GitHub, if USER
 #     likes, and sets the name and email for git commits, from GitHub, or if
 #     gh isn't logged in, GIT_NAME and GIT_EMAIL, from git on your Mac (either
 #     may be empty), installs the latest bun, Node, Python and Rust, or asks to
 #     upgrade them, then installs the coding agents USER picks, and logs them
-#     in, installs the latest Playwright, with Chromium, for them, and the
-#     latest opentunnel, connected, for dev server links, writes instructions
-#     for them about the server, and installs T3 Code, connected to USER's
-#     devices with T3 Connect. Then carries on with finish, in the same
-#     session, so ssh logs in only once.
+#     in, installs the latest Playwright, with Chromium, for them, cf,
+#     Cloudflare's CLI, and the latest opentunnel, connected, for dev server
+#     links, writes instructions for them about the server, installs T3 Code,
+#     connected to USER's devices with T3 Connect, and has a timer clean up the
+#     server every day at 4 AM in TIMEZONE, your Mac's (or the server's, if
+#     it's empty). Then carries on with finish, in the same session, so ssh
+#     logs in only once.
 #
 #   setup.sh finish PORT [LOCALE...]
 #     As root, after home: lets your user run psql as a PostgreSQL superuser,
@@ -63,6 +66,7 @@ main() {
     add_caddy_repo
     update
     setup_auto_upgrades
+    limit_journal
     checklist_send
     setup_nat64
     checklist_send
@@ -76,7 +80,8 @@ main() {
     open_ssh_port "$port"
     ;;
   home)
-    (($# >= 4)) || fail "Usage: setup.sh home GIT_NAME GIT_EMAIL PORT [LOCALE...]"
+    (($# >= 5)) || fail "Usage: setup.sh home GIT_NAME GIT_EMAIL PORT TIMEZONE [LOCALE...]"
+    local port=$4 tz=$5
     make_projects_dir
     setup_zsh
     setup_zellij
@@ -88,16 +93,20 @@ main() {
     setup_agents
     setup_playwright
     checklist_send
+    setup_cloudflare
+    checklist_send
     setup_opentunnel
     checklist_send
     setup_agent_instructions
     checklist_send
     setup_t3
     checklist_send
-    shift 3
+    setup_cleanup "$tz"
+    checklist_send
+    shift 5
     step "Finish as root"
-    as_root finish "$@"
-    finish "$@"
+    as_root finish "$port" "$@"
+    finish "$port" "$@"
     ;;
   finish)
     (($# >= 2)) || fail "Usage: setup.sh finish PORT [LOCALE...]"
@@ -106,7 +115,7 @@ main() {
     finish "$@"
     ;;
   *)
-    fail "Usage: setup.sh start DEFAULT_USER DEFAULT_PORT LOGIN_PORT NAME, setup.sh home GIT_NAME GIT_EMAIL PORT [LOCALE...], or setup.sh finish PORT [LOCALE...]"
+    fail "Usage: setup.sh start DEFAULT_USER DEFAULT_PORT LOGIN_PORT NAME, setup.sh home GIT_NAME GIT_EMAIL PORT TIMEZONE [LOCALE...], or setup.sh finish PORT [LOCALE...]"
     ;;
   esac
 }

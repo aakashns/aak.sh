@@ -290,6 +290,7 @@
               <li><a href="https://www.postgresql.org/" target="_blank">PostgreSQL</a> is a local-only database server; your user is a psql superuser.</li>
               <li><a href="https://caddyserver.com/" target="_blank">Caddy</a> is a web server with automatic HTTPS, from Caddy’s apt repo.</li>
               <li><a href="https://ffmpeg.org/" target="_blank">ffmpeg</a> converts and edits audio and video.</li>
+              <li><a href="https://podman.io/" target="_blank">Podman</a> runs containers without root, and <a href="https://developers.cloudflare.com/cf/" target="_blank">cf</a> is Cloudflare’s command line.</li>
               <li><a href="https://fukuchi.org/works/qrencode/" target="_blank">qrencode</a> draws the QR code for T3 Code’s phone app.</li>
             </ul>
             <p>Shell</p>
@@ -351,6 +352,14 @@
             coding agents and big builds, 4 GB and 40 GB work better. rembox adds swap, up to 4 GB,
             for when memory runs low. IPv6-only servers work too: rembox has them reach IPv4-only
             sites, like GitHub, through public NAT64.
+          </div>
+        </details>
+        <details>
+          <summary>How does rembox manage CPU, RAM, and disk space on the server?</summary>
+          <div>
+            Every day at 4 AM, your time, rembox closes opentunnel links and stops dev servers, test browsers,
+            and containers. T3 Code deletes worktrees that are merged or idle for 2 days, unless they have
+            uncommitted changes. apt clears its downloads and unused packages, and logs stay under 500 MB.
           </div>
         </details>
         <details>
