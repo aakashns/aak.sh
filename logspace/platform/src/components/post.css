@@ -49,9 +49,8 @@
   }
 
   /*
-   * A post's photos, in a row that snaps to each (see PhotoCarousel in post.tsx). It's a dialog
-   * that's shown in place until it's opened, when it fills the screen. The track, arrows, dots,
-   * and close button share one grid cell, stacked in that order.
+   * A post's photos, in a row that snaps to each (see PhotoCarousel in post.tsx). The feed and
+   * full-screen dialog each have a track and overlay controls in a shared grid cell.
    */
   html:has(.carousel:modal) {
     overflow: hidden;
@@ -76,7 +75,7 @@
     }
   }
 
-  [data-box] > .carousel:not(:modal) {
+  [data-box] > .carousel-inline {
     background-color: black;
 
     & .carousel-slide > img {
@@ -84,7 +83,8 @@
     }
   }
 
-  .carousel {
+  .carousel-inline,
+  .carousel:modal {
     display: grid;
     grid-template: minmax(0, 1fr) / minmax(0, 1fr);
     padding: 0;
@@ -96,9 +96,7 @@
     }
   }
 
-  .carousel:not(:modal) {
-    position: static;
-    inset: auto;
+  .carousel-inline {
     width: 100%;
     height: 100%;
     margin: 0;
@@ -170,9 +168,6 @@
     &:focus-visible {
       outline: 2px solid var(--ring);
       outline-offset: -2px;
-    }
-    .carousel:modal & {
-      display: none;
     }
   }
 
@@ -248,9 +243,6 @@
         background-color: oklch(1 0 0 / 15%);
         color: white;
       }
-    }
-    .carousel:not(:modal) & {
-      display: none;
     }
   }
 

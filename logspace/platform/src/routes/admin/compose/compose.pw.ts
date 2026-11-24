@@ -56,14 +56,14 @@ test('photos upload as they’re chosen, and one can be taken out', async ({ pag
   await caption(page, 'Two photos, then one')
   await upload(page, 'Add photos', [photo, secondPhoto])
   await loadedImages(page, '#composer-media img', 2)
-  await loadedImages(page, '#composer-preview img', 2)
+  await loadedImages(page, '#composer-preview .carousel-inline img', 2)
   await page.getByRole('button', { name: 'Remove hike-2.jpg', exact: true }).click()
   await loadedImages(page, '#composer-media img', 1)
   await publish(page)
-  await loadedImages(page, 'main article img', 1)
+  await loadedImages(page, 'main article .carousel-inline img', 1)
   await expect(page.locator('main')).toContainText('Two photos, then one')
   // Public media is served without the admin cookie.
-  const image = await page.locator('main article img').getAttribute('src')
+  const image = await page.locator('main article .carousel-inline img').getAttribute('src')
   expect((await page.request.get(image ?? '')).status()).toBe(200)
 })
 
@@ -111,7 +111,7 @@ test('photos pasted or dropped anywhere are added like chosen ones', async ({ pa
   await loadedImages(page, '#composer-media img', 2)
   await expect(page.getByLabel('Caption', { exact: true })).toHaveValue('Pasted and dropped')
   await publish(page)
-  await loadedImages(page, 'main article img', 2)
+  await loadedImages(page, 'main article .carousel-inline img', 2)
 })
 
 test('Post waits for an upload to finish', async ({ page }) => {
@@ -128,7 +128,7 @@ test('Post waits for an upload to finish', async ({ page }) => {
   await loadedImages(page, '#composer-media img', 1)
   await expect(page.getByRole('button', { name: 'Post', exact: true })).toBeEnabled()
   await publish(page)
-  await loadedImages(page, 'main article img', 1)
+  await loadedImages(page, 'main article .carousel-inline img', 1)
 })
 
 test('a video and its poster publish with playable public media', async ({ page }) => {
@@ -179,7 +179,7 @@ test('an edit changes nothing until it’s saved, and × goes back to /admin/pos
   await expect(page).toHaveURL(/\/admin\/posts$/)
   await page.goto(post)
   await expect(page.locator('main')).toContainText('Before the edit')
-  await loadedImages(page, 'main article img', 2)
+  await loadedImages(page, 'main article .carousel-inline img', 2)
 
   await page.goto(`${new URL(post).pathname.replace('/posts/', '/admin/posts/')}/edit`)
   await caption(page, 'After the edit')
@@ -188,7 +188,7 @@ test('an edit changes nothing until it’s saved, and × goes back to /admin/pos
   await page.getByRole('button', { name: 'Save', exact: true }).click()
   await expect(page).toHaveURL(post)
   await expect(page.locator('main')).toContainText('After the edit')
-  await loadedImages(page, 'main article img', 1)
+  await loadedImages(page, 'main article .carousel-inline img', 1)
 })
 
 test.describe('without JavaScript', () => {
@@ -199,6 +199,6 @@ test.describe('without JavaScript', () => {
     await page.getByLabel('Add photos', { exact: true }).setInputFiles(photo)
     await publish(page)
     await expect(page.locator('main')).toContainText('Plain HTML publication')
-    await loadedImages(page, 'main article img', 1)
+    await loadedImages(page, 'main article .carousel-inline img', 1)
   })
 })
