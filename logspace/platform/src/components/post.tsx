@@ -71,30 +71,29 @@ export function PostMedia(props: {
 
 const trackWidth = (track: string) => `${track}.getBoundingClientRect().width`
 const photoIndex = (track: string) => `Math.round(${track}.scrollLeft / ${trackWidth(track)})`
-// The dots and arrows follow the track. Read the offset again before toggling the lightbox
-// because the user can toggle it before the track's scroll event updates the index.
+const scrollToPhoto = (track: string, index: string) =>
+  `${track}.scrollTo({ left: (${index}) * ${trackWidth(track)}, behavior: 'instant' })`
+
 const SHOW_INDEX = `el.parentElement.style.setProperty('--index', ${photoIndex('el')})`
-const NOTE_INDEX = `el.dataset.index = ${photoIndex('el.firstElementChild')}`
-// Restore the same photo using the track's new width, including fractional pixels on phones.
-const RESTORE_INDEX = `el.firstElementChild.scrollTo({ left: el.dataset.index * ${trackWidth('el.firstElementChild')}, behavior: 'instant' })`
-// Once the lightbox has opened, the browser picks copies of the photos for the whole screen
-// rather than for the content column.
-const FULL_SCREEN_SIZES = "el.querySelectorAll('img').forEach((img) => (img.sizes = '100vw'))"
-// Scrolls the track to the photo before or after the one shown (data-step). It's scrollTo rather
-// than scrollBy because Safari snaps a scrollBy in its direction, and on a phone the rounded
-// clientWidth lands it past the next photo, so a tap skipped one; scrollTo snaps to the nearest.
-const STEP =
-  "el.parentElement.firstElementChild.scrollTo({ left: (+el.parentElement.style.getPropertyValue('--index') + +el.dataset.step) * el.parentElement.clientWidth })"
-// In the lightbox, the arrow key in the button's aria-keyshortcuts presses it.
+// The show-modal command carries the index of the photo the user pressed.
+const OPEN_AT_PHOTO =
+  "evt.command === 'show-modal' && (el.dataset.index = evt.source.dataset.index)"
+const SHOW_PHOTO = `evt.newState === 'open' && ${scrollToPhoto('el.firstElementChild', 'el.dataset.index')}`
+// Capture the live offset before the dialog is hidden, even if a scroll event is still pending.
+const NOTE_PHOTO = `evt.newState === 'closed' && (el.dataset.index = ${photoIndex('el.firstElementChild')})`
+const FEED_TRACK = 'el.previousElementSibling.firstElementChild'
+// Leave the feed's scroll position alone unless the user picked a different photo in the viewer.
+const RETURN_TO_PHOTO = `+el.dataset.index !== ${photoIndex(FEED_TRACK)} && ${scrollToPhoto(FEED_TRACK, 'el.dataset.index')}`
+// scrollTo snaps to the nearest slide. Safari's directional scrollBy can skip a slide.
+const STEP = scrollToPhoto(
+  'el.parentElement.firstElementChild',
+  "+el.parentElement.style.getPropertyValue('--index') + +el.dataset.step",
+)
 const STEP_BY_KEY =
   "evt.key === el.getAttribute('aria-keyshortcuts') && el.parentElement.matches(':modal') && (evt.preventDefault(), el.click())"
 
-// A post's photos in a row to swipe through, as on Instagram: one photo keeps its own shape, and
-// more (or one whose size couldn't be read) take the default box (see .carousel-frame in
-// post.css), with arrows and a dot for each when there's more than one. The row is
-// a <dialog> shown in place, so clicking a photo opens the same element as a modal lightbox, at
-// the same photo, where photos are shown whole; its close button or Escape closes it. The frame
-// keeps the row's space in the page while it's open.
+// Give the feed and lightbox separate tracks. Resizing the feed track into a modal and back
+// can leave Safari painting it at the fullscreen scroll offset after closing.
 function PhotoCarousel(props: {
   id: string
   photos: Arr.NonEmptyReadonlyArray<Photo>
@@ -110,41 +109,21 @@ function PhotoCarousel(props: {
       data-many={many}
       style={`--count: ${photos.length}${aspectRatio ? `; --aspect-ratio: ${aspectRatio}` : ''}`}
     >
+      <div class="carousel carousel-inline">
+        <PhotoTrack photos={photos} opener={id} priority={priority} />
+        {many ? <CarouselNavigation count={photos.length} /> : null}
+      </div>
       <dialog
         id={id}
         aria-label="Photos"
         class="carousel"
-        data-on:beforetoggle={many ? NOTE_INDEX : undefined}
-        data-on:toggle={many ? RESTORE_INDEX : undefined}
-        data-on:command={FULL_SCREEN_SIZES}
+        data-on:command={many ? OPEN_AT_PHOTO : undefined}
+        data-on:toggle={many ? SHOW_PHOTO : undefined}
+        data-on:beforetoggle={many ? NOTE_PHOTO : undefined}
+        data-on:close={many ? RETURN_TO_PHOTO : undefined}
       >
-        <div class="carousel-track" data-on:scroll={many ? SHOW_INDEX : undefined}>
-          {/* Each photo's button lies over it rather than around it, because Reader views
-              drop buttons and all they hold. */}
-          {photos.map((photo, index) => (
-            <div class="carousel-slide">
-              <PostImage photo={photo} priority={priority && index === 0} />
-              <button
-                type="button"
-                command="show-modal"
-                commandfor={id}
-                aria-label="Open photo"
-                class="carousel-open"
-              />
-            </div>
-          ))}
-        </div>
-        {many ? (
-          <>
-            <StepButton step={-1} />
-            <StepButton step={1} />
-            <div class="carousel-dots" aria-hidden="true">
-              {photos.map(() => (
-                <span />
-              ))}
-            </div>
-          </>
-        ) : null}
+        <PhotoTrack photos={photos} />
+        {many ? <CarouselNavigation count={photos.length} lightbox /> : null}
         <Button
           command="close"
           commandfor={id}
@@ -161,7 +140,53 @@ function PhotoCarousel(props: {
   )
 }
 
-function StepButton(props: { step: -1 | 1 }): Html {
+function PhotoTrack(props: {
+  photos: Arr.NonEmptyReadonlyArray<Photo>
+  opener?: string | undefined
+  priority?: boolean | undefined
+}): Html {
+  let { photos, opener, priority } = props
+  return (
+    <div class="carousel-track" data-on:scroll={photos.length > 1 ? SHOW_INDEX : undefined}>
+      {photos.map((photo, index) => (
+        <div class="carousel-slide">
+          <PostImage
+            photo={photo}
+            priority={priority && index === 0}
+            sizes={opener ? undefined : '100vw'}
+          />
+          {/* Reader views drop buttons and their contents, so overlay the button on the photo. */}
+          {opener ? (
+            <button
+              type="button"
+              command="show-modal"
+              commandfor={opener}
+              data-index={index}
+              aria-label="Open photo"
+              class="carousel-open"
+            />
+          ) : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function CarouselNavigation(props: { count: number; lightbox?: boolean }): Html {
+  return (
+    <>
+      <StepButton step={-1} lightbox={props.lightbox} />
+      <StepButton step={1} lightbox={props.lightbox} />
+      <div class="carousel-dots" aria-hidden="true">
+        {Array.from({ length: props.count }, () => (
+          <span />
+        ))}
+      </div>
+    </>
+  )
+}
+
+function StepButton(props: { step: -1 | 1; lightbox?: boolean | undefined }): Html {
   let back = props.step === -1
   return (
     <Button
@@ -172,7 +197,7 @@ function StepButton(props: { step: -1 | 1 }): Html {
       class="carousel-step"
       data-step={props.step}
       data-on:click={STEP}
-      data-on:keydown__window={STEP_BY_KEY}
+      data-on:keydown__window={props.lightbox ? STEP_BY_KEY : undefined}
     >
       {back ? <CaretLeftIcon /> : <CaretRightIcon />}
     </Button>
