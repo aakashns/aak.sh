@@ -11,4 +11,4 @@
 - keep main up to date, and NEVER push directly to main
 - start every task in a new branch, and always create PRs with evidence
   - use `gh pr --attach` to attach images & videos to PRs & comments
-  - merge PRs when asked, delete the local branch, switch to main & pull
+  - merge PRs when asked, delete the local branch & its worktree, switch to main & pull
