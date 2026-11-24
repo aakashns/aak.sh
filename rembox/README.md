@@ -29,7 +29,7 @@ Run `rembox setup` to begin setting up a remote server.
 - [`postgres.sh`](cli/internal/remote/postgres.sh): has apt install PostgreSQL from PostgreSQL's apt repo, with PostgreSQL's own script; later, adds a PostgreSQL superuser for your user, so it can run psql as itself.
 - [`caddy.sh`](cli/internal/remote/caddy.sh): has apt install Caddy from Caddy's apt repo, as Caddy's docs do.
 - [`update.sh`](cli/internal/remote/update.sh): upgrades packages, turns on daily security updates, after which apt cleans up, and installs dev tools (Podman, and fzf, zoxide and Zellij from their latest releases).
-- [`cleanup.sh`](cli/internal/remote/cleanup.sh): keeps the journal under 500 MB; later, as your user, adds a timer that cleans up every day at 4 AM, your Mac's time: it removes opentunnel's routes, stops dev servers and containers, and prunes caches.
+- [`cleanup.sh`](cli/internal/remote/cleanup.sh): keeps the journal under 500 MB; later, as your user, adds a timer that cleans up every day at 4 AM, your Mac's time: it removes opentunnel's routes and stops the dev servers behind them, stops containers, and prunes caches.
 - [`nat64.sh`](cli/internal/remote/nat64.sh): if the server has only IPv6, looks up names with public DNS64 resolvers, to reach sites with only IPv4, like GitHub, through NAT64.
 - [`toolchains.sh`](cli/internal/remote/toolchains.sh): installs the latest Go; later, as your user, the latest bun, Node (with Vite+), Python (with uv), Rust (with rustup), Playwright (with Chromium) and cf, Cloudflare's CLI. Asks before upgrading them.
 - [`user.sh`](cli/internal/remote/user.sh): asks for your user's name, and adds it, with a sudo password, your SSH keys and zsh.

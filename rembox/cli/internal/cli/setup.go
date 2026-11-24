@@ -65,9 +65,9 @@ GitHub, through their NAT64 gateways. If it has IPv4, setup undoes that.
 To test a dev server on your phone, have an agent run 'opentunnel route add
 PORT', which prints a public https link to it.
 
-Every day at 4 AM, your time, a cleanup removes opentunnel's routes, stops
-Podman containers, Playwright's browsers and dev servers (Node, bun, Deno,
-Python, Ruby or PHP, or built by go run or cargo), and prunes caches. T3
+Every day at 4 AM, your time, a cleanup removes opentunnel's routes and stops
+the dev servers they lead to, stops Playwright's browsers and Podman
+containers, and prunes caches. Servers without a route keep running. T3
 Code deletes worktrees once their pull request merges, or their thread is
 deleted or idle for 2 days, unless they have uncommitted changes. apt deletes
 its downloads and unused packages, and the journal stays under 500 MB. To run

@@ -1,7 +1,8 @@
 # cleanup.sh: keeps the server from running out of CPU, memory or disk. A
 # systemd timer of your user's runs rembox's cleanup every day at 4 AM, your
-# Mac's time: it removes opentunnel's routes, stops dev servers, Playwright's
-# browsers and containers, and prunes caches. The rest clean up after
+# Mac's time: it removes opentunnel's routes and stops the dev servers behind
+# them, stops Playwright's browsers and every container, and prunes caches.
+# Servers you run yourself, without a route, keep running. The rest clean up after
 # themselves, as setup sets them to: T3 Code deletes old worktrees and logs
 # (see t3_settings), apt its downloads and unused packages (see
 # setup_auto_upgrades), and journald keeps its logs under JOURNAL_MAX.
@@ -90,7 +91,7 @@ setup_cleanup() {
       return
     fi
   fi
-  ok "Every day at 4 AM ($tz), rembox removes opentunnel's routes, stops dev servers, Playwright's browsers and containers, and prunes caches. To run it now: systemctl --user start rembox-cleanup"
+  ok "Every day at 4 AM ($tz), rembox removes opentunnel's routes and stops the dev servers behind them, stops Playwright's browsers and containers, and prunes caches. To run it now: systemctl --user start rembox-cleanup"
   checklist ok "Cleans up daily at 4 AM ($tz)"
 }
 
@@ -102,8 +103,8 @@ cleanup_script() {
   echo "# rembox's daily cleanup. Written by rembox setup, which rewrites it."
   echo '# rembox-cleanup.timer runs it. To run it now: systemctl --user start rembox-cleanup'
   echo 'set -uo pipefail'
-  declare -f cleanup_all cleanup_routes cleanup_dev_servers cleanup_dev_server_pids \
-    cleanup_playwright_pids cleanup_stop cleanup_containers cleanup_caches
+  declare -f cleanup_all cleanup_tunnels cleanup_listener_pids cleanup_playwright \
+    cleanup_stop cleanup_containers cleanup_caches
   # shellcheck disable=SC2016 # "$@" is the script's
   echo 'cleanup_all "$@"'
 }
@@ -112,7 +113,7 @@ cleanup_script() {
 # fails if any did, saying which.
 cleanup_all() {
   local part status=0
-  for part in cleanup_routes cleanup_containers cleanup_dev_servers cleanup_caches; do
+  for part in cleanup_tunnels cleanup_containers cleanup_playwright cleanup_caches; do
     if ! "$part"; then
       echo "$part failed" >&2
       status=1
@@ -121,62 +122,60 @@ cleanup_all() {
   return "$status"
 }
 
-# cleanup_routes: removes every opentunnel route, so no dev server stays public.
-# The tunnel stays connected, for the next route. `opentunnel route list` shows
-# each as "NAME.TUNNEL.opentunnel.xyz  →  TARGET".
-cleanup_routes() {
-  local bin=$HOME/.local/bin/opentunnel routes name status=0
+# cleanup_tunnels: removes every opentunnel route, so no dev server stays
+# public, and stops the dev servers they led to: what listens on a route's
+# port on this server. The tunnel stays connected, for the next route.
+# `opentunnel route list` shows each route as
+# "NAME.TUNNEL.opentunnel.xyz  →  127.0.0.1:PORT". A program that restarts its
+# server when it stops gets 3 tries; it fails if one is still listening after
+# them. Says what it stops by ID and name only, as a command line can hold a
+# secret.
+cleanup_tunnels() {
+  local bin=$HOME/.local/bin/opentunnel routes name target ports=() pids status=0
   [[ -x $bin ]] || return 0
   routes=$("$bin" route list) || return 1
-  while read -r name; do
+  while read -r name target; do
     "$bin" route remove "$name" || status=1
-  done < <(awk '$2 == "→" { sub(/\..*/, "", $1); print $1 }' <<<"$routes")
-  return "$status"
-}
-
-# cleanup_dev_servers: stops the dev servers you or your agents left running,
-# and Playwright's browsers, saying which by ID and name only, as a command
-# line can hold a secret. A program that restarts its server when it stops
-# gets 3 tries; it fails if any is still running after them.
-cleanup_dev_servers() {
-  local pids
+    if [[ $target =~ ^(127\.0\.0\.1|localhost|\[::1\]):([0-9]+)$ ]]; then
+      ports+=("${BASH_REMATCH[2]}")
+    fi
+  done < <(awk '$2 == "→" { sub(/\..*/, "", $1); print $1, $3 }' <<<"$routes")
+  ((${#ports[@]} > 0)) || return "$status"
   for _ in 1 2 3; do
-    mapfile -t pids < <({ cleanup_dev_server_pids; cleanup_playwright_pids; } | sort -un)
-    ((${#pids[@]} > 0)) || return 0
+    mapfile -t pids < <(cleanup_listener_pids "${ports[@]}")
+    ((${#pids[@]} > 0)) || return "$status"
     ps -o pid=,comm= -p "${pids[*]}" | sed 's/^ */Stopping /'
     cleanup_stop "${pids[@]}"
   done
-  mapfile -t pids < <({ cleanup_dev_server_pids; cleanup_playwright_pids; } | sort -un)
-  ((${#pids[@]} == 0))
+  mapfile -t pids < <(cleanup_listener_pids "${ports[@]}")
+  ((${#pids[@]} == 0)) || status=1
+  return "$status"
 }
 
-# cleanup_dev_server_pids: prints the IDs of your dev servers: processes
-# listening on a TCP port that run Node, bun, Deno, Python, Ruby or PHP, or a
-# program built by go run or cargo. Others, like ssh -L or a database, stay,
-# as do programs systemd runs as a service, like T3 Code's and opentunnel's,
-# and T3 Code's own tools, in ~/.t3. Dev servers run in a session's scope, or
-# an agent's, which T3 Code puts in one of its own.
-cleanup_dev_server_pids() {
-  local pid cgroup exe
-  for pid in $(ss -Htlnp 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -un); do
+# cleanup_listener_pids PORT...: prints the IDs of your processes listening on
+# the TCP PORTs, except ones systemd runs as a service, like T3 Code's, and
+# T3 Code's own tools, in ~/.t3.
+cleanup_listener_pids() {
+  local port filter='' pid cgroup exe
+  for port; do
+    filter+="${filter:+ or }sport = :$port"
+  done
+  for pid in $(ss -Htlnp "( $filter )" 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -un); do
     cgroup=$(cut -d: -f3- "/proc/$pid/cgroup" 2>/dev/null) || continue
     exe=$(readlink "/proc/$pid/exe" 2>/dev/null) || continue
-    [[ $cgroup != *.service && $exe != "$HOME/.t3/"* ]] || continue
-    if [[ ${exe##*/} =~ ^(node|bun|deno|python[0-9.]*|ruby[0-9.]*|php[0-9.]*)$ ||
-      $exe == /tmp/go-build*/exe/* || $exe == */target/debug/* || $exe == */target/release/* ]]; then
-      echo "$pid"
-    fi
+    [[ $cgroup == *.service || $exe == "$HOME/.t3/"* ]] || echo "$pid"
   done
 }
 
-# cleanup_playwright_pids: prints the IDs of the browsers Playwright runs, from
+# cleanup_playwright: stops the browsers Playwright runs, from
 # ~/.cache/ms-playwright, which tests can leave running.
-cleanup_playwright_pids() {
-  local pid exe
+cleanup_playwright() {
+  local pid exe pids=()
   for pid in $(pgrep -u "$(id -u)"); do
     exe=$(readlink "/proc/$pid/exe" 2>/dev/null) || continue
-    [[ $exe != "$HOME/.cache/ms-playwright/"* ]] || echo "$pid"
+    [[ $exe != "$HOME/.cache/ms-playwright/"* ]] || pids+=("$pid")
   done
+  ((${#pids[@]} == 0)) || cleanup_stop "${pids[@]}"
 }
 
 # cleanup_stop PID...: asks the processes to stop, then, after 10 seconds,

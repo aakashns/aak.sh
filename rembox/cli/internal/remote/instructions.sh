@@ -63,7 +63,7 @@ agent_instructions() {
 - Run \`psql\` to access postgres as a superuser, then create per-project user & database(s)
 - Use the installed \`playwright\` with Chromium for browser testing. Clean up when done.
 - Use \`podman\` (rootless) for containers, and \`cf\` for Cloudflare.
-- Every day at 4 AM, a cleanup removes opentunnel routes, and stops dev servers & containers.
+- Every day at 4 AM, a cleanup removes opentunnel routes & stops their dev servers, and containers.
 - \`gh\` is logged in to GitHub. Work on branches; never force-push the default branch.
 - Never print, log or commit secrets (~/.codex, ~/.claude, ~/.pi, ~/.local, ~/.config, ~/.t3)
 END
