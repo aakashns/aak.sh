@@ -354,6 +354,8 @@ small {
   color: #fff;
 }
 .export {
+  display: grid;
+  gap: 8px;
   margin-top: 16px;
   border-top: 1px solid var(--edge);
   padding-top: 16px;
@@ -375,9 +377,11 @@ dialog button {
   font-size: 15px;
 }
 @media (min-width: 801px) {
+  .export {
+    grid-template-columns: repeat(3, minmax(0, 240px));
+    justify-content: center;
+  }
   .export button {
-    max-width: 240px;
-    margin-inline: auto;
     height: 38px;
     font-size: 14px;
   }
@@ -536,9 +540,9 @@ dialog #install {
   background: #242426;
   color: var(--text);
   border: 1px solid #474749;
-  margin-top: 8px;
 }
 dialog #install {
+  margin-top: 8px;
   margin-bottom: 10px;
 }
 dialog [hidden] {
