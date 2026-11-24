@@ -39,6 +39,7 @@ type App struct {
 	Username  string                  // yours on this machine, for your user on servers
 	NewPort   func() int              // a random port to move ssh to
 	Locales   []string                // the locales ssh passes on to servers, like en_US.UTF-8
+	TimeZone  string                  // yours, like Asia/Kolkata, or "", for the server's daily cleanup
 	GitConfig func(key string) string // a setting from your git config, like user.name, or ""
 
 	// Command runs a program at the terminal, with its output going to stdout.
@@ -67,6 +68,7 @@ func Main() int {
 		Username:   os.Getenv("USER"),
 		NewPort:    func() int { return 10000 + rand.IntN(22768) }, // 10000-32767, below Linux's ports for outgoing connections
 		Locales:    sentLocales(os.Environ()),
+		TimeZone:   localTimeZone(),
 		GitConfig:  gitConfig,
 		Command:    atTerminal,
 		Euid:       os.Geteuid(),

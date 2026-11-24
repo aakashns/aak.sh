@@ -42,6 +42,7 @@ setup_t3() {
   if t3_connected "$t3"; then
     ok "T3 Code $(version_of "$t3") runs in the background, and your devices reach it through T3 Connect$(t3_account). To get its phone app: $T3_APP_URL, or its desktop app: $T3_DESKTOP_URL"
     checklist ok "T3 Code $(version_of "$t3"), connected with T3 Connect$(t3_account)"
+    t3_publish "$t3"
     return
   fi
   info "T3 Connect logs in with a code: open the link it shows on any device, check the code matches, and approve."
@@ -52,7 +53,23 @@ setup_t3() {
   fi
   ok "T3 Code $(version_of "$t3") runs in the background, and your devices reach it through T3 Connect$(t3_account)."
   checklist ok "T3 Code $(version_of "$t3"), connected with T3 Connect$(t3_account)"
+  t3_publish "$t3"
   setup_phone
+}
+
+# t3_publish T3: has T3 Code publish what your agents are doing through T3
+# Connect, which is off until you turn it on, so its phone app gets push
+# notifications and Live Activities. Runs after T3 Code connects.
+t3_publish() {
+  if ! "$1" connect status 2>/dev/null | grep -q '^ *Publish agent activity: enabled'; then
+    if ! run "$1" connect publish; then
+      warn "T3 Code couldn't turn on push notifications, as it says above. To try again: t3 connect publish"
+      checklist warn ", without push notifications"
+      return
+    fi
+  fi
+  ok "T3 Code sends your phone push notifications about your agents."
+  checklist ok ", with push notifications"
 }
 
 # t3_connected T3: succeeds if T3 Code runs in the background, with T3 Connect.
@@ -69,9 +86,13 @@ t3_account() {
   [[ -z $account ]] || printf ' as %s' "$account"
 }
 
-# t3_settings: sets T3 Code to add projects in ~/PROJECTS_DIR, and turns on Pi
-# and OpenCode, which are off until you turn them on, if they're installed.
-# Settings you've changed stay as they are.
+# t3_settings: sets T3 Code to add projects in ~/PROJECTS_DIR, start new
+# threads in their own git worktree, and turns on Pi and OpenCode, which are
+# off until you turn them on, if they're installed. Its cleanup deletes a
+# worktree once its pull request merges, its thread is deleted, or its thread
+# has been idle for 2 days, unless it has uncommitted changes, keeping its
+# branch, and deletes browser artifacts and old logs after a week. Settings
+# you've changed stay as they are.
 t3_settings() {
   local file=$HOME/$T3_SETTINGS old new pi=false opencode=false
   [[ -x $HOME/.local/bin/pi ]] && pi=true
@@ -84,6 +105,9 @@ t3_settings() {
   # shellcheck disable=SC2016,SC2088 # $pi and $opencode are jq's; ~ is for T3 Code
   new=$(jq --arg dir "~/$PROJECTS_DIR" --argjson pi "$pi" --argjson opencode "$opencode" '
     .addProjectBaseDirectory //= $dir
+    | .defaultThreadEnvMode //= "worktree"
+    | .storageCleanup //= {worktreeAfterDays: 2, worktreeOnMerge: true, worktreeOnDelete: true,
+        browserArtifactsAfterDays: 7, logsAfterDays: 7}
     | if $pi then .providerInstances.pi //= {driver: "pi", enabled: true} else . end
     | if $opencode then .providerInstances.opencode //= {driver: "opencode", enabled: true} else . end' <<<"$old")
   if [[ $new != "$old" ]]; then

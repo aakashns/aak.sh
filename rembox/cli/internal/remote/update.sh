@@ -1,5 +1,5 @@
 # update.sh: installs packages with apt, and has it install security updates
-# every day.
+# every day, then clean up after itself.
 
 export DEBIAN_FRONTEND=noninteractive # apt never stops to ask a question
 # Wait up to 5 minutes for another apt (like unattended-upgrades) to finish,
@@ -39,7 +39,9 @@ update() {
 AUTO_UPGRADES=/etc/apt/apt.conf.d/99rembox-auto-upgrades
 
 # setup_auto_upgrades: has unattended-upgrades install security updates every
-# day. It never restarts the server; restart asks to, the next time setup runs.
+# day, then remove packages nothing needs anymore, like old kernels, and apt
+# delete the packages it downloaded. It never restarts the server; restart asks
+# to, the next time setup runs.
 setup_auto_upgrades() {
   step "Install security updates every day, with unattended-upgrades"
   install_packages unattended-upgrades
@@ -50,6 +52,8 @@ setup_auto_upgrades() {
     echo "// Written by rembox setup."
     echo 'APT::Periodic::Update-Package-Lists "1";'
     echo 'APT::Periodic::Unattended-Upgrade "1";'
+    echo 'APT::Periodic::CleanInterval "1";'
+    echo 'Unattended-Upgrade::Remove-Unused-Dependencies "true";'
   )
   same "$AUTO_UPGRADES" "$content" || put "$AUTO_UPGRADES" 644 "$content"
   # apt's timers run unattended-upgrades.
@@ -61,7 +65,7 @@ setup_auto_upgrades() {
   local lists='' upgrade=''
   eval "$(apt-config shell lists APT::Periodic::Update-Package-Lists upgrade APT::Periodic::Unattended-Upgrade)"
   if [[ $lists == 1 && $upgrade == 1 ]]; then
-    ok "unattended-upgrades installs security updates every day."
+    ok "unattended-upgrades installs security updates every day, and apt cleans up after it."
     checklist ok "; security updates install daily"
   else
     warn "A file in /etc/apt/apt.conf.d that comes after $AUTO_UPGRADES turns off daily updates. To have unattended-upgrades install them, remove what it says about APT::Periodic."
@@ -86,7 +90,7 @@ install_packages() {
 # (Zellij).
 BASIC_PACKAGES=(
   build-essential git gh curl wget zip unzip jq ripgrep fd-find htop zsh
-  nano man-db dnsutils ufw qrencode postgresql caddy ffmpeg
+  nano man-db dnsutils ufw qrencode postgresql caddy ffmpeg podman
 )
 
 # install_basics: installs BASIC_PACKAGES, the ones that aren't installed yet,

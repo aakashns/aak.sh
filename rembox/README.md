@@ -28,9 +28,10 @@ Run `rembox setup` to begin setting up a remote server.
 - [`git.sh`](cli/internal/remote/git.sh): has apt install gh from GitHub's apt repo; later, as your user, sets your name and email for git and logs gh in to GitHub.
 - [`postgres.sh`](cli/internal/remote/postgres.sh): has apt install PostgreSQL from PostgreSQL's apt repo, with PostgreSQL's own script; later, adds a PostgreSQL superuser for your user, so it can run psql as itself.
 - [`caddy.sh`](cli/internal/remote/caddy.sh): has apt install Caddy from Caddy's apt repo, as Caddy's docs do.
-- [`update.sh`](cli/internal/remote/update.sh): upgrades packages, turns on daily security updates, and installs dev tools (fzf, zoxide and Zellij from their latest releases).
+- [`update.sh`](cli/internal/remote/update.sh): upgrades packages, turns on daily security updates, after which apt cleans up, and installs dev tools (Podman, and fzf, zoxide and Zellij from their latest releases).
+- [`cleanup.sh`](cli/internal/remote/cleanup.sh): keeps the journal under 500 MB; later, as your user, adds a timer that cleans up every day at 4 AM, your Mac's time: it removes opentunnel's routes and stops the dev servers behind them, stops containers, and prunes caches.
 - [`nat64.sh`](cli/internal/remote/nat64.sh): if the server has only IPv6, looks up names with public DNS64 resolvers, to reach sites with only IPv4, like GitHub, through NAT64.
-- [`toolchains.sh`](cli/internal/remote/toolchains.sh): installs the latest Go; later, as your user, the latest bun, Node (with Vite+), Python (with uv), Rust (with rustup) and Playwright (with Chromium). Asks before upgrading them.
+- [`toolchains.sh`](cli/internal/remote/toolchains.sh): installs the latest Go; later, as your user, the latest bun, Node (with Vite+), Python (with uv), Rust (with rustup), Playwright (with Chromium) and cf, Cloudflare's CLI. Asks before upgrading them.
 - [`user.sh`](cli/internal/remote/user.sh): asks for your user's name, and adds it, with a sudo password, your SSH keys and zsh.
 - [`sshd.sh`](cli/internal/remote/sshd.sh): moves ssh to the port you give, with keys only and no root login.
 - [`firewall.sh`](cli/internal/remote/firewall.sh): turns on ufw, blocking every incoming connection but ssh.
@@ -38,7 +39,7 @@ Run `rembox setup` to begin setting up a remote server.
 - [`agents.sh`](cli/internal/remote/agents.sh): asks whether to install Claude Code, Codex, OpenCode and Pi, installs each with its own installer, and logs it in, to a subscription or with API billing.
 - [`opentunnel.sh`](cli/internal/remote/opentunnel.sh): installs opentunnel, with its own installer, for public links to dev servers, to test them from your phone, and connects its tunnel. Asks before upgrading it.
 - [`instructions.sh`](cli/internal/remote/instructions.sh): writes `~/.config/rembox/AGENTS.md`, about the server, and links each agent's global instructions to it.
-- [`t3.sh`](cli/internal/remote/t3.sh): makes ~/work for your projects, installs T3 Code, connects it to your devices with T3 Connect, and shows a QR code for its phone app.
+- [`t3.sh`](cli/internal/remote/t3.sh): makes ~/work for your projects, installs T3 Code, with new threads in worktrees and its cleanup on, connects it to your devices with T3 Connect, with push notifications, and shows a QR code for its phone app.
 - [`fail2ban.sh`](cli/internal/remote/fail2ban.sh): bans IP addresses that keep failing to log in.
 - [`locale.sh`](cli/internal/remote/locale.sh): adds your Mac's locale, so programs on the server don't warn.
 - [`restart.sh`](cli/internal/remote/restart.sh): restarts the server, if an update needs it and you agree.

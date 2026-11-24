@@ -1,6 +1,6 @@
 # toolchains.sh: installs the latest Go, and, as your user, the latest bun,
-# Node with Vite+, Python with uv, Rust with rustup, and Playwright with
-# Chromium, each with its own installer, in the usual place, and as it usually
+# Node with Vite+, Python with uv, Rust with rustup, Playwright with Chromium,
+# and Cloudflare's CLI, cf, each with its own installer, in the usual place, and as it usually
 # sets up your shell. Once they're installed, running setup again asks before
 # upgrading any of them.
 
@@ -155,6 +155,38 @@ setup_playwright() {
   fi
   ok "Playwright $have is installed, with Chromium."
   checklist ok "Playwright $have, with Chromium"
+}
+
+# setup_cloudflare: installs the latest cf, Cloudflare's CLI, as a global
+# package of Vite+'s, with cf in ~/.local/share/vite-plus/bin, as Cloudflare's
+# docs install it with npm, or upgrades it. Runs as your user, after setup_node.
+setup_cloudflare() {
+  step "Install the latest cf, Cloudflare's CLI"
+  ((EUID != 0)) || fail "Run this as your user, not root."
+  local bin=$HOME/.local/share/vite-plus/bin have latest
+  if [[ ! -x $bin/node ]]; then
+    warn "cf needs Node, which isn't installed, so it isn't either. Run rembox setup again later."
+    checklist warn "No cf, as there's no Node"
+    return
+  fi
+  have=$(cf_version "$bin/cf")
+  latest=$(npm_latest cf)
+  if wants_latest cf "$have" "$latest"; then
+    run "$bin/vp" install -g cf@latest || warn "Vite+ couldn't install cf, as it says above. Run rembox setup again later."
+  fi
+  have=$(cf_version "$bin/cf")
+  if [[ -z $have ]]; then
+    checklist warn "cf didn't install"
+    return
+  fi
+  ok "cf $have is installed. To log in to Cloudflare: cf auth login --no-browser"
+  checklist ok "cf $have, Cloudflare's CLI"
+}
+
+# cf_version CF: the version of cf at CF, like 1.0.0-rc.5, with its prerelease,
+# as npm_latest has it, or nothing if it isn't installed.
+cf_version() {
+  "$1" --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+(-[0-9A-Za-z.]+)?' | head -n 1 || true
 }
 
 # chromium_installed PLAYWRIGHT: succeeds if the Chromium PLAYWRIGHT uses is

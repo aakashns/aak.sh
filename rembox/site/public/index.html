@@ -110,9 +110,11 @@
           <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed OpenCode 1.4.2 and logged in</div>
           <div class="t-check" data-step="120"><span class="t-green">✓</span> Installed Pi 0.12.0</div>
           <div class="t-check" data-step="120"><span class="t-green">✓</span> Playwright 1.66.0, with Chromium</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> cf 1.0.0, Cloudflare’s CLI</div>
           <div class="t-check" data-step="120"><span class="t-green">✓</span> opentunnel 0.6.2, for dev server links</div>
           <div class="t-check" data-step="120"><span class="t-green">✓</span> Coding agents follow ~/.config/rembox/AGENTS.md</div>
-          <div class="t-check" data-step="120"><span class="t-green">✓</span> T3 Code 0.8.0, connected to your phone with T3 Connect as alex@example.com</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> T3 Code 0.8.0, connected with T3 Connect as alex@example.com, with push notifications</div>
+          <div class="t-check" data-step="120"><span class="t-green">✓</span> Cleans up daily at 4 AM (America/New_York)</div>
           <div class="t-check" data-step="120"><span class="t-green">✓</span> ssh on port 47213 only, with keys and no root login; ufw and fail2ban on</div>
         </div>
       </figure>
@@ -290,6 +292,7 @@
               <li><a href="https://www.postgresql.org/" target="_blank">PostgreSQL</a> is a local-only database server; your user is a psql superuser.</li>
               <li><a href="https://caddyserver.com/" target="_blank">Caddy</a> is a web server with automatic HTTPS, from Caddy’s apt repo.</li>
               <li><a href="https://ffmpeg.org/" target="_blank">ffmpeg</a> converts and edits audio and video.</li>
+              <li><a href="https://podman.io/" target="_blank">Podman</a> runs containers without root, and <a href="https://developers.cloudflare.com/cf/" target="_blank">cf</a> is Cloudflare’s command line.</li>
               <li><a href="https://fukuchi.org/works/qrencode/" target="_blank">qrencode</a> draws the QR code for T3 Code’s phone app.</li>
             </ul>
             <p>Shell</p>
@@ -351,6 +354,14 @@
             coding agents and big builds, 4 GB and 40 GB work better. rembox adds swap, up to 4 GB,
             for when memory runs low. IPv6-only servers work too: rembox has them reach IPv4-only
             sites, like GitHub, through public NAT64.
+          </div>
+        </details>
+        <details>
+          <summary>How does rembox manage CPU, RAM, and disk space on the server?</summary>
+          <div>
+            Every day at 4 AM, your time, rembox closes opentunnel links and stops the dev servers behind them,
+            test browsers, and containers. T3 Code deletes worktrees that are merged or idle for 2 days, unless they have
+            uncommitted changes. apt clears its downloads and unused packages, and logs stay under 500 MB.
           </div>
         </details>
         <details>

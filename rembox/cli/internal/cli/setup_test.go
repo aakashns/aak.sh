@@ -106,14 +106,14 @@ func TestSetup(t *testing.T) {
 		t.Errorf("first session's args %q", first)
 	}
 	if !slices.Equal(home[:3], []string{"-t", "-p", "23456"}) || !slices.Contains(home, "ada@203.0.113.10") ||
-		slices.Contains(home, "sudo") || !slices.Equal(scriptArgs(home), []string{"home", "''", "''", "23456"}) {
+		slices.Contains(home, "sudo") || !slices.Equal(scriptArgs(home), []string{"home", "''", "''", "23456", "''"}) {
 		t.Errorf("home session's args %q", home)
 	}
-	files := `"$(cat lib.sh check.sh hostname.sh git.sh postgres.sh caddy.sh update.sh nat64.sh toolchains.sh agents.sh opentunnel.sh instructions.sh t3.sh user.sh sshd.sh firewall.sh zsh.sh fail2ban.sh swap.sh locale.sh restart.sh setup.sh)"`
+	files := `"$(cat lib.sh check.sh hostname.sh git.sh postgres.sh caddy.sh update.sh cleanup.sh nat64.sh toolchains.sh agents.sh opentunnel.sh instructions.sh t3.sh user.sh sshd.sh firewall.sh zsh.sh fail2ban.sh swap.sh locale.sh restart.sh setup.sh)"`
 	if !strings.Contains(out, "\n$ ssh -t -p 22 -i "+key+" -o IdentitiesOnly=yes") ||
 		!strings.Contains(out, "root@203.0.113.10 bash -c "+files+" bash start ada 23456 22 box1\n"+
 			"  These scripts come with rembox; read them at https://github.com/aakashns/aak.sh/tree/rembox-v0.1.0/rembox/cli/internal/remote\n") ||
-		!strings.Contains(out, "ada@203.0.113.10 bash -c "+files+" bash home '' '' 23456\n") {
+		!strings.Contains(out, "ada@203.0.113.10 bash -c "+files+" bash home '' '' 23456 ''\n") {
 		t.Errorf("output doesn't show the scripts' commands:\n%s", out)
 	}
 	if strings.Index(out, "User to log in as") > strings.Index(out, "SSH private key") {
@@ -186,12 +186,13 @@ func TestSetupLocales(t *testing.T) {
 	ta := newTestApp(t, "0.1.0")
 	ta.withKey(t, "id_ed25519")
 	ta.Locales = []string{"en_IN.UTF-8", "en_US.UTF-8"}
+	ta.TimeZone = "Asia/Kolkata"
 	ta.typing("203.0.113.10", "", "", "", "box1", "n")
 	ta.mustRun(t, "setup")
-	// Only the home session adds them, as it finishes as root.
+	// Only the home session adds them, as it finishes as root, and sets up the cleanup.
 	s := ta.sessions()
 	if len(s) != 2 || !slices.Equal(scriptArgs(s[0]), []string{"start", "ada", "23456", "22", "box1"}) ||
-		!slices.Equal(scriptArgs(s[1]), []string{"home", "''", "''", "23456", "en_IN.UTF-8", "en_US.UTF-8"}) {
+		!slices.Equal(scriptArgs(s[1]), []string{"home", "''", "''", "23456", "Asia/Kolkata", "en_IN.UTF-8", "en_US.UTF-8"}) {
 		t.Errorf("sessions %q", s)
 	}
 }
@@ -206,7 +207,7 @@ func TestSetupGitDefaults(t *testing.T) {
 	ta.mustRun(t, "setup")
 	// The home session asks for them, with these as defaults.
 	s := ta.sessions()
-	if len(s) != 2 || !slices.Equal(scriptArgs(s[1]), []string{"home", "'Ada Lovelace'", "ada@example.com", "23456"}) {
+	if len(s) != 2 || !slices.Equal(scriptArgs(s[1]), []string{"home", "'Ada Lovelace'", "ada@example.com", "23456", "''"}) {
 		t.Errorf("sessions %q", s)
 	}
 }
@@ -223,6 +224,23 @@ func TestSentLocales(t *testing.T) {
 	}
 	if got := sentLocales([]string{"PATH=/bin"}); got != nil {
 		t.Errorf("sentLocales with none = %q", got)
+	}
+}
+
+func TestZoneName(t *testing.T) {
+	for _, c := range []struct{ tz, link, want string }{
+		{"", "/var/db/timezone/zoneinfo/Asia/Kolkata", "Asia/Kolkata"}, // macOS
+		{"", "/usr/share/zoneinfo/America/Argentina/Buenos_Aires", "America/Argentina/Buenos_Aires"},
+		{"", "../usr/share/zoneinfo/Etc/GMT+5", "Etc/GMT+5"},
+		{"Europe/Berlin", "/usr/share/zoneinfo/Asia/Kolkata", "Europe/Berlin"},
+		{":UTC", "", "UTC"},
+		{"IST-5:30", "/usr/share/zoneinfo/Asia/Kolkata", "Asia/Kolkata"}, // not a name
+		{"", "/etc/zoneinfo/Asia/Kolkata; rm -rf /", ""},
+		{"", "", ""},
+	} {
+		if got := zoneName(c.tz, c.link); got != c.want {
+			t.Errorf("zoneName(%q, %q) = %q, want %q", c.tz, c.link, got, c.want)
+		}
 	}
 }
 
@@ -476,7 +494,7 @@ func TestSetupNewPort(t *testing.T) {
 	s := ta.sessions()
 	if got := ta.servers(t); len(got) != 1 || got[0].Port != 40000 || len(s) != 2 ||
 		!slices.Equal(scriptArgs(s[0]), []string{"start", "ada", "23456", "22", "box.example.com"}) ||
-		s[1][2] != "40000" || !slices.Equal(scriptArgs(s[1]), []string{"home", "''", "''", "40000"}) {
+		s[1][2] != "40000" || !slices.Equal(scriptArgs(s[1]), []string{"home", "''", "''", "40000", "''"}) {
 		t.Errorf("saved %+v, sessions %q", got, s)
 	}
 	if !strings.Contains(ta.stdout.String(), "Is box.example.com behind a firewall outside it") {
