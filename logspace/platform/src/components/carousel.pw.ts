@@ -87,16 +87,29 @@ test.describe('on a phone', () => {
     let slide = carousel.locator('.carousel-slide').nth(1)
     expect((await slide.boundingBox())?.x).toBeCloseTo((await feedTrack.boundingBox())?.x ?? NaN, 0)
 
+    // No frame should show the first slide while the second slide is being opened.
+    let openPosition = await openSecond.evaluate((button) => {
+      if (!(button instanceof HTMLButtonElement)) throw new Error('Missing photo button')
+      let viewer = document.getElementById(button.getAttribute('commandfor') ?? '')
+      let track = viewer?.querySelector('.carousel-track')
+      if (!track) throw new Error('Missing viewer track')
+      button.click()
+      return track.scrollLeft - track.getBoundingClientRect().width
+    })
+    expect(openPosition).toBeCloseTo(0, 0)
     // Use the live offset when a swipe changes the photo right before closing.
-    await openSecond.tap()
     await expect(lightbox).toHaveCSS('--index', '1')
-    await lightbox.getByRole('button', { name: 'Close' }).evaluate((button) => {
-      let track = button.closest('.carousel')?.querySelector('.carousel-track')
-      if (!track || !(button instanceof HTMLButtonElement))
+    let closedOffset = await lightbox.getByRole('button', { name: 'Close' }).evaluate((button) => {
+      let viewer = button.closest('.carousel')
+      let track = viewer?.querySelector('.carousel-track')
+      let feed = viewer?.previousElementSibling?.querySelector('.carousel-track')
+      if (!track || !feed || !(button instanceof HTMLButtonElement))
         throw new Error('Missing carousel controls')
       track.scrollLeft = 0
       button.click()
+      return feed.scrollLeft
     })
+    expect(closedOffset).toBe(0)
     await expect(lightbox).toBeHidden()
     await expect(carousel).toHaveCSS('--index', '0')
   })
