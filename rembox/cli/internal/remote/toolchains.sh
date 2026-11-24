@@ -169,18 +169,24 @@ setup_cloudflare() {
     checklist warn "No cf, as there's no Node"
     return
   fi
-  have=$(version_of "$bin/cf")
+  have=$(cf_version "$bin/cf")
   latest=$(npm_latest cf)
   if wants_latest cf "$have" "$latest"; then
     run "$bin/vp" install -g cf@latest || warn "Vite+ couldn't install cf, as it says above. Run rembox setup again later."
   fi
-  have=$(version_of "$bin/cf")
+  have=$(cf_version "$bin/cf")
   if [[ -z $have ]]; then
     checklist warn "cf didn't install"
     return
   fi
   ok "cf $have is installed. To log in to Cloudflare: cf auth login --no-browser"
   checklist ok "cf $have, Cloudflare's CLI"
+}
+
+# cf_version CF: the version of cf at CF, like 1.0.0-rc.5, with its prerelease,
+# as npm_latest has it, or nothing if it isn't installed.
+cf_version() {
+  "$1" --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+(-[0-9A-Za-z.]+)?' | head -n 1 || true
 }
 
 # chromium_installed PLAYWRIGHT: succeeds if the Chromium PLAYWRIGHT uses is
