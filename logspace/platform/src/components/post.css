@@ -88,7 +88,8 @@
     display: grid;
     grid-template: minmax(0, 1fr) / minmax(0, 1fr);
     padding: 0;
-    overflow: hidden;
+    /* Only the track scrolls, including when the browser restores focus after closing. */
+    overflow: clip;
 
     & > * {
       grid-area: 1 / 1;

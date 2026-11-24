@@ -69,13 +69,14 @@ export function PostMedia(props: {
   }
 }
 
-// Which photo the track is scrolled to, for the dots and arrows (see .carousel in post.css).
-const SHOW_INDEX =
-  "el.parentElement.style.setProperty('--index', Math.round(el.scrollLeft / el.clientWidth))"
-// Opening or closing the lightbox resizes the track, and Chrome then snaps to the photo nearest
-// its old offset, so the photo shown is noted before and scrolled back to after.
-const NOTE_INDEX = "el.dataset.index = el.style.getPropertyValue('--index')"
-const RESTORE_INDEX = 'el.firstElementChild.scrollLeft = el.dataset.index * el.clientWidth'
+const trackWidth = (track: string) => `${track}.getBoundingClientRect().width`
+const photoIndex = (track: string) => `Math.round(${track}.scrollLeft / ${trackWidth(track)})`
+// The dots and arrows follow the track. Read the offset again before toggling the lightbox
+// because the user can toggle it before the track's scroll event updates the index.
+const SHOW_INDEX = `el.parentElement.style.setProperty('--index', ${photoIndex('el')})`
+const NOTE_INDEX = `el.dataset.index = ${photoIndex('el.firstElementChild')}`
+// Restore the same photo using the track's new width, including fractional pixels on phones.
+const RESTORE_INDEX = `el.firstElementChild.scrollTo({ left: el.dataset.index * ${trackWidth('el.firstElementChild')}, behavior: 'instant' })`
 // Once the lightbox has opened, the browser picks copies of the photos for the whole screen
 // rather than for the content column.
 const FULL_SCREEN_SIZES = "el.querySelectorAll('img').forEach((img) => (img.sizes = '100vw'))"
