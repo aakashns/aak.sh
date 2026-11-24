@@ -76,6 +76,20 @@ test.describe('on a phone', () => {
     await expect(carousel).toHaveCSS('--index', '1')
     let before = await position()
     let openSecond = carousel.getByRole('button', { name: 'Open photo' }).nth(1)
+    // No frame should show the first slide while the second slide is being opened.
+    let openPosition = await openSecond.evaluate((button) => {
+      if (!(button instanceof HTMLButtonElement)) throw new Error('Missing photo button')
+      let viewer = document.getElementById(button.getAttribute('commandfor') ?? '')
+      let track = viewer?.querySelector('.carousel-track')
+      if (!track) throw new Error('Missing viewer track')
+      button.click()
+      return track.scrollLeft - track.getBoundingClientRect().width
+    })
+    expect(openPosition).toBeCloseTo(0, 0)
+    await lightbox.getByRole('button', { name: 'Close' }).tap()
+    await expect(lightbox).toBeHidden()
+    expect(await position()).toEqual(before)
+
     for (let attempt = 0; attempt < 2; attempt++) {
       await openSecond.tap()
       await expect(lightbox).toHaveCSS('--index', '1')
@@ -87,17 +101,8 @@ test.describe('on a phone', () => {
     let slide = carousel.locator('.carousel-slide').nth(1)
     expect((await slide.boundingBox())?.x).toBeCloseTo((await feedTrack.boundingBox())?.x ?? NaN, 0)
 
-    // No frame should show the first slide while the second slide is being opened.
-    let openPosition = await openSecond.evaluate((button) => {
-      if (!(button instanceof HTMLButtonElement)) throw new Error('Missing photo button')
-      let viewer = document.getElementById(button.getAttribute('commandfor') ?? '')
-      let track = viewer?.querySelector('.carousel-track')
-      if (!track) throw new Error('Missing viewer track')
-      button.click()
-      return track.scrollLeft - track.getBoundingClientRect().width
-    })
-    expect(openPosition).toBeCloseTo(0, 0)
     // Use the live offset when a swipe changes the photo right before closing.
+    await openSecond.tap()
     await expect(lightbox).toHaveCSS('--index', '1')
     let closedOffset = await lightbox.getByRole('button', { name: 'Close' }).evaluate((button) => {
       let viewer = button.closest('.carousel')
