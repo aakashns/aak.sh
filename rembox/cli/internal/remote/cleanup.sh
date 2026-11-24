@@ -196,12 +196,12 @@ cleanup_stop() {
   return 0
 }
 
-# cleanup_containers: stops your Podman containers, then removes images no tag
-# points to. Stopped containers stay, with what they hold, so podman start
-# starts them again, as do volumes and tagged images.
+# cleanup_containers: stops your Podman containers, then removes stopped
+# containers, with what they hold, images no tag points to, unused networks and
+# the build cache. Volumes and tagged images stay.
 cleanup_containers() {
   command -v podman >/dev/null || return 0
-  podman stop --all --time 10 && podman image prune --force
+  podman stop --all --time 10 && podman system prune --force
 }
 
 # cleanup_caches: removes what uv's cache holds that nothing uses.

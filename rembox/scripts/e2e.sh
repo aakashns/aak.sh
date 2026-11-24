@@ -50,7 +50,6 @@ while 1 {
     -re {Log in (to GitHub now|again)\?[^\n]*\] $} { send "n\r" }
     -re {Install [^\n]*\?[^\n]*\] $} { send "\r" }
     -re {Log [^\n]* in now\?[^\n]*\] $} { send "n\r" }
-    -re {push notifications about your agents[^\n]*\] $} { send "n\r" }
     -re {Waiting for approval[^\n]*\n} { send "\003" }
     -re {Restart it now\?[^\n]*\] $} { send "n\r" }
     -re {to ~/.ssh/config\?[^\n]*\] $} { send "y\r" }
