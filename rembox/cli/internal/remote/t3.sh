@@ -57,18 +57,27 @@ setup_t3() {
   setup_phone
 }
 
-# t3_publish T3: has T3 Code publish what your agents are doing through T3
-# Connect, which is off until you turn it on, so its phone app gets push
-# notifications and Live Activities. Runs after T3 Code connects.
+# t3_publish T3: asks whether T3 Code should publish what your agents are
+# doing through T3 Connect, so its phone app gets push notifications and Live
+# Activities, unless it does already. It's off until you turn it on, and if
+# you turned it off, it asks again. Runs after T3 Code connects.
 t3_publish() {
-  if ! "$1" connect status 2>/dev/null | grep -q '^ *Publish agent activity: enabled'; then
-    if ! run "$1" connect publish; then
-      warn "T3 Code couldn't turn on push notifications, as it says above. To try again: t3 connect publish"
-      checklist warn ", without push notifications"
-      return
-    fi
+  if "$1" connect status 2>/dev/null | grep -q '^ *Publish agent activity: enabled'; then
+    ok "T3 Code sends your phone push notifications about your agents. To stop them: t3 connect publish --disable"
+    checklist ok ", with push notifications"
+    return
   fi
-  ok "T3 Code sends your phone push notifications about your agents. To stop them: t3 connect publish --disable, which setup undoes when it runs again."
+  if ! confirm "Have T3 Code send your phone push notifications about your agents, through T3 Connect?" yes; then
+    ok "T3 Code doesn't send push notifications. To turn them on later: t3 connect publish"
+    checklist skip ", without push notifications"
+    return
+  fi
+  if ! run "$1" connect publish; then
+    warn "T3 Code couldn't turn on push notifications, as it says above. To try again: t3 connect publish"
+    checklist warn ", without push notifications"
+    return
+  fi
+  ok "T3 Code sends your phone push notifications about your agents. To stop them: t3 connect publish --disable"
   checklist ok ", with push notifications"
 }
 

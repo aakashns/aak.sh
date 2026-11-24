@@ -108,49 +108,64 @@ cleanup_script() {
   echo 'cleanup_all "$@"'
 }
 
-# cleanup_all: runs each part of the cleanup, carrying on if one fails.
+# cleanup_all: runs each part of the cleanup, carrying on if one fails, and
+# fails if any did, saying which.
 cleanup_all() {
-  cleanup_routes
-  cleanup_containers
-  cleanup_dev_servers
-  cleanup_caches
+  local part status=0
+  for part in cleanup_routes cleanup_containers cleanup_dev_servers cleanup_caches; do
+    if ! "$part"; then
+      echo "$part failed" >&2
+      status=1
+    fi
+  done
+  return "$status"
 }
 
 # cleanup_routes: removes every opentunnel route, so no dev server stays public.
 # The tunnel stays connected, for the next route. `opentunnel route list` shows
 # each as "NAME.TUNNEL.opentunnel.xyz  →  TARGET".
 cleanup_routes() {
-  local bin=$HOME/.local/bin/opentunnel name
+  local bin=$HOME/.local/bin/opentunnel routes name status=0
   [[ -x $bin ]] || return 0
-  "$bin" route list 2>/dev/null | awk '$2 == "→" { sub(/\..*/, "", $1); print $1 }' |
-    while read -r name; do
-      "$bin" route remove "$name"
-    done
+  routes=$("$bin" route list) || return 1
+  while read -r name; do
+    "$bin" route remove "$name" || status=1
+  done < <(awk '$2 == "→" { sub(/\..*/, "", $1); print $1 }' <<<"$routes")
+  return "$status"
 }
 
-# cleanup_dev_servers: stops the programs you or your agents left listening
-# on a TCP port, like dev servers, and Playwright's browsers. A program that
-# restarts its server when it stops gets 3 tries.
+# cleanup_dev_servers: stops the dev servers you or your agents left running,
+# and Playwright's browsers, saying which by ID and name only, as a command
+# line can hold a secret. A program that restarts its server when it stops
+# gets 3 tries; it fails if any is still running after them.
 cleanup_dev_servers() {
   local pids
   for _ in 1 2 3; do
     mapfile -t pids < <({ cleanup_dev_server_pids; cleanup_playwright_pids; } | sort -un)
     ((${#pids[@]} > 0)) || return 0
-    ps -o pid=,args= -p "${pids[*]}" | cut -c1-200 | sed 's/^ */Stopping /'
+    ps -o pid=,comm= -p "${pids[*]}" | sed 's/^ */Stopping /'
     cleanup_stop "${pids[@]}"
   done
+  mapfile -t pids < <({ cleanup_dev_server_pids; cleanup_playwright_pids; } | sort -un)
+  ((${#pids[@]} == 0))
 }
 
-# cleanup_dev_server_pids: prints the IDs of your processes listening on a TCP
-# port, except ones that systemd runs as a service, like T3 Code's and
-# opentunnel's, and T3 Code's own tools, in ~/.t3. Dev servers run in a
-# session's scope, or an agent's, which T3 Code puts in one of its own.
+# cleanup_dev_server_pids: prints the IDs of your dev servers: processes
+# listening on a TCP port that run Node, bun, Deno, Python, Ruby or PHP, or a
+# program built by go run or cargo. Others, like ssh -L or a database, stay,
+# as do programs systemd runs as a service, like T3 Code's and opentunnel's,
+# and T3 Code's own tools, in ~/.t3. Dev servers run in a session's scope, or
+# an agent's, which T3 Code puts in one of its own.
 cleanup_dev_server_pids() {
   local pid cgroup exe
   for pid in $(ss -Htlnp 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -un); do
     cgroup=$(cut -d: -f3- "/proc/$pid/cgroup" 2>/dev/null) || continue
     exe=$(readlink "/proc/$pid/exe" 2>/dev/null) || continue
-    [[ $cgroup == *.service || $exe == "$HOME/.t3/"* ]] || echo "$pid"
+    [[ $cgroup != *.service && $exe != "$HOME/.t3/"* ]] || continue
+    if [[ ${exe##*/} =~ ^(node|bun|deno|python[0-9.]*|ruby[0-9.]*|php[0-9.]*)$ ||
+      $exe == /tmp/go-build*/exe/* || $exe == */target/debug/* || $exe == */target/release/* ]]; then
+      echo "$pid"
+    fi
   done
 }
 
@@ -181,13 +196,12 @@ cleanup_stop() {
   return 0
 }
 
-# cleanup_containers: stops your Podman containers, then removes stopped
-# containers, images no tag points to, unused networks and the build cache.
-# Volumes and tagged images stay.
+# cleanup_containers: stops your Podman containers, then removes images no tag
+# points to. Stopped containers stay, with what they hold, so podman start
+# starts them again, as do volumes and tagged images.
 cleanup_containers() {
   command -v podman >/dev/null || return 0
-  podman stop --all --time 10
-  podman system prune --force
+  podman stop --all --time 10 && podman image prune --force
 }
 
 # cleanup_caches: removes what uv's cache holds that nothing uses.

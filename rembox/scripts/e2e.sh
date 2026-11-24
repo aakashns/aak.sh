@@ -50,6 +50,7 @@ while 1 {
     -re {Log in (to GitHub now|again)\?[^\n]*\] $} { send "n\r" }
     -re {Install [^\n]*\?[^\n]*\] $} { send "\r" }
     -re {Log [^\n]* in now\?[^\n]*\] $} { send "n\r" }
+    -re {push notifications about your agents[^\n]*\] $} { send "n\r" }
     -re {Waiting for approval[^\n]*\n} { send "\003" }
     -re {Restart it now\?[^\n]*\] $} { send "n\r" }
     -re {to ~/.ssh/config\?[^\n]*\] $} { send "y\r" }
@@ -72,5 +73,5 @@ setup
 setup "$name"
 port=$(sed -n 's/^ *Port //p' "$tmp/home/.config/rembox/ssh_config")
 ssh -F /dev/null -o UserKnownHostsFile="$tmp/known_hosts" -i "$key" -o IdentitiesOnly=yes -p "$port" \
-  "dev@$host" 'zsh -lic "echo \$SHELL; hostname; node --version; bun --version; python --version; cargo --version; go version; claude --version; codex --version; opencode --version; pi --version; t3 --version; playwright --version; cf --version; podman --version; systemctl --user list-timers rembox-cleanup.timer; ls -l ~/.claude/CLAUDE.md ~/.codex/AGENTS.md ~/.config/opencode/AGENTS.md ~/.pi/agent/AGENTS.md; cat ~/.config/rembox/AGENTS.md"'
+  "dev@$host" 'zsh -lic "echo \$SHELL && hostname && node --version && bun --version && python --version && cargo --version && go version && claude --version && codex --version && opencode --version && pi --version && t3 --version && playwright --version && cf --version && podman --version && systemctl --user is-enabled rembox-cleanup.timer && systemctl --user is-active rembox-cleanup.timer && ls -l ~/.claude/CLAUDE.md ~/.codex/AGENTS.md ~/.config/opencode/AGENTS.md ~/.pi/agent/AGENTS.md && cat ~/.config/rembox/AGENTS.md"'
 echo "e2e: passed. Delete the machine with: orb delete -f $name"
