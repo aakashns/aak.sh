@@ -359,8 +359,8 @@
         <details>
           <summary>How does rembox manage CPU, RAM, and disk space on the server?</summary>
           <div>
-            Every day at 4 AM, your time, rembox closes opentunnel links and stops dev servers, test browsers,
-            and containers. T3 Code deletes worktrees that are merged or idle for 2 days, unless they have
+            Every day at 4 AM, your time, rembox closes opentunnel links and stops the dev servers behind them,
+            test browsers, and containers. T3 Code deletes worktrees that are merged or idle for 2 days, unless they have
             uncommitted changes. apt clears its downloads and unused packages, and logs stay under 500 MB.
           </div>
         </details>
