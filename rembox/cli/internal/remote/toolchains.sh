@@ -241,7 +241,9 @@ wants_latest() {
 
 # older A B: succeeds if version A comes before version B.
 older() {
-  [[ $1 != "$2" && $(printf '%s\n' "$1" "$2" | sort -V | head -n 1) == "$1" ]]
+  # GNU version sort puts a tilde before the corresponding stable release.
+  local a=${1/-/~} b=${2/-/~}
+  [[ $a != "$b" && $(printf '%s\n' "$a" "$b" | sort -V | head -n 1) == "$a" ]]
 }
 
 # npm_latest PACKAGE: prints the latest version of the npm package PACKAGE, or
@@ -264,4 +266,26 @@ run_installer() {
   { run curl -fsSL -o "$script" "$url" && run "${args[@]}"; } || status=$?
   rm -f "$script"
   return "$status"
+}
+
+# Install Cloudflare's cf CLI as a global package alongside Node.
+setup_cf() {
+  step "Install the Cloudflare CLI (cf)"
+  local bin=$HOME/.local/share/vite-plus/bin have latest
+  if [[ ! -x $bin/node ]]; then
+    checklist warn "Cloudflare CLI needs Node"
+    return
+  fi
+  local PATH=$bin:$PATH
+  have=$(cf_version "$bin/cf")
+  latest=$(npm_latest cf)
+  if wants_latest cf "$have" "$latest"; then
+    run "$bin/vp" install -g cf@latest || warn "Couldn't install cf. To retry: vp install -g cf@latest"
+  fi
+  checklist_version "" "Cloudflare CLI" "$(cf_version "$bin/cf")"
+}
+
+# Include prerelease suffixes, as cf publishes release candidates.
+cf_version() {
+  "$1" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+([-+][[:alnum:].-]+)?' | head -1 || true
 }

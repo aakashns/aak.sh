@@ -52,6 +52,12 @@ Get a server ready for development, securely. rembox setup:
        phone
      - installs T3 Code and enables T3 Connect to let you code from your phone
 
+Setup also installs the Cloudflare CLI (cf) and Podman. At 04:00 server time,
+rembox closes opentunnel routes, stops project dev servers and containers,
+checks stale worktrees for open PRs, and cleans apt packages and old logs.
+For the results, see 'journalctl --user -u rembox-cleanup' and
+'sudo journalctl -u rembox-cleanup'.
+
 To reach a program on the server, like a dev server or database, forward its
 port over ssh: 'rembox tunnel NAME 3000' makes localhost:3000 on this machine
 reach port 3000 on the server. Docker's published ports get past ufw,

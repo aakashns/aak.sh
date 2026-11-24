@@ -21,6 +21,7 @@ build: ## Build bin/rembox for this machine
 
 test: ## Run the tests (including install.sh's, against a pretend release)
 	go test -race ./...
+	python3 -B internal/remote/cleanup_test.py
 
 lint: ## Check formatting, vet the code, and shellcheck install.sh, scripts/ and the server scripts
 	@test -z "$$(gofmt -l .)" || { echo "Needs gofmt:"; gofmt -l .; exit 1; }
