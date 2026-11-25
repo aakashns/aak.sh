@@ -47,10 +47,15 @@
 }
 
 [data-slot='badge'][data-variant='destructive'] {
-  background: var(--destructive);
-  color: white;
+  /* The fallbacks are for themes from before dui 0.3.0, which don't have these tokens. */
+  background: var(--destructive-solid, light-dark(oklch(0.577 0.245 27.325), oklch(0.53 0.21 26)));
+  color: var(--destructive-solid-foreground, oklch(1 0 0));
   &:is(a):hover {
-    background: color-mix(in oklch, var(--destructive) 90%, transparent);
+    background: color-mix(
+      in oklch,
+      var(--destructive-solid, light-dark(oklch(0.577 0.245 27.325), oklch(0.53 0.21 26))) 90%,
+      black
+    );
   }
 }
 

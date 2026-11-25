@@ -4,6 +4,7 @@ import type { Child, Html } from '../lib/jsx/jsx-runtime.ts'
 import { components, lib, type RegistryItem } from '../registry.ts'
 import { Button } from '../ui/button.tsx'
 import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card.tsx'
+import { readSource } from '../sources.ts' with { type: 'macro' }
 import { CodeBlock } from './code.tsx'
 import { docs, type Example } from './examples.tsx'
 import { DESCRIPTION, INSTALL } from './home.tsx'
@@ -39,29 +40,14 @@ export const Introduction = (): Html => (
   </DocsPage>
 )
 
-const SETUP = `// package.json
-"imports": { "#jsx/*": "./src/lib/jsx/*.ts" }
+// The quickstart, as CI runs it in a new project (see .github/workflows/dui-release.yml).
+const QUICKSTART = readSource('../quickstart/index.tsx')
+
+const SETUP = `// package.json: ./src/lib/jsx/*.ts where lib/ is in src/
+"imports": { "#jsx/*": "./lib/jsx/*.ts" }
 
 // tsconfig.json
 "compilerOptions": { "jsx": "react-jsx", "jsxImportSource": "#jsx" }`
-
-const PAGE = `import { raw } from './lib/jsx/jsx-runtime.ts'
-import theme from './lib/theme.css' with { type: 'text' }
-import { Button, BUTTON_CSS } from './ui/button.tsx'
-
-const page = (
-  <html>
-    <head>
-      <style>{raw(theme + BUTTON_CSS)}</style>
-      <script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.4/bundles/datastar.js"></script>
-    </head>
-    <body data-signals:count="0">
-      <Button data-on:click="$count++">Clicked <span data-text="$count"></span> times</Button>
-    </body>
-  </html>
-)
-
-Bun.serve({ routes: { '/': new Response('<!DOCTYPE html>' + page, { headers: { 'Content-Type': 'text/html' } }) } })`
 
 export const Installation = (): Html => (
   <DocsPage
@@ -69,29 +55,54 @@ export const Installation = (): Html => (
     title="Installation"
     description="Add dui's components to a Bun project."
   >
-    <h2>Install the CLI</h2>
+    <h2 id="install">Install the CLI</h2>
     <p>
       <code>dui</code> is one binary, for Linux and macOS. This puts it in{' '}
       <code>/usr/local/bin</code>, and running it again upgrades it:
     </p>
     <CodeBlock code={INSTALL} />
-    <h2>Add components</h2>
     <p>
-      Run this in your project. It writes the components to <code>src/ui/</code>, and the JSX
-      runtime and theme they need to <code>src/lib/</code> (or <code>ui/</code> and{' '}
-      <code>lib/</code> where there's no <code>src/</code>; pick another folder with{' '}
-      <code>--dir</code>).
+      The components come with it, so each version of dui adds the same code. Set{' '}
+      <code>DUI_VERSION</code> to install a particular one.
     </p>
-    <CodeBlock code="dui add button card" />
+    <h2 id="init">Set up your project</h2>
     <p>
-      <code>dui list</code> shows every component.
+      Run this in your project's folder, beside its <code>package.json</code> (<code>bun init</code>{' '}
+      makes one):
     </p>
-    <h2>Set up JSX</h2>
-    <p>Point JSX at the runtime in lib/:</p>
+    <CodeBlock code="dui init" />
+    <p>
+      It writes the JSX runtime and the theme to <code>lib/</code>, in <code>src/</code> if there's
+      one (or wherever <code>--dir</code> says), and points JSX at them. Running it again only adds
+      what's missing. To do that by hand:
+    </p>
     <CodeBlock code={SETUP} />
-    <h2>Use them</h2>
-    <p>Each component exports its CSS as text, for the page to inline with the theme's:</p>
-    <CodeBlock code={PAGE} />
+    <h2 id="add">Add components</h2>
+    <CodeBlock code="dui add button" />
+    <p>
+      It copies each component, and the ones it uses, into <code>ui/</code> beside <code>lib/</code>
+      , and lists every stylesheet there in <code>ui/styles.ts</code>. <code>dui list</code> shows
+      every component, and each component's page has the command for each example.
+    </p>
+    <p>
+      A file you've changed is yours: <code>add</code> keeps it, <code>--dry-run</code> says what it
+      would write, <code>dui diff</code> shows how your copies differ from dui's, and{' '}
+      <code>--overwrite</code> replaces the files of the components you name, and only those.
+    </p>
+    <h2 id="use-them">Use them</h2>
+    <p>
+      Save this as <code>index.tsx</code>, in the folder with <code>ui/</code> and <code>lib/</code>
+      :
+    </p>
+    <CodeBlock code={QUICKSTART} title="index.tsx" />
+    <p>
+      Then run <code>bun index.tsx</code> (or <code>bun src/index.tsx</code>), and open{' '}
+      <code>http://localhost:3000</code>. <code>DUI_CSS</code> is the theme and every component's
+      CSS, for the page to inline: add your own after it. The theme sets the page's font, colors,
+      and <code>box-sizing</code>, and follows the system's light or dark mode; put{' '}
+      <code>class="dark"</code> or <code>class="light"</code> on <code>&lt;html&gt;</code> to pick
+      one, or change its variables to make it yours.
+    </p>
     <p>
       Every file is also on the site at its path in your project, like{' '}
       <a href="/ui/button.css">/ui/button.css</a> and <a href="/lib/theme.css">/lib/theme.css</a>,
@@ -138,7 +149,12 @@ const ExampleBlock = (props: { item: RegistryItem; example: Example }): Html => 
   return (
     <div class="example">
       <div class="preview">{example.render()}</div>
-      {others.length ? <p class="uses">Also uses {componentLinks(others)}.</p> : null}
+      {others.length ? (
+        <p class="uses">
+          Also uses {componentLinks(others)}:{' '}
+          <code>dui add {[item.name, ...others].join(' ')}</code>
+        </p>
+      ) : null}
       <CodeBlock code={example.code} title={`${example.slug}.tsx`} />
     </div>
   )

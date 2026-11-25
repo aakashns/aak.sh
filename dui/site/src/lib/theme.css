@@ -14,10 +14,15 @@
   --secondary: light-dark(oklch(0.97 0 0), oklch(0.269 0 0));
   --secondary-foreground: var(--foreground);
   --muted: light-dark(oklch(0.97 0 0), oklch(0.269 0 0));
-  --muted-foreground: light-dark(oklch(0.556 0 0), oklch(0.708 0 0));
+  /* A touch darker than shadcn/ui's 0.556 in light mode, for 4.5:1 on --muted. */
+  --muted-foreground: light-dark(oklch(0.53 0 0), oklch(0.708 0 0));
   --accent: light-dark(oklch(0.97 0 0), oklch(0.269 0 0));
   --accent-foreground: var(--foreground);
   --destructive: light-dark(oklch(0.577 0.245 27.325), oklch(0.704 0.191 22.216));
+  /* Destructive text is --destructive on the background; a destructive fill, like a button, is
+     --destructive-solid under --destructive-solid-foreground, 4.5:1 or more in both schemes. */
+  --destructive-solid: light-dark(oklch(0.577 0.245 27.325), oklch(0.53 0.21 26));
+  --destructive-solid-foreground: oklch(1 0 0);
   --border: light-dark(oklch(0.922 0 0), oklch(1 0 0 / 10%));
   --input: light-dark(oklch(0.922 0 0), oklch(1 0 0 / 15%));
   --ring: light-dark(oklch(0.708 0 0), oklch(0.556 0 0));

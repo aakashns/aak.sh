@@ -452,7 +452,15 @@ export const docs: Record<string, ComponentDocs> = {
         The open tab is a Datastar signal, so anything on the page can read it or switch tabs, where
         shadcn has <code>value</code> and <code>onValueChange</code>.
       </>,
-      'Radix moves between tabs with the arrow keys; here each tab is in the Tab order. Closed panels are hidden from everyone.',
+      <>
+        The keyboard works as Radix's does, horizontally: the open tab is the list's one stop in the
+        Tab order, and the arrow keys, Home, and End move between tabs and open them. Give{' '}
+        <code>TabsList</code> an <code>aria-label</code>. Closed panels are hidden from everyone.
+      </>,
+      <>
+        The signal names the parts' ids, so each set on a page needs a signal of its own. Two sets
+        with one signal would also open and close together.
+      </>,
     ],
   },
   textarea: {

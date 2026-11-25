@@ -6,7 +6,7 @@ const { Tabs, TabsList, TabsTrigger, TabsContent } = createTabs('billing', 'mont
 // The open tab is a signal, so anything on the page can read it or switch tabs.
 export default () => (
   <Tabs style="align-items: center">
-    <TabsList>
+    <TabsList aria-label="Billing period">
       <TabsTrigger value="monthly">Monthly</TabsTrigger>
       <TabsTrigger value="yearly">Yearly</TabsTrigger>
     </TabsList>

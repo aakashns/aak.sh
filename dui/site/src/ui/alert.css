@@ -23,11 +23,9 @@
     translate: 0 0.125rem;
     color: currentColor;
   }
-  &[data-variant='destructive'] {
-    color: var(--destructive);
-  }
+  &[data-variant='destructive'],
   &[data-variant='destructive'] [data-slot='alert-description'] {
-    color: color-mix(in oklch, var(--destructive) 90%, transparent);
+    color: var(--destructive);
   }
 }
 

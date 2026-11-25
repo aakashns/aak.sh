@@ -7,3 +7,8 @@ export function readSources(pattern: string): Record<string, string> {
   let paths = new Bun.Glob(pattern).scanSync({ cwd: dir })
   return Object.fromEntries([...paths].sort().map((p) => [p, readFileSync(dir + p, 'utf8')]))
 }
+
+// One file's code, by its path from src/.
+export function readSource(path: string): string {
+  return readFileSync(new URL(path, import.meta.url), 'utf8')
+}

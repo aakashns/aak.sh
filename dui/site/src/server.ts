@@ -86,6 +86,17 @@ const Routes = HttpRouter.addAll([
   HttpRouter.route('GET', '/docs/installation', always(html(Installation()))),
   HttpRouter.route('GET', '/docs/components', always(html(ComponentList()))),
   HttpRouter.route('GET', '/docs/components/:name', component),
+  // An example form posted with Datastar off: back to the page, with nothing kept.
+  HttpRouter.route(
+    'POST',
+    '/docs/components/:name',
+    Effect.gen(function* () {
+      let { name } = yield* HttpRouter.params
+      return HttpServerResponse.redirect(`/docs/components/${encodeURIComponent(name ?? '')}`, {
+        status: 303,
+      })
+    }),
+  ),
   HttpRouter.route('GET', '/r/:file', registryItem),
   // The installer, for this version of dui, the latest.
   HttpRouter.route(
