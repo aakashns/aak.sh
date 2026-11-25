@@ -1,0 +1,34 @@
+[data-slot='textarea'] {
+  display: flex;
+  width: 100%;
+  min-height: 4rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--input);
+  border-radius: calc(var(--radius) - 2px);
+  background: transparent;
+  color: var(--foreground);
+  font: inherit;
+  /* 1rem on phones, so iOS doesn't zoom in on focus. */
+  font-size: 1rem;
+  field-sizing: content;
+  resize: vertical;
+  outline: none;
+
+  @media (min-width: 48rem) {
+    font-size: 0.875rem;
+  }
+  &::placeholder {
+    color: var(--muted-foreground);
+  }
+  &:focus-visible {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+  }
+  &[aria-invalid='true'] {
+    border-color: var(--destructive);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
