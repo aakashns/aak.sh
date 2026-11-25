@@ -1,14 +1,5 @@
-# Copy this block into the server's main Caddyfile.
-# Build from /srv/aak.sh/dui/site with bun install --frozen-lockfile and bun run build.
+# Copy this block into the server's main Caddyfile. dui.service serves the site on this port.
 dui.aak.sh {
-	root * /srv/aak.sh/dui/site/dist
 	encode zstd gzip
-	# /docs/installation is docs/installation.html (see scripts/build.ts).
-	try_files {path} {path}.html
-	header /r/* Access-Control-Allow-Origin *
-	file_server
-	handle_errors 404 {
-		rewrite * /404.html
-		file_server
-	}
+	reverse_proxy 127.0.0.1:44200
 }

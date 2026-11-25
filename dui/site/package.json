@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "bun --watch src/server.ts",
-    "build": "bun scripts/build.ts",
+    "start": "bun src/server.ts",
     "check": "bun check && bun fmt --check"
   },
   "dependencies": {

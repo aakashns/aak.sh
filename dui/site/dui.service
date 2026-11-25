@@ -1,0 +1,27 @@
+# dui.aak.sh: the site's Bun server, behind Caddy (see Caddyfile). Install it with
+#   sudo cp dui.service /etc/systemd/system/ && sudo systemctl enable --now dui
+[Unit]
+Description=dui.aak.sh
+After=network.target
+
+[Service]
+Type=exec
+WorkingDirectory=/srv/aak.sh/dui/site
+# A copy of Bun outside any home folder, which the service can't read.
+ExecStart=/usr/local/bin/bun src/server.ts
+Environment=HOST=127.0.0.1
+Environment=PORT=44200
+# No home folder to cache transpiled files in.
+Environment=BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
+DynamicUser=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+RestrictAddressFamilies=AF_INET AF_INET6
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

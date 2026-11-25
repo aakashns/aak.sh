@@ -1,5 +1,5 @@
-// The site's routes, served by Effect's HTTP router on Bun. `bun run dev` serves them, and
-// scripts/build.ts renders each one to a file in dist/ for Caddy.
+// The site: its routes, served by Effect's HTTP router on Bun, behind Caddy (see ../dui.service).
+// Pages are rendered once, when it starts.
 import { BunHttpServer, BunRuntime } from '@effect/platform-bun'
 import { Effect, Layer } from 'effect'
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from 'effect/http'
@@ -24,8 +24,8 @@ const notFound = html(NotFound(), 404)
 // A response that's the same every time. Routes take effects: a bare response types as `any`.
 const always = (response: HttpServerResponse.HttpServerResponse) => Effect.succeed(response)
 
-// Every page, for the build and the sitemap.
-export const PAGES = [
+// Every page, for the sitemap.
+const PAGES = [
   '/',
   '/docs',
   '/docs/installation',
@@ -68,7 +68,7 @@ const publicFile = Effect.gen(function* () {
   return HttpServerResponse.uint8Array(bytes, { contentType: file.type })
 })
 
-export const Routes = HttpRouter.addAll([
+const Routes = HttpRouter.addAll([
   HttpRouter.route('GET', '/', always(html(Home()))),
   HttpRouter.route('GET', '/docs', always(html(Introduction()))),
   HttpRouter.route('GET', '/docs/installation', always(html(Installation()))),
