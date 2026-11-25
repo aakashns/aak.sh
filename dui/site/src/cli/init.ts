@@ -6,6 +6,7 @@ import { readFile, writeFile } from 'node:fs/promises'
 import { relative, resolve, sep } from 'node:path'
 
 import { add, sourceDir, type Options } from './add.ts'
+import { set } from './jsonc.ts'
 
 const JSX = { jsx: 'react-jsx', jsxImportSource: '#jsx' }
 
@@ -21,63 +22,48 @@ export async function init(options: Options) {
   if (lib.startsWith('..')) throw new Error(`--dir must be in this project: ${dir}`)
   let mapping = `./${lib}/*.ts`
 
+  // Every change, worked out and checked before any is written.
+  let changes = [
+    await plan('package.json', { imports: { '#jsx/*': mapping } }),
+    await plan('tsconfig.json', { compilerOptions: JSX }),
+  ]
+
   await add(['lib'], { ...options, overwrite: false })
+  for (let { file, before, after } of changes) {
+    let [verb, done] =
+      before === after
+        ? ['same    ', 'same    ']
+        : before === undefined
+          ? ['write   ', 'wrote   ']
+          : ['update  ', 'updated ']
+    console.log(`  ${options.dryRun ? verb : done} ${file}`)
+    if (!options.dryRun && before !== after) await writeFile(file, after)
+  }
   if (options.dryRun) return
-
-  let text = await readFile('package.json', 'utf8')
-  let pkg = JSON.parse(text) as { imports?: Record<string, string> }
-  if (pkg.imports?.['#jsx/*'] === mapping) console.log('  same     package.json')
-  else {
-    pkg.imports = { ...pkg.imports, '#jsx/*': mapping }
-    await writeFile('package.json', JSON.stringify(pkg, null, indent(text)) + '\n')
-    console.log(`  updated  package.json ("imports": { "#jsx/*": "${mapping}" })`)
-  }
-
-  let tsconfig = existsSync('tsconfig.json') ? await readFile('tsconfig.json', 'utf8') : undefined
-  let updated = tsconfig === undefined ? newTsconfig() : setJsx(tsconfig)
-  if (updated === tsconfig) console.log('  same     tsconfig.json')
-  else {
-    await writeFile('tsconfig.json', updated)
-    console.log(
-      `  ${tsconfig === undefined ? 'wrote  ' : 'updated'}  tsconfig.json (JSX from #jsx)`,
-    )
-  }
 
   console.log(`
 Next, add components, like \`dui add button\`, and render one:
 https://dui.aak.sh/docs/installation#use-them`)
 }
 
-const indent = (json: string) => /\n([ \t]+)"/.exec(json)?.[1] ?? 2
-
-const newTsconfig = () => JSON.stringify({ compilerOptions: JSX }, null, 2) + '\n'
-
-// Sets compilerOptions.jsx and jsxImportSource, editing the text so its comments (bun init's
-// tsconfig.json has some) and formatting stay as they are.
-function setJsx(tsconfig: string) {
-  let text = tsconfig
-  for (let [key, value] of Object.entries(JSX)) {
-    let existing = new RegExp(`("${key}"\\s*:\\s*)"[^"]*"`)
-    if (existing.test(text)) text = text.replace(existing, `$1"${value}"`)
-    else {
-      let options = /"compilerOptions"\s*:\s*\{(\s*\})?/.exec(text)
-      if (!options) return newTsconfigFrom(text)
-      let [match, empty] = options
-      let line = `"${key}": "${value}"`
-      let at = options.index + match.length - (empty?.length ?? 0)
-      text = text.slice(0, at) + `\n    ${line}${empty ? '\n  ' : ','}` + text.slice(at)
+// A JSON file with these values set in it, as before and after texts. It edits only the values
+// it sets, so comments (bun init's tsconfig.json has some) and formatting stay.
+async function plan(file: string, values: Record<string, Record<string, string>>) {
+  let before = existsSync(file) ? await readFile(file, 'utf8') : undefined
+  let after = before ?? '{}\n'
+  try {
+    for (let [key, object] of Object.entries(values)) {
+      for (let [name, value] of Object.entries(object)) after = set(after, [key, name], value)
     }
+    let parsed = Bun.JSONC.parse(after) as Record<string, Record<string, unknown> | undefined>
+    for (let [key, object] of Object.entries(values)) {
+      for (let [name, value] of Object.entries(object)) {
+        if (parsed[key]?.[name] !== value) throw new Error(`${key}.${name} isn't set`)
+      }
+    }
+  } catch (error) {
+    let reason = error instanceof Error ? error.message : String(error)
+    throw new Error(`couldn't update ${file} (${reason}), so nothing was written`)
   }
-  let parsed = Bun.JSONC.parse(text) as { compilerOptions?: Record<string, unknown> }
-  if (Object.entries(JSX).some(([key, value]) => parsed.compilerOptions?.[key] !== value)) {
-    throw new Error(`couldn't update tsconfig.json: set "jsx": "react-jsx" and
-"jsxImportSource": "#jsx" in its "compilerOptions"`)
-  }
-  return text
-}
-
-// A tsconfig.json without compilerOptions: parsed and written again with them.
-function newTsconfigFrom(text: string) {
-  let parsed = Bun.JSONC.parse(text) as Record<string, unknown>
-  return JSON.stringify({ ...parsed, compilerOptions: JSX }, null, 2) + '\n'
+  return { file, before, after }
 }

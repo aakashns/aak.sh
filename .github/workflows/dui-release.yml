@@ -101,6 +101,8 @@ jobs:
           bun-version-file: dui/site/package.json
       - run: bun install --frozen-lockfile
       - run: bunx playwright install --with-deps chromium
+      # The CLI in new projects: what init and add write and keep, and upgrades from 0.2.
+      - run: bun test
       - name: Quickstart
         run: |
           dui="bun $PWD/src/cli/main.ts"

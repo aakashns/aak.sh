@@ -24,6 +24,15 @@ function check(ok: boolean, what: string) {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${what}`)
   if (!ok) failures.push(what)
 }
+// Switches the page to a scheme, with transitions off so colors are settled when axe reads them.
+async function setScheme(page: Page, scheme: string) {
+  await page.addStyleTag({ content: '*, ::before, ::after { transition: none !important }' })
+  await page.evaluate(async (scheme) => {
+    document.documentElement.className = scheme
+    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
+  }, scheme)
+}
+
 const shot = (page: Page, name: string) =>
   screenshots ? page.screenshot({ path: join(screenshots, `${name}.png`) }) : undefined
 
@@ -112,7 +121,7 @@ if (site) {
   for (let scheme of ['dark', 'light']) {
     for (let path of paths) {
       await page.goto(site + path)
-      await page.evaluate((scheme) => (document.documentElement.className = scheme), scheme)
+      await setScheme(page, scheme)
       await page.addScriptTag({ content: axe.source })
       let violations = await page.evaluate(async () => {
         let result = await (window as unknown as { axe: typeof axe }).axe.run(

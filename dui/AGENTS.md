@@ -22,5 +22,5 @@
   `README.md` says; component changes reach `dui add` with the next release
 - Example forms post (`method="post"`) and Datastar handles `data-on:submit`, so nothing typed
   lands in a URL
-- Before a PR: `bun run check`, and `bun scripts/e2e.ts` against the dev server (it fails on
+- Before a PR: `bun run check`, `bun test`, and `bun scripts/e2e.ts` against the dev server (it fails on
   contrast in either scheme), then attach screenshots of the changed component pages

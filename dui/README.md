@@ -19,6 +19,7 @@ cd site
 bun install
 bun run dev     # http://127.0.0.1:3000
 bun run check   # types and formatting
+bun test        # the CLI in new projects (needs Playwright's Chromium, as below)
 bun run build   # dist/dui, for this platform
 
 # Browser checks (forms, tabs, contrast) against the dev server; CI runs them too:
