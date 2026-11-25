@@ -3,6 +3,12 @@ body {
   line-height: 1.6;
 }
 
+/* Nothing may make the page wider than the phone: long code scrolls inside its block. */
+html,
+body {
+  overflow-x: clip;
+}
+
 a {
   color: inherit;
 }
@@ -11,7 +17,8 @@ a {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 64rem;
+  gap: 1rem;
+  max-width: 80rem;
   margin: 0 auto;
   padding: 1rem;
   border-bottom: 1px solid var(--border);
@@ -36,23 +43,33 @@ a {
   text-decoration: none;
 }
 
+.home {
+  padding: 0 1rem 4rem;
+}
+
 .hero {
-  max-width: 40rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 42rem;
   margin: 0 auto;
-  padding: 6rem 1rem;
+  padding: 4rem 0 3rem;
   text-align: center;
 
   & h1 {
-    margin: 0;
-    font-size: 2.5rem;
+    margin: 1rem 0 0;
+    font-size: clamp(2.25rem, 8vw, 3.5rem);
+    letter-spacing: -0.02em;
     line-height: 1.1;
   }
   & .row {
     justify-content: center;
   }
-  & pre {
-    display: inline-block;
+  & .install {
+    width: fit-content;
+    max-width: 100%;
     margin-top: 2rem;
+    text-align: left;
   }
 }
 
@@ -65,14 +82,21 @@ a {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 2rem;
-  max-width: 64rem;
+  max-width: 80rem;
   margin: 0 auto;
   padding: 2rem 1rem;
 
   @media (min-width: 48rem) {
     grid-template-columns: 12rem minmax(0, 1fr);
   }
-  /* Phones skip the sidebar: the header and the introduction link to the rest. */
+  @media (min-width: 64rem) {
+    gap: 4rem;
+  }
+  & main {
+    max-width: 52rem;
+  }
+  /* Phones skip the sidebar: the header, the component list, and each page's links to the
+     next and previous components lead to the rest. */
   & aside {
     display: none;
 
@@ -102,12 +126,17 @@ a {
     font-size: 1.875rem;
   }
   & main > h2 {
-    margin-top: 2.5rem;
+    margin-top: 3rem;
     font-size: 1.25rem;
+  }
+  & main > h3 {
+    margin-top: 2rem;
+    font-size: 1rem;
   }
 }
 
 pre {
+  margin: 0;
   overflow-x: auto;
   padding: 1rem;
   border: 1px solid var(--border);
@@ -121,14 +150,139 @@ code {
   font-family: var(--font-mono);
 }
 
+:not(pre) > code {
+  font-size: 0.875em;
+}
+
+/* A code block, its file name, and the button that copies it. */
+.code {
+  position: relative;
+  min-width: 0;
+  margin-block: 1rem;
+
+  & pre {
+    max-height: 28rem;
+    padding-right: 3rem;
+  }
+  & .code-title + pre {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+}
+
+.code-title {
+  padding: 0.5rem 3rem 0.5rem 1rem;
+  border: 1px solid var(--border);
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: oklch(0.145 0 0);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+}
+
+.copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius) - 2px);
+  background: oklch(0.145 0 0);
+  color: var(--muted-foreground);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--muted);
+    color: var(--foreground);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+  }
+  & svg {
+    grid-area: 1 / 1;
+    width: 1rem;
+    height: 1rem;
+  }
+  & svg:last-child,
+  &[data-copied] svg:first-child {
+    visibility: hidden;
+  }
+  &[data-copied] svg:last-child {
+    visibility: visible;
+    color: var(--foreground);
+  }
+  /* Beside the file name, where there is one. */
+  .code-title ~ & {
+    top: 0.125rem;
+  }
+}
+
 .preview {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  gap: 0.5rem;
   min-height: 14rem;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
+
+  & > * {
+    min-width: 0;
+  }
+}
+
+/* An example: its preview, joined to its code. */
+.example {
+  margin-block: 1rem 2rem;
+
+  & .preview {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  & .code {
+    margin: 0;
+  }
+  & .code-title {
+    border-top: 0;
+    border-radius: 0;
+  }
+}
+
+.uses {
+  margin: 0;
+  padding: 0.5rem 1rem;
+  border-inline: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 0.8125rem;
+}
+
+.files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 1rem 1.5rem;
+}
+
+.differences li + li {
+  margin-top: 0.5rem;
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+}
+
+.muted {
+  color: var(--muted-foreground);
 }
 
 .row {
@@ -138,18 +292,177 @@ code {
   gap: 0.5rem;
 }
 
-.stack {
-  display: grid;
-  gap: 0.5rem;
-  width: 100%;
-  max-width: 20rem;
-}
-
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
   gap: 1rem;
   & a {
     text-decoration: none;
+  }
+}
+
+/* The home page's dashboard. */
+.showcase {
+  max-width: 80rem;
+  margin: 0 auto;
+
+  & .caption {
+    margin-top: 1.5rem;
+    font-size: 0.875rem;
+    text-align: center;
+  }
+}
+
+.app {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) + 6px);
+  background: var(--background);
+  font-size: 0.875rem;
+  line-height: 1.5;
+
+  & h2,
+  & h3,
+  & p {
+    margin: 0;
+  }
+  & [data-slot='card'] {
+    min-width: 0;
+  }
+}
+
+.app-bar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-nav {
+  display: none;
+  gap: 1.25rem;
+
+  @media (min-width: 48rem) {
+    display: flex;
+  }
+  & a {
+    color: var(--muted-foreground);
+    text-decoration: none;
+    &:hover,
+    &[aria-current] {
+      color: var(--foreground);
+    }
+  }
+}
+
+.app-search {
+  position: relative;
+  flex: 1;
+  max-width: 16rem;
+  margin-left: auto;
+
+  & [data-slot='kbd'] {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    translate: 0 -50%;
+  }
+}
+
+.app-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem;
+
+  @media (min-width: 48rem) {
+    padding: 1.5rem;
+  }
+}
+
+.app-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+
+  & h2 {
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 1rem;
+
+  & [data-slot='card'] {
+    gap: 1rem;
+  }
+  & .stat {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+  & .stat-goal {
+    display: grid;
+    gap: 0.75rem;
+  }
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+
+  @media (min-width: 48rem) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: 72rem) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    & .span-2 {
+      grid-column: span 2;
+    }
+  }
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  & .person-name {
+    font-weight: 500;
+  }
+  & [data-slot='native-select-wrapper'] {
+    margin-left: auto;
+  }
+}
+
+.team {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+}
+
+.invite {
+  display: flex;
+  gap: 0.5rem;
+}
+
+[data-slot='field-group'].tight {
+  gap: 1.25rem;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  & > div:not([data-slot]) {
+    display: grid;
+    flex: 1;
+    gap: 0.5rem;
   }
 }

@@ -17,7 +17,7 @@ import {
   NotFound,
 } from './pages/pages.tsx'
 import { PUBLIC_FILES } from './public.ts'
-import { components, registry, registryJson } from './registry.ts'
+import { components, registry, registryJson, SOURCES } from './registry.ts'
 
 const html = (page: Html, status = 200) =>
   HttpServerResponse.text(page.value, { status, contentType: 'text/html; charset=utf-8' })
@@ -59,10 +59,21 @@ const registryItem = Effect.gen(function* () {
   return yield* HttpServerResponse.json(registryJson(item))
 })
 
-// Anything else is one of PUBLIC_FILES, or not found.
+// The code dui adds, at its path in a project, like /ui/button.css: CSS as a stylesheet, the
+// rest as text.
+const sourceFile = (path: string, source: string) =>
+  HttpServerResponse.text(source, {
+    contentType: path.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/plain; charset=utf-8',
+    headers: { 'access-control-allow-origin': '*' },
+  })
+
+// Anything else is the code dui adds, one of PUBLIC_FILES, or not found.
 const publicFile = Effect.gen(function* () {
   let { url } = yield* HttpServerRequest.HttpServerRequest
-  let path = PUBLIC_FILES[new URL(url, 'http://localhost').pathname]
+  let pathname = new URL(url, 'http://localhost').pathname
+  let source = SOURCES[pathname.slice(1)]
+  if (source !== undefined) return sourceFile(pathname, source)
+  let path = PUBLIC_FILES[pathname]
   if (!path) return notFound
   let file = Bun.file(path)
   let bytes = yield* Effect.promise(() => file.bytes())

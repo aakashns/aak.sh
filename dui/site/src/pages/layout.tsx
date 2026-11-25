@@ -1,19 +1,18 @@
 // Every page's <html>: its <head> (title, search and link preview tags, icons, the inlined CSS),
 // the header, and the docs' sidebar.
 import { raw, type Child, type Html } from '../lib/jsx/jsx-runtime.ts'
-import themeCss from '../lib/theme.css' with { type: 'text' }
-import { components } from '../registry.ts'
-import { BUTTON_CSS } from '../ui/button.tsx'
-import { CARD_CSS } from '../ui/card.tsx'
-import { DIALOG_CSS } from '../ui/dialog.tsx'
-import { INPUT_CSS } from '../ui/input.tsx'
-import { SWITCH_CSS } from '../ui/switch.tsx'
+import { components, SOURCES } from '../registry.ts'
 import siteCss from './site.css' with { type: 'text' }
 
 export const SITE_URL = 'https://dui.aak.sh'
 export const GITHUB_URL = 'https://github.com/aakashns/aak.sh/tree/main/dui'
 
-const CSS = [themeCss, BUTTON_CSS, CARD_CSS, DIALOG_CSS, INPUT_CSS, SWITCH_CSS, siteCss].join('\n')
+// The theme, every component's CSS, and then the site's.
+const CSS = [
+  SOURCES['lib/theme.css'],
+  ...components.map((c) => SOURCES[`ui/${c.name}.css`]),
+  siteCss,
+].join('\n')
 
 export function Document(props: {
   path: string

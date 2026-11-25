@@ -1,0 +1,44 @@
+[data-slot='radio-group'] {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* The circle is the <input>, with its native look removed, and the dot is its ::before. */
+[data-slot='radio-group-item'] {
+  display: inline-grid;
+  place-content: center;
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  border: 1px solid var(--input);
+  border-radius: 9999px;
+  background: light-dark(transparent, color-mix(in oklch, var(--input) 30%, transparent));
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: box-shadow 150ms;
+
+  &::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background: var(--primary);
+    scale: 0;
+  }
+  &:checked::before {
+    scale: 1;
+  }
+  &:focus-visible {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+  }
+  &[aria-invalid='true'] {
+    border-color: var(--destructive);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}

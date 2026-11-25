@@ -1,34 +1,15 @@
 // The site's pages, at shadcn/ui's URLs: /docs, /docs/installation, /docs/components, and
 // /docs/components/<name>.
-import type { Html } from '../lib/jsx/jsx-runtime.ts'
-import { components, type RegistryItem } from '../registry.ts'
+import type { Child, Html } from '../lib/jsx/jsx-runtime.ts'
+import { components, lib, type RegistryItem } from '../registry.ts'
 import { Button } from '../ui/button.tsx'
 import { Card, CardDescription, CardHeader, CardTitle } from '../ui/card.tsx'
-import { examples } from './examples.tsx'
+import { CodeBlock } from './code.tsx'
+import { docs, type Example } from './examples.tsx'
+import { DESCRIPTION, INSTALL } from './home.tsx'
 import { Document, DocsPage, GITHUB_URL } from './layout.tsx'
 
-const DESCRIPTION =
-  'Components for Datastar, in the style of shadcn/ui: server-rendered JSX and plain CSS that you copy into your project and own.'
-
-const INSTALL = 'curl -fsSL https://dui.aak.sh/install.sh | sh'
-
-export const Home = (): Html => (
-  <Document path="/" title="dui · Datastar UI components" description={DESCRIPTION}>
-    <main class="hero">
-      <h1>Datastar UI</h1>
-      <p class="lead">{DESCRIPTION}</p>
-      <div class="row">
-        <Button href="/docs">Get started</Button>
-        <Button href="/docs/components" variant="outline">
-          Components
-        </Button>
-      </div>
-      <pre>
-        <code>{INSTALL}</code>
-      </pre>
-    </main>
-  </Document>
-)
+export { Home } from './home.tsx'
 
 export const Introduction = (): Html => (
   <DocsPage path="/docs" title="Introduction" description={DESCRIPTION}>
@@ -93,9 +74,7 @@ export const Installation = (): Html => (
       <code>dui</code> is one binary, for Linux and macOS. This puts it in{' '}
       <code>/usr/local/bin</code>, and running it again upgrades it:
     </p>
-    <pre>
-      <code>{INSTALL}</code>
-    </pre>
+    <CodeBlock code={INSTALL} />
     <h2>Add components</h2>
     <p>
       Run this in your project. It writes the components to <code>src/ui/</code>, and the JSX
@@ -103,22 +82,21 @@ export const Installation = (): Html => (
       <code>lib/</code> where there's no <code>src/</code>; pick another folder with{' '}
       <code>--dir</code>).
     </p>
-    <pre>
-      <code>dui add button card</code>
-    </pre>
+    <CodeBlock code="dui add button card" />
     <p>
       <code>dui list</code> shows every component.
     </p>
     <h2>Set up JSX</h2>
     <p>Point JSX at the runtime in lib/:</p>
-    <pre>
-      <code>{SETUP}</code>
-    </pre>
+    <CodeBlock code={SETUP} />
     <h2>Use them</h2>
     <p>Each component exports its CSS as text, for the page to inline with the theme's:</p>
-    <pre>
-      <code>{PAGE}</code>
-    </pre>
+    <CodeBlock code={PAGE} />
+    <p>
+      Every file is also on the site at its path in your project, like{' '}
+      <a href="/ui/button.css">/ui/button.css</a> and <a href="/lib/theme.css">/lib/theme.css</a>,
+      to read or copy by hand.
+    </p>
   </DocsPage>
 )
 
@@ -143,24 +121,115 @@ export const ComponentList = (): Html => (
   </DocsPage>
 )
 
+const GITHUB_SOURCE = 'https://github.com/aakashns/aak.sh/blob/main/dui/site/src'
+
+const titleOf = (name: string) => components.find((c) => c.name === name)?.title ?? name
+
+// A list of links to components' pages, like "Field and Input".
+const componentLinks = (names: string[]): Child[] =>
+  names.flatMap((name, i) => [
+    i === 0 ? '' : i === names.length - 1 ? ' and ' : ', ',
+    <a href={`/docs/components/${name}`}>{titleOf(name)}</a>,
+  ])
+
+const ExampleBlock = (props: { item: RegistryItem; example: Example }): Html => {
+  let { item, example } = props
+  let others = example.uses.filter((name) => name !== item.name)
+  return (
+    <div class="example">
+      <div class="preview">{example.render()}</div>
+      {others.length ? <p class="uses">Also uses {componentLinks(others)}.</p> : null}
+      <CodeBlock code={example.code} title={`${example.slug}.tsx`} />
+    </div>
+  )
+}
+
+const FileIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+  </svg>
+)
+
 export const ComponentPage = (props: { item: RegistryItem }): Html => {
   let { item } = props
-  let example = examples[item.name]!
+  let { examples, shadcn } = docs[item.name]!
+  let [demo, ...more] = examples
+  let index = components.indexOf(item)
+  let previous = components[index - 1]
+  let next = components[index + 1]
+  let deps = item.registryDependencies.filter((name) => name !== 'lib')
   return (
     <DocsPage
       path={`/docs/components/${item.name}`}
       title={item.title}
       description={item.description}
     >
-      <div class="preview">{example.preview()}</div>
-      <h2>Installation</h2>
-      <pre>
-        <code>dui add {[item.name, ...(example.with ?? [])].join(' ')}</code>
-      </pre>
-      <h2>Usage</h2>
-      <pre>
-        <code>{example.code}</code>
-      </pre>
+      <div class="files">
+        {item.files.map((path) => (
+          <Button href={`/${path}`} variant="outline" size="sm">
+            <FileIcon />
+            {path.split('/').pop()}
+          </Button>
+        ))}
+        <Button href={`${GITHUB_SOURCE}/${item.files[0]}`} variant="ghost" size="sm">
+          GitHub
+        </Button>
+        <Button
+          href={`https://ui.shadcn.com/docs/components/${item.name}`}
+          variant="ghost"
+          size="sm"
+        >
+          shadcn/ui
+        </Button>
+      </div>
+      {demo ? <ExampleBlock item={item} example={demo} /> : null}
+      <h2 id="installation">Installation</h2>
+      <CodeBlock code={`dui add ${item.name}`} />
+      <p>
+        Or copy {item.files.map((path, i) => [i ? ' and ' : '', <a href={`/${path}`}>{path}</a>])}{' '}
+        into your project, with{' '}
+        {lib.files.map((path, i) => [
+          i === 0 ? '' : i === lib.files.length - 1 ? ', and ' : ', ',
+          <a href={`/${path}`}>{path}</a>,
+        ])}
+        {deps.length ? <> and {componentLinks(deps)}</> : null}.
+      </p>
+      {more.length ? <h2 id="examples">Examples</h2> : null}
+      {more.map((example) => (
+        <>
+          <h3 id={example.slug}>{example.title}</h3>
+          <ExampleBlock item={item} example={example} />
+        </>
+      ))}
+      <h2 id="shadcn">Compared to shadcn/ui</h2>
+      <ul class="differences">
+        {shadcn.map((difference) => (
+          <li>{difference}</li>
+        ))}
+      </ul>
+      <nav class="pager">
+        {previous ? (
+          <Button href={`/docs/components/${previous.name}`} variant="outline" size="sm">
+            ← {previous.title}
+          </Button>
+        ) : (
+          <span></span>
+        )}
+        {next ? (
+          <Button href={`/docs/components/${next.name}`} variant="outline" size="sm">
+            {next.title} →
+          </Button>
+        ) : null}
+      </nav>
     </DocsPage>
   )
 }

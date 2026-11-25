@@ -1,0 +1,23 @@
+/* The track is the <progress> and the bar is its value, styled for each engine. */
+[data-slot='progress'] {
+  display: block;
+  width: 100%;
+  height: 0.5rem;
+  overflow: hidden;
+  border: 0;
+  border-radius: 9999px;
+  background: color-mix(in oklch, var(--primary) 20%, transparent);
+  color: var(--primary);
+  appearance: none;
+
+  &::-webkit-progress-bar {
+    background: transparent;
+  }
+  &::-webkit-progress-value {
+    background: var(--primary);
+    transition: inline-size 300ms;
+  }
+  &::-moz-progress-bar {
+    background: var(--primary);
+  }
+}

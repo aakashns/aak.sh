@@ -22,15 +22,18 @@ export function DialogClose(props: ButtonProps & { dialog: string }): Html {
   return <Button command="close" commandfor={dialog} {...button} />
 }
 
+// The dialog, with its title and description in a header, and an × in the corner that closes
+// it (leave it out with `showCloseButton={false}`).
 export function Dialog(
   props: Record<string, unknown> & {
     id: string
     title: Child
     description?: Child
+    showCloseButton?: boolean | undefined
     children?: Child
   },
 ): Html {
-  let { id, title, description, children, ...attributes } = props
+  let { id, title, description, showCloseButton = true, children, ...attributes } = props
   return (
     <dialog
       id={id}
@@ -40,15 +43,39 @@ export function Dialog(
       data-slot="dialog"
       {...attributes}
     >
-      <h2 id={`${id}-title`} data-slot="dialog-title">
-        {title}
-      </h2>
-      {description ? (
-        <p id={`${id}-description`} data-slot="dialog-description">
-          {description}
-        </p>
-      ) : null}
+      <div data-slot="dialog-header">
+        <h2 id={`${id}-title`} data-slot="dialog-title">
+          {title}
+        </h2>
+        {description ? (
+          <p id={`${id}-description`} data-slot="dialog-description">
+            {description}
+          </p>
+        ) : null}
+      </div>
       {children}
+      {showCloseButton ? (
+        <button
+          type="button"
+          command="close"
+          commandfor={id}
+          aria-label="Close"
+          data-slot="dialog-close"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M18 6 6 18" />
+            <path d="m6 6 12 12" />
+          </svg>
+        </button>
+      ) : null}
     </dialog>
   )
 }
