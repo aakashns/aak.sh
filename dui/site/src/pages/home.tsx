@@ -1,7 +1,6 @@
 // The home page: what dui is, how to get it, and a dashboard made of its components, with
 // Datastar wiring a few of them together.
 import type { Html } from '../lib/jsx/jsx-runtime.ts'
-import { components } from '../registry.ts'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion.tsx'
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert.tsx'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar.tsx'
@@ -430,9 +429,6 @@ export const Home = (): Html => (
   <Document path="/" title="dui · Datastar UI components" description={DESCRIPTION}>
     <main class="home">
       <section class="hero">
-        <Badge href="/docs/components" variant="secondary">
-          {components.length} components, and new ones like Field
-        </Badge>
         <h1>Datastar UI</h1>
         <p class="lead">{DESCRIPTION}</p>
         <div class="row">
