@@ -1,4 +1,4 @@
-// `sudo dui-site deploy`: runs this binary as dui.service on 127.0.0.1:44200, and adds a block
+// `sudo dui deploy`: runs this binary as dui.service on 127.0.0.1:44200, and adds a block
 // for dui.aak.sh to Caddy's config the first time. Run it again after replacing the binary.
 import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -39,7 +39,7 @@ function run(...command: string[]) {
 
 export function deploy(version: string) {
   if (process.platform !== 'linux' || process.getuid?.() !== 0) {
-    throw new Error('Run it as root on a Linux server: sudo dui-site deploy')
+    throw new Error('Run it as root on a Linux server: sudo dui deploy')
   }
   let binary = realpathSync(process.execPath)
   if (basename(binary) === 'bun') throw new Error('Run it from the built binary, not with bun')
@@ -68,5 +68,5 @@ export function deploy(version: string) {
       throw new Error(`Caddy didn't take the new config, so the old one is back. ${error}`)
     }
   }
-  console.log(`Done: dui-site ${version} is at https://dui.aak.sh`)
+  console.log(`Done: dui ${version} is at https://dui.aak.sh`)
 }
