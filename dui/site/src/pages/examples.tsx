@@ -91,14 +91,16 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
     code: `import { Dialog, DialogClose, DialogFooter, DialogTrigger } from './ui/dialog.tsx'
 import { Input } from './ui/input.tsx'
 
-<DialogTrigger dialog="rename" variant="outline">Rename</DialogTrigger>
-<Dialog id="rename" title="Rename file" description="Pick a new name for this file.">
-  <Input value="notes.txt" aria-label="Name" />
-  <DialogFooter>
-    <DialogClose dialog="rename" variant="outline">Cancel</DialogClose>
-    <DialogClose dialog="rename">Save</DialogClose>
-  </DialogFooter>
-</Dialog>`,
+<>
+  <DialogTrigger dialog="rename" variant="outline">Rename</DialogTrigger>
+  <Dialog id="rename" title="Rename file" description="Pick a new name for this file.">
+    <Input value="notes.txt" aria-label="Name" />
+    <DialogFooter>
+      <DialogClose dialog="rename" variant="outline">Cancel</DialogClose>
+      <DialogClose dialog="rename">Save</DialogClose>
+    </DialogFooter>
+  </Dialog>
+</>`,
   },
   input: {
     preview: () => (
