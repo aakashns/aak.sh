@@ -79,7 +79,7 @@ jobs:
           kill "$server"
           # And from the components built into it, with no site.
           "$bin" add dialog --dir embedded
-          cmp embedded/ui/dialog.tsx project/ui/dialog.tsx && grep -q buttonCss embedded/ui/styles.ts
+          cmp embedded/ui/dialog.tsx project/ui/dialog.tsx && grep -q '"./button.css"' embedded/ui/styles.ts
           "$bin" --help > /dev/null
       - run: mv dist/dui dist/dui-${{ matrix.target }}
       - uses: actions/upload-artifact@v5
