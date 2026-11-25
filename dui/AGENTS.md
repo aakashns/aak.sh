@@ -6,8 +6,11 @@
 - `site/src/ui/` and `site/src/lib/` get copied into other projects: keep site-only code out,
   and import between them with relative paths (`../lib/jsx/jsx-runtime.ts`), not `#jsx`
 - A component is `ui/<name>.tsx` + `ui/<name>.css`, exporting the component and `<NAME>_CSS`.
-  List it in `src/registry.ts` (with its `registryDependencies`), and add a preview and usage
-  to `src/pages/examples.tsx`
+  List it in `src/registry.ts` (with its `registryDependencies`). Write each example as
+  `src/examples/<name>-<case>.tsx`, and list them with its shadcn/ui differences in
+  `src/pages/examples.tsx`: the page renders each file and shows its code
+- Datastar's `data-attr` writes `true` as an empty attribute: wrap values that CSS or ARIA
+  read as `"true"` in `String(…)`
 - Match shadcn/ui's markup and look with `data-slot`/`data-variant` attributes and plain CSS
   on the theme's tokens. Unknown props go on the element as they are, so Datastar attributes
   pass through
