@@ -61,12 +61,14 @@ function renderChildren(children: Child): string {
   return escapeHtml(String(children))
 }
 
-// `true` writes the attribute alone, and `false`, null, and undefined leave it out. Props are
-// written as named, so pages use HTML's names (`class`, `for`, `data-on:click`).
+// `true` writes the attribute alone, and `false`, null, and undefined leave it out, except that
+// `aria-*` booleans are written as "true" and "false", the values assistive technology reads.
+// Props are written as named, so pages use HTML's names (`class`, `for`, `data-on:click`).
 function renderAttributes(attributes: Record<string, unknown>): string {
   let html = ''
   for (let name in attributes) {
     let value = attributes[name]
+    if (typeof value === 'boolean' && name.startsWith('aria-')) value = String(value)
     if (value == null || value === false) continue
     html += value === true ? ` ${name}` : ` ${name}="${escapeAttribute(String(value))}"`
   }

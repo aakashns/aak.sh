@@ -52,7 +52,8 @@ export const Introduction = (): Html => (
       </li>
     </ul>
     <p>
-      The code is on <a href={GITHUB_URL}>GitHub</a>.
+      Start with <a href="/docs/installation">Installation</a>, then browse the{' '}
+      <a href="/docs/components">components</a>. The code is on <a href={GITHUB_URL}>GitHub</a>.
     </p>
   </DocsPage>
 )
@@ -154,7 +155,7 @@ export const ComponentPage = (props: { item: RegistryItem }): Html => {
       <div class="preview">{example.preview()}</div>
       <h2>Installation</h2>
       <pre>
-        <code>dui add {item.name}</code>
+        <code>dui add {[item.name, ...(example.with ?? [])].join(' ')}</code>
       </pre>
       <h2>Usage</h2>
       <pre>

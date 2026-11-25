@@ -1,8 +1,7 @@
 // `sudo dui deploy`: runs this binary as dui.service on 127.0.0.1:44200, and adds a block
 // for dui.aak.sh to Caddy's config the first time. Run it again after replacing the binary.
-import { existsSync, readFileSync, realpathSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { basename, join } from 'node:path'
+import { existsSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
+import { basename } from 'node:path'
 
 const PORT = 44200
 const SERVICE_FILE = '/etc/systemd/system/dui.service'
@@ -56,10 +55,16 @@ export function deploy(version: string) {
   } else {
     console.log(`Adding dui.aak.sh to ${CADDYFILE}...`)
     let updated = caddyfile ? `${caddyfile.trimEnd()}\n\n${CADDY_BLOCK}` : CADDY_BLOCK
-    let candidate = join(tmpdir(), `dui-Caddyfile-${process.pid}`)
-    writeFileSync(candidate, updated)
-    run('caddy', 'validate', '--adapter', 'caddyfile', '--config', candidate)
-    writeFileSync(`${CADDYFILE}.bak`, caddyfile)
+    // Validated beside the real one, so relative imports resolve the same, and readable only
+    // by root, like the config it copies may need to be.
+    let candidate = `${CADDYFILE}.dui-${process.pid}`
+    try {
+      writeFileSync(candidate, updated, { flag: 'wx', mode: 0o600 })
+      run('caddy', 'validate', '--adapter', 'caddyfile', '--config', candidate)
+    } finally {
+      rmSync(candidate, { force: true })
+    }
+    writeFileSync(`${CADDYFILE}.bak`, caddyfile, { mode: 0o600 })
     writeFileSync(CADDYFILE, updated)
     try {
       run('systemctl', 'reload', 'caddy')

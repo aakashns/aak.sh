@@ -1,7 +1,8 @@
 # dui
 
-- `site/` is dui.aak.sh and the component registry; `package/` is the `@aakashns/dui` CLI.
-  Run site commands from `site/`
+- `site/` is one Bun binary, `dui`: it serves dui.aak.sh (`dui start`), deploys it
+  (`sudo dui deploy`), and adds components to projects (`dui add`) from the live site's
+  `/r/<name>.json`. Run commands from `site/`
 - `site/src/ui/` and `site/src/lib/` get copied into other projects: keep site-only code out,
   and import between them with relative paths (`../lib/jsx/jsx-runtime.ts`), not `#jsx`
 - A component is `ui/<name>.tsx` + `ui/<name>.css`, exporting the component and `<NAME>_CSS`.
@@ -11,11 +12,10 @@
   on the theme's tokens. Unknown props go on the element as they are, so Datastar attributes
   pass through
 - The only browser JavaScript is Datastar; prefer native elements (`<dialog>`, `command`)
-- Keep shadcn/ui's URLs (`/docs/components/<name>`) and `/r/<name>.json`'s shape: published
+- Keep shadcn/ui's URLs (`/docs/components/<name>`) and `/r/<name>.json`'s shape: installed
   CLIs fetch it
-- `package/cli.js` runs on Node 20+ with no dependencies. Bumping its version publishes it;
-  component changes don't need a release
+- Anything the binary serves must be embedded (`with { type: 'file' }` or `'text'`, or
+  `src/sources.ts`'s macro). Bump `site/package.json`'s version to release it, then deploy as
+  `README.md` says; component changes reach `dui add` once the site is deployed
 - Before a PR: `bun run check`, then open the changed component pages in Playwright and attach
   screenshots
-- The site runs as `dui.service` from `/srv/aak.sh/dui/site`: dependency or unit changes need
-  the steps in `README.md` on the server

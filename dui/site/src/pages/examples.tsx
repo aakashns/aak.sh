@@ -14,7 +14,8 @@ import { Dialog, DialogClose, DialogFooter, DialogTrigger } from '../ui/dialog.t
 import { Input } from '../ui/input.tsx'
 import { Switch } from '../ui/switch.tsx'
 
-export const examples: Record<string, { preview: () => Html; code: string }> = {
+// `with` lists the other components the code uses, for the page's `dui add` command.
+export const examples: Record<string, { preview: () => Html; code: string; with?: string[] }> = {
   button: {
     preview: () => (
       <div class="row" data-signals:count="0">
@@ -54,7 +55,9 @@ export const examples: Record<string, { preview: () => Html; code: string }> = {
         </CardFooter>
       </Card>
     ),
-    code: `import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card.tsx'
+    with: ['button'],
+    code: `import { Button } from './ui/button.tsx'
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card.tsx'
 
 <Card>
   <CardHeader>
@@ -84,7 +87,9 @@ export const examples: Record<string, { preview: () => Html; code: string }> = {
         </Dialog>
       </>
     ),
+    with: ['input'],
     code: `import { Dialog, DialogClose, DialogFooter, DialogTrigger } from './ui/dialog.tsx'
+import { Input } from './ui/input.tsx'
 
 <DialogTrigger dialog="rename" variant="outline">Rename</DialogTrigger>
 <Dialog id="rename" title="Rename file" description="Pick a new name for this file.">

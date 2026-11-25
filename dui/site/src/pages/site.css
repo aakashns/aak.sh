@@ -72,7 +72,7 @@ a {
   @media (min-width: 48rem) {
     grid-template-columns: 12rem minmax(0, 1fr);
   }
-  /* The header links to every page, so phones skip the sidebar. */
+  /* Phones skip the sidebar: the header and the introduction link to the rest. */
   & aside {
     display: none;
 
