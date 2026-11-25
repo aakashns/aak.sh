@@ -1,5 +1,5 @@
 // The site: its routes, served by Effect's HTTP router on Bun, behind Caddy (see cli/deploy.ts).
-// Pages are rendered once, when it starts.
+// Pages are rendered once, when it starts, in both schemes.
 import { BunHttpServer, BunRuntime } from '@effect/platform-bun'
 import { Effect, Layer } from 'effect'
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from 'effect/http'
@@ -7,7 +7,7 @@ import { HttpRouter, HttpServerRequest, HttpServerResponse } from 'effect/http'
 import packageJson from '../package.json' with { type: 'json' }
 import installSh from '../public/install.sh' with { type: 'text' }
 import type { Html } from './lib/jsx/jsx-runtime.ts'
-import { SITE_URL } from './pages/layout.tsx'
+import { lightPage, SITE_URL } from './pages/layout.tsx'
 import {
   ComponentList,
   ComponentPage,
@@ -19,8 +19,20 @@ import {
 import { PUBLIC_FILES } from './public.ts'
 import { components, registry, registryJson, SOURCES } from './registry.ts'
 
-const html = (page: Html, status = 200) =>
-  HttpServerResponse.text(page.value, { status, contentType: 'text/html; charset=utf-8' })
+// A page, light if the header's switch set the `theme=light` cookie, and dark otherwise.
+const html = (page: Html, status = 200) => {
+  let response = (value: string) =>
+    HttpServerResponse.text(value, {
+      status,
+      contentType: 'text/html; charset=utf-8',
+      headers: { vary: 'cookie' },
+    })
+  let dark = response(page.value)
+  let light = response(lightPage(page.value))
+  return Effect.map(HttpServerRequest.HttpServerRequest, (request) =>
+    request.cookies.theme === 'light' ? light : dark,
+  )
+}
 
 const notFound = html(NotFound(), 404)
 
@@ -45,7 +57,7 @@ ${PAGES.map((path) => `  <url><loc>${SITE_URL}${path}</loc></url>`).join('\n')}
 const component = Effect.gen(function* () {
   let { name } = yield* HttpRouter.params
   let item = components.find((c) => c.name === name)
-  return item ? html(ComponentPage({ item })) : notFound
+  return yield* item ? html(ComponentPage({ item })) : notFound
 })
 
 // /r/index.json lists the registry; /r/<name>.json is one item, with its files.
@@ -55,7 +67,7 @@ const registryItem = Effect.gen(function* () {
     return yield* HttpServerResponse.json(registry.map(({ files, ...item }) => item))
   }
   let item = registry.find((i) => `${i.name}.json` === file)
-  if (!item) return notFound
+  if (!item) return yield* notFound
   return yield* HttpServerResponse.json(registryJson(item))
 })
 
@@ -74,17 +86,17 @@ const publicFile = Effect.gen(function* () {
   let source = SOURCES[pathname.slice(1)]
   if (source !== undefined) return sourceFile(pathname, source)
   let path = PUBLIC_FILES[pathname]
-  if (!path) return notFound
+  if (!path) return yield* notFound
   let file = Bun.file(path)
   let bytes = yield* Effect.promise(() => file.bytes())
   return HttpServerResponse.uint8Array(bytes, { contentType: file.type })
 })
 
 const Routes = HttpRouter.addAll([
-  HttpRouter.route('GET', '/', always(html(Home()))),
-  HttpRouter.route('GET', '/docs', always(html(Introduction()))),
-  HttpRouter.route('GET', '/docs/installation', always(html(Installation()))),
-  HttpRouter.route('GET', '/docs/components', always(html(ComponentList()))),
+  HttpRouter.route('GET', '/', html(Home())),
+  HttpRouter.route('GET', '/docs', html(Introduction())),
+  HttpRouter.route('GET', '/docs/installation', html(Installation())),
+  HttpRouter.route('GET', '/docs/components', html(ComponentList())),
   HttpRouter.route('GET', '/docs/components/:name', component),
   // An example form posted with Datastar off: back to the page, with nothing kept.
   HttpRouter.route(

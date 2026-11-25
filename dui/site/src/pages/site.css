@@ -1,4 +1,8 @@
 /* The site's own layout, after the theme and the components'. */
+:root {
+  --code-background: light-dark(oklch(0.985 0 0), oklch(0.145 0 0));
+}
+
 body {
   line-height: 1.6;
 }
@@ -25,6 +29,7 @@ a {
 
   & nav {
     display: flex;
+    align-items: center;
     gap: 1.25rem;
     font-size: 0.875rem;
   }
@@ -34,6 +39,15 @@ a {
     &:hover {
       color: var(--foreground);
     }
+  }
+}
+
+/* The switch shows the scheme it switches to: a sun in dark, a moon in light. */
+.theme-switch {
+  margin-block: -0.5rem;
+  :root.light & .sun,
+  :root:not(.light) & .moon {
+    display: none;
   }
 }
 
@@ -141,7 +155,7 @@ pre {
   padding: 1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: oklch(0.145 0 0);
+  background: var(--code-background);
   font-size: 0.8125rem;
   line-height: 1.5;
 }
@@ -152,6 +166,26 @@ code {
 
 :not(pre) > code {
   font-size: 0.875em;
+}
+
+/* Highlighted code's tokens (see code.tsx), in GitHub's colors; the rest is --foreground. */
+.sh__token--keyword {
+  color: light-dark(#cf222e, #ff7b72);
+}
+.sh__token--string {
+  color: light-dark(#0a3069, #a5d6ff);
+}
+.sh__token--entity {
+  color: light-dark(#8250df, #d2a8ff);
+}
+.sh__token--property {
+  color: light-dark(#0550ae, #79c0ff);
+}
+.sh__token--class {
+  color: light-dark(#953800, #ffa657);
+}
+.sh__token--comment {
+  color: light-dark(#59636e, #8b949e);
 }
 
 /* A code block, its file name, and the button that copies it. */
@@ -175,7 +209,7 @@ code {
   border: 1px solid var(--border);
   border-bottom: 0;
   border-radius: var(--radius) var(--radius) 0 0;
-  background: oklch(0.145 0 0);
+  background: var(--code-background);
   color: var(--muted-foreground);
   font-family: var(--font-mono);
   font-size: 0.75rem;
@@ -192,7 +226,7 @@ code {
   padding: 0;
   border: 1px solid transparent;
   border-radius: calc(var(--radius) - 2px);
-  background: oklch(0.145 0 0);
+  background: var(--code-background);
   color: var(--muted-foreground);
   cursor: pointer;
 

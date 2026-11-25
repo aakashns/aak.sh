@@ -441,7 +441,7 @@ export const Home = (): Html => (
             Components
           </Button>
         </div>
-        <CodeBlock code={INSTALL} class="install" />
+        <CodeBlock code={INSTALL} lang="sh" class="install" />
       </section>
       <section class="showcase" aria-label="A dashboard made of dui's components">
         <Dashboard />
