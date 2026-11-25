@@ -1,4 +1,4 @@
-// What `npx @aakashns/dui add` can copy into a project, served as JSON at /r/<name>.json, like
+// What `dui add` can copy into a project, served as JSON at /r/<name>.json, like
 // shadcn/ui's registry. Paths are relative to the project's source folder, and every file is
 // one in this folder, so the site uses the same code it hands out.
 import { readSources } from './sources.ts' with { type: 'macro' }

@@ -50,6 +50,10 @@ a {
   & .row {
     justify-content: center;
   }
+  & pre {
+    display: inline-block;
+    margin-top: 2rem;
+  }
 }
 
 .lead {

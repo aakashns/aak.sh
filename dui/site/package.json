@@ -7,8 +7,8 @@
     "#jsx/*": "./src/lib/jsx/*.ts"
   },
   "scripts": {
-    "dev": "bun --watch src/main.ts",
-    "start": "bun src/main.ts",
+    "dev": "bun --watch src/cli/main.ts start",
+    "start": "bun src/cli/main.ts start",
     "build": "bun scripts/build.ts",
     "check": "bun check && bun fmt --check"
   },

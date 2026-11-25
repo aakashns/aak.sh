@@ -10,6 +10,8 @@ import { Document, DocsPage, GITHUB_URL } from './layout.tsx'
 const DESCRIPTION =
   'Components for Datastar, in the style of shadcn/ui: server-rendered JSX and plain CSS that you copy into your project and own.'
 
+const INSTALL = 'curl -fsSL https://dui.aak.sh/install.sh | sh'
+
 export const Home = (): Html => (
   <Document path="/" title="dui · Datastar UI components" description={DESCRIPTION}>
     <main class="hero">
@@ -21,6 +23,9 @@ export const Home = (): Html => (
           Components
         </Button>
       </div>
+      <pre>
+        <code>{INSTALL}</code>
+      </pre>
     </main>
   </Document>
 )
@@ -82,6 +87,14 @@ export const Installation = (): Html => (
     title="Installation"
     description="Add dui's components to a Bun project."
   >
+    <h2>Install the CLI</h2>
+    <p>
+      <code>dui</code> is one binary, for Linux and macOS. This puts it in{' '}
+      <code>/usr/local/bin</code>, and running it again upgrades it:
+    </p>
+    <pre>
+      <code>{INSTALL}</code>
+    </pre>
     <h2>Add components</h2>
     <p>
       Run this in your project. It writes the components to <code>src/ui/</code>, and the JSX
@@ -90,10 +103,10 @@ export const Installation = (): Html => (
       <code>--dir</code>).
     </p>
     <pre>
-      <code>npx @aakashns/dui add button card</code>
+      <code>dui add button card</code>
     </pre>
     <p>
-      <code>npx @aakashns/dui list</code> shows every component.
+      <code>dui list</code> shows every component.
     </p>
     <h2>Set up JSX</h2>
     <p>Point JSX at the runtime in lib/:</p>
@@ -141,7 +154,7 @@ export const ComponentPage = (props: { item: RegistryItem }): Html => {
       <div class="preview">{example.preview()}</div>
       <h2>Installation</h2>
       <pre>
-        <code>npx @aakashns/dui add {item.name}</code>
+        <code>dui add {item.name}</code>
       </pre>
       <h2>Usage</h2>
       <pre>

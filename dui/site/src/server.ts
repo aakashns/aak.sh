@@ -1,9 +1,11 @@
-// The site: its routes, served by Effect's HTTP router on Bun, behind Caddy (see deploy.ts).
+// The site: its routes, served by Effect's HTTP router on Bun, behind Caddy (see cli/deploy.ts).
 // Pages are rendered once, when it starts.
 import { BunHttpServer, BunRuntime } from '@effect/platform-bun'
 import { Effect, Layer } from 'effect'
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from 'effect/http'
 
+import packageJson from '../package.json' with { type: 'json' }
+import installSh from '../public/install.sh' with { type: 'text' }
 import type { Html } from './lib/jsx/jsx-runtime.ts'
 import { SITE_URL } from './pages/layout.tsx'
 import {
@@ -74,6 +76,16 @@ const Routes = HttpRouter.addAll([
   HttpRouter.route('GET', '/docs/components', always(html(ComponentList()))),
   HttpRouter.route('GET', '/docs/components/:name', component),
   HttpRouter.route('GET', '/r/:file', registryItem),
+  // The installer, for this version of dui, the latest.
+  HttpRouter.route(
+    'GET',
+    '/install.sh',
+    always(
+      HttpServerResponse.text(installSh.replace('__DUI_VERSION__', packageJson.version), {
+        contentType: 'text/plain; charset=utf-8',
+      }),
+    ),
+  ),
   HttpRouter.route(
     'GET',
     '/sitemap.xml',

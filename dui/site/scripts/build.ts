@@ -3,7 +3,7 @@
 import { join } from 'node:path'
 
 let result = await Bun.build({
-  entrypoints: [join(import.meta.dir, '../src/main.ts')],
+  entrypoints: [join(import.meta.dir, '../src/cli/main.ts')],
   compile: {
     outfile: join(import.meta.dir, '../dist/dui'),
     autoloadDotenv: false,

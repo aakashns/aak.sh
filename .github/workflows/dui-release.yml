@@ -1,6 +1,6 @@
-# Builds the dui binary for Linux and checks it serves the site. Merging a PR that bumps
-# dui/site/package.json's version publishes the binaries as the dui-v<version> GitHub
-# release, which the server runs (see Deploy in dui/README.md).
+# Builds the dui binary for Linux and macOS, and checks it serves the site and adds components
+# from it. Merging a PR that bumps dui/site/package.json's version publishes the binaries as the
+# dui-v<version> GitHub release, which install.sh installs once dui.aak.sh runs that version.
 name: dui release
 
 on:
@@ -47,6 +47,8 @@ jobs:
         include:
           - { target: linux-x64, runner: ubuntu-24.04 }
           - { target: linux-arm64, runner: ubuntu-24.04-arm }
+          - { target: darwin-x64, runner: macos-15-intel }
+          - { target: darwin-arm64, runner: macos-15 }
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v5
@@ -66,11 +68,14 @@ jobs:
           server=$!
           for _ in $(seq 50); do curl -fs -o /dev/null http://127.0.0.1:44299/ && break; sleep 0.2; done
           for path in / /docs /docs/installation /docs/components /docs/components/dialog \
-            /r/index.json /r/lib.json /sitemap.xml /datastar.js /favicon.ico /social.png; do
+            /r/index.json /r/lib.json /sitemap.xml /install.sh /datastar.js /favicon.ico /social.png; do
             curl -fsS -o /dev/null "http://127.0.0.1:44299$path"
           done
           curl -fsS http://127.0.0.1:44299/r/dialog.json | jq -e '.files | length == 2 and all(.content != "")'
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:44299/nope)" = 404
+          curl -fsS http://127.0.0.1:44299/install.sh | grep -q 'DUI_VERSION:-${{ needs.version.outputs.version }}}'
+          DUI_REGISTRY=http://127.0.0.1:44299/r "$bin" add dialog --dir project
+          test -s project/ui/dialog.tsx && test -s project/ui/button.tsx && test -s project/lib/theme.css
           kill "$server"
       - run: mv dist/dui dist/dui-${{ matrix.target }}
       - uses: actions/upload-artifact@v5
@@ -101,7 +106,7 @@ jobs:
         run: |
           sha256sum -- dui-* > SHA256SUMS
           previous=$(git describe --tags --abbrev=0 --match 'dui-v*' "$GITHUB_SHA" 2>/dev/null || true)
-          notes=(--notes "The first release of dui.aak.sh's server.")
+          notes=(--notes "The first release of dui.")
           [ -n "$previous" ] && notes=(--generate-notes --notes-start-tag "$previous")
           gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" "${notes[@]}" \
             -- dui-* SHA256SUMS

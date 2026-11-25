@@ -19,3 +19,8 @@ declare module '*/datastar.js' {
   const path: string
   export default path
 }
+// The installer, imported as text (see server.ts).
+declare module '*.sh' {
+  const text: string
+  export default text
+}
