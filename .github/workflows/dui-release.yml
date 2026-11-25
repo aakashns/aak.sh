@@ -77,6 +77,10 @@ jobs:
           DUI_REGISTRY=http://127.0.0.1:44299/r "$bin" add dialog --dir project
           test -s project/ui/dialog.tsx && test -s project/ui/button.tsx && test -s project/lib/theme.css
           kill "$server"
+          # And from the components built into it, with no site.
+          "$bin" add dialog --dir embedded
+          cmp embedded/ui/dialog.tsx project/ui/dialog.tsx && grep -q buttonCss embedded/ui/styles.ts
+          "$bin" --help > /dev/null
       - run: mv dist/dui dist/dui-${{ matrix.target }}
       - uses: actions/upload-artifact@v5
         with:
@@ -84,8 +88,58 @@ jobs:
           path: dui/site/dist/dui-${{ matrix.target }}
           if-no-files-found: error
 
+  # The installation page's steps in new projects, with and without src/, through a click on
+  # the quickstart's button; then the docs' forms, tabs, and contrast (see scripts/e2e.ts).
+  e2e:
+    needs: version
+    if: github.event_name == 'pull_request' || needs.version.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: dui/site/package.json
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - name: Quickstart
+        run: |
+          dui="bun $PWD/src/cli/main.ts"
+          for layout in root src; do
+            app="$RUNNER_TEMP/$layout"
+            mkdir -p "$app"
+            (
+              cd "$app"
+              bun init -y > /dev/null
+              dir=.
+              if [ "$layout" = src ]; then mkdir src; dir=src; fi
+              $dui init
+              $dui init | grep -q 'same     package.json'
+              $dui add button
+              cp "$GITHUB_WORKSPACE/dui/site/quickstart/index.tsx" "$dir/index.tsx"
+              bun check
+              port=$([ "$layout" = src ] && echo 3002 || echo 3001)
+              PORT=$port nohup bun "$dir/index.tsx" > "$RUNNER_TEMP/$layout.log" 2>&1 &
+            )
+          done
+      - name: Browser checks
+        env:
+          SCREENSHOTS: ${{ runner.temp }}/screenshots
+        run: |
+          PORT=3000 nohup bun src/cli/main.ts start > "$RUNNER_TEMP/site.log" 2>&1 &
+          for port in 3000 3001 3002; do
+            for _ in $(seq 50); do curl -fs -o /dev/null "http://127.0.0.1:$port/" && break; sleep 0.2; done
+          done
+          bun scripts/e2e.ts --site http://127.0.0.1:3000 \
+            --quickstart http://127.0.0.1:3001 --quickstart http://127.0.0.1:3002
+      - if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: dui-e2e-screenshots
+          path: ${{ runner.temp }}/screenshots
+          if-no-files-found: ignore
+
   release:
-    needs: [version, build]
+    needs: [version, build, e2e]
     if: needs.version.outputs.release == 'true'
     runs-on: ubuntu-24.04
     permissions:

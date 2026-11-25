@@ -61,7 +61,12 @@
 
 [data-slot='tabs-content'] {
   flex: 1;
+  border-radius: calc(var(--radius) - 2px);
   outline: none;
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+  }
 
   &[hidden] {
     display: none;

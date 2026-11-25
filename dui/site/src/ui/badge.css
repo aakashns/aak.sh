@@ -47,10 +47,10 @@
 }
 
 [data-slot='badge'][data-variant='destructive'] {
-  background: var(--destructive);
-  color: white;
+  background: var(--destructive-solid);
+  color: var(--destructive-solid-foreground);
   &:is(a):hover {
-    background: color-mix(in oklch, var(--destructive) 90%, transparent);
+    background: color-mix(in oklch, var(--destructive-solid) 90%, black);
   }
 }
 

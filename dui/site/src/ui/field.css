@@ -48,7 +48,7 @@
     color: var(--destructive);
   }
   &[data-invalid='true'] [data-slot='field-description'] {
-    color: color-mix(in oklch, var(--destructive) 80%, transparent);
+    color: var(--destructive);
   }
 }
 
@@ -129,6 +129,10 @@
   &:has(:checked) {
     border-color: var(--primary);
     background: color-mix(in oklch, var(--primary) 10%, transparent);
+  }
+  /* Darker than muted, to read on the tint. */
+  &:has(:checked) [data-slot='field-description'] {
+    color: color-mix(in oklch, var(--muted-foreground) 75%, var(--foreground));
   }
 }
 

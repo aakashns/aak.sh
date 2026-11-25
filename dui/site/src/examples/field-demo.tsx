@@ -13,64 +13,66 @@ import { Input } from '../ui/input.tsx'
 import { NativeSelect, NativeSelectOption } from '../ui/native-select.tsx'
 import { Textarea } from '../ui/textarea.tsx'
 
+// Datastar handles the submit, from Save or Enter, in place of the form's own: post it to your
+// server with @post. method="post" keeps the values out of the URL if Datastar isn't running.
 export default () => (
-  <form style="width: 100%; max-width: 28rem">
+  <form
+    method="post"
+    style="width: 100%; max-width: 28rem"
+    data-signals="{projectName: 'Acme dashboard', saved: ''}"
+    data-on:submit="$saved = $projectName"
+    data-on:reset="$saved = ''; $projectName = 'Acme dashboard'"
+  >
     <FieldGroup>
       <FieldSet>
-        <FieldLegend>Payment method</FieldLegend>
-        <FieldDescription>All transactions are secure and encrypted.</FieldDescription>
+        <FieldLegend>Project</FieldLegend>
+        <FieldDescription>How the project appears to your team.</FieldDescription>
         <FieldGroup>
           <Field>
-            <FieldLabel for="card-name">Name on card</FieldLabel>
-            <Input id="card-name" name="name" placeholder="Evil Rabbit" required />
+            <FieldLabel for="project-name">Name</FieldLabel>
+            <Input
+              id="project-name"
+              name="name"
+              value="Acme dashboard"
+              required
+              data-bind:project-name
+            />
           </Field>
           <Field>
-            <FieldLabel for="card-number">Card number</FieldLabel>
-            <Input
-              id="card-number"
-              name="number"
-              inputmode="numeric"
-              placeholder="1234 5678 9012 3456"
-              required
-            />
-            <FieldDescription>Enter your 16-digit card number.</FieldDescription>
+            <FieldLabel for="project-region">Region</FieldLabel>
+            <NativeSelect id="project-region" name="region" style="width: 100%">
+              <NativeSelectOption value="us-east">US East</NativeSelectOption>
+              <NativeSelectOption value="eu-west">EU West</NativeSelectOption>
+              <NativeSelectOption value="ap-south">Asia Pacific South</NativeSelectOption>
+            </NativeSelect>
+            <FieldDescription>Where its data is stored.</FieldDescription>
           </Field>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
-            <Field>
-              <FieldLabel for="card-month">Month</FieldLabel>
-              <NativeSelect id="card-month" name="month" style="width: 100%">
-                {Array.from({ length: 12 }, (_, i) => (
-                  <NativeSelectOption>{String(i + 1).padStart(2, '0')}</NativeSelectOption>
-                ))}
-              </NativeSelect>
-            </Field>
-            <Field>
-              <FieldLabel for="card-cvv">CVV</FieldLabel>
-              <Input id="card-cvv" name="cvv" inputmode="numeric" placeholder="123" required />
-            </Field>
-          </div>
         </FieldGroup>
       </FieldSet>
       <FieldSeparator />
       <FieldSet>
-        <FieldLegend>Billing address</FieldLegend>
-        <FieldDescription>The billing address for this payment method.</FieldDescription>
+        <FieldLegend>Notifications</FieldLegend>
         <Field orientation="horizontal">
-          <Checkbox id="same-address" name="same" checked />
-          <FieldLabel for="same-address" style="font-weight: 400">
-            Same as shipping address
+          <Checkbox id="project-alerts" name="alerts" checked />
+          <FieldLabel for="project-alerts" style="font-weight: 400">
+            Email me when a deploy fails
           </FieldLabel>
         </Field>
       </FieldSet>
       <Field>
-        <FieldLabel for="card-comments">Comments</FieldLabel>
-        <Textarea id="card-comments" name="comments" placeholder="Add any comments" />
+        <FieldLabel for="project-notes">Notes</FieldLabel>
+        <Textarea id="project-notes" name="notes" placeholder="Anything your team should know" />
       </Field>
       <Field orientation="horizontal">
-        <Button type="submit">Submit</Button>
+        <Button type="submit">Save</Button>
         <Button type="reset" variant="outline">
-          Cancel
+          Reset
         </Button>
+        <p
+          role="status"
+          data-text="$saved && 'Saved ' + $saved + '.'"
+          style="margin: 0; font-size: 0.875rem"
+        ></p>
       </Field>
     </FieldGroup>
   </form>

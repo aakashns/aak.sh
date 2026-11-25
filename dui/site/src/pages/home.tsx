@@ -203,7 +203,7 @@ const Dashboard = (): Html => (
           </CardHeader>
           <CardContent>
             <Orders.Tabs>
-              <Orders.TabsList>
+              <Orders.TabsList aria-label="Orders by status">
                 <Orders.TabsTrigger value="all">All</Orders.TabsTrigger>
                 <Orders.TabsTrigger value="paid">Paid</Orders.TabsTrigger>
                 <Orders.TabsTrigger value="pending">Pending</Orders.TabsTrigger>
@@ -332,13 +332,17 @@ const Dashboard = (): Html => (
                   <FieldLabel>
                     <Field orientation="horizontal">
                       <FieldContent>
-                        <FieldTitle>{title}</FieldTitle>
-                        <FieldDescription>{description}</FieldDescription>
+                        <FieldTitle id={`home-plan-${value}-title`}>{title}</FieldTitle>
+                        <FieldDescription id={`home-plan-${value}-description`}>
+                          {description}
+                        </FieldDescription>
                       </FieldContent>
                       <RadioGroupItem
                         name="plan"
                         value={value}
                         checked={value === 'pro'}
+                        aria-labelledby={`home-plan-${value}-title`}
+                        aria-describedby={`home-plan-${value}-description`}
                         data-bind:plan
                       />
                     </Field>

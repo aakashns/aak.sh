@@ -16,7 +16,7 @@ const { Tabs, TabsList, TabsTrigger, TabsContent } = createTabs('settings', 'acc
 
 export default () => (
   <Tabs style="width: 100%; max-width: 24rem">
-    <TabsList>
+    <TabsList aria-label="Settings">
       <TabsTrigger value="account">Account</TabsTrigger>
       <TabsTrigger value="password">Password</TabsTrigger>
     </TabsList>
