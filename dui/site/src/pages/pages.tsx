@@ -60,7 +60,7 @@ export const Installation = (): Html => (
       <code>dui</code> is one binary, for Linux and macOS. This puts it in{' '}
       <code>/usr/local/bin</code>, and running it again upgrades it:
     </p>
-    <CodeBlock code={INSTALL} />
+    <CodeBlock code={INSTALL} lang="sh" />
     <p>
       The components come with it, so each version of dui adds the same code. Set{' '}
       <code>DUI_VERSION</code> to install a particular one.
@@ -70,15 +70,15 @@ export const Installation = (): Html => (
       Run this in your project's folder, beside its <code>package.json</code> (<code>bun init</code>{' '}
       makes one):
     </p>
-    <CodeBlock code="dui init" />
+    <CodeBlock code="dui init" lang="sh" />
     <p>
       It writes the JSX runtime and the theme to <code>lib/</code>, in <code>src/</code> if there's
       one (or wherever <code>--dir</code> says), and points JSX at them. Running it again only adds
       what's missing. To do that by hand:
     </p>
-    <CodeBlock code={SETUP} />
+    <CodeBlock code={SETUP} lang="tsx" />
     <h2 id="add">Add components</h2>
-    <CodeBlock code="dui add button" />
+    <CodeBlock code="dui add button" lang="sh" />
     <p>
       It copies each component, and the ones it uses, into <code>ui/</code> beside <code>lib/</code>
       , and lists every stylesheet there in <code>ui/styles.ts</code>. <code>dui list</code> shows
@@ -94,7 +94,7 @@ export const Installation = (): Html => (
       Save this as <code>index.tsx</code>, in the folder with <code>ui/</code> and <code>lib/</code>
       :
     </p>
-    <CodeBlock code={QUICKSTART} title="index.tsx" />
+    <CodeBlock code={QUICKSTART} lang="tsx" title="index.tsx" />
     <p>
       Then run <code>bun index.tsx</code> (or <code>bun src/index.tsx</code>), and open{' '}
       <code>http://localhost:3000</code>. <code>DUI_CSS</code> is the theme and every component's
@@ -155,7 +155,7 @@ const ExampleBlock = (props: { item: RegistryItem; example: Example }): Html => 
           <code>dui add {[item.name, ...others].join(' ')}</code>
         </p>
       ) : null}
-      <CodeBlock code={example.code} title={`${example.slug}.tsx`} />
+      <CodeBlock code={example.code} lang="tsx" title={`${example.slug}.tsx`} />
     </div>
   )
 }
@@ -178,7 +178,6 @@ const FileIcon = () => (
 export const ComponentPage = (props: { item: RegistryItem }): Html => {
   let { item } = props
   let { examples, shadcn } = docs[item.name]!
-  let [demo, ...more] = examples
   let index = components.indexOf(item)
   let previous = components[index - 1]
   let next = components[index + 1]
@@ -207,9 +206,8 @@ export const ComponentPage = (props: { item: RegistryItem }): Html => {
           shadcn/ui
         </Button>
       </div>
-      {demo ? <ExampleBlock item={item} example={demo} /> : null}
       <h2 id="installation">Installation</h2>
-      <CodeBlock code={`dui add ${item.name}`} />
+      <CodeBlock code={`dui add ${item.name}`} lang="sh" />
       <p>
         Or copy {item.files.map((path, i) => [i ? ' and ' : '', <a href={`/${path}`}>{path}</a>])}{' '}
         into your project, with{' '}
@@ -219,8 +217,8 @@ export const ComponentPage = (props: { item: RegistryItem }): Html => {
         ])}
         {deps.length ? <> and {componentLinks(deps)}</> : null}.
       </p>
-      {more.length ? <h2 id="examples">Examples</h2> : null}
-      {more.map((example) => (
+      {examples.length ? <h2 id="examples">Examples</h2> : null}
+      {examples.map((example) => (
         <>
           <h3 id={example.slug}>{example.title}</h3>
           <ExampleBlock item={item} example={example} />

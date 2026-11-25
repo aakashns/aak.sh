@@ -112,7 +112,38 @@ if (site) {
     'tabs: the open tab is the stop',
   )
 
-  // Contrast, in both schemes, in every component's previews and the home page's dashboard.
+  // The header's switch flips the scheme, and the next page load keeps it.
+  let toggle = page.getByRole('button', { name: 'Dark mode' })
+  let schemeNow = () =>
+    page.evaluate(() => [
+      document.documentElement.className,
+      document.querySelector<HTMLMetaElement>('meta[name=theme-color]')?.content,
+      document.querySelector('.theme-switch')?.getAttribute('aria-pressed'),
+    ])
+  await page.goto(`${site}/docs`)
+  check(String(await schemeNow()) === 'dark,#000000,true', 'theme: dark by default')
+  await toggle.click()
+  check(String(await schemeNow()) === 'light,#ffffff,false', 'theme: the switch turns it light')
+  await page.reload()
+  check(String(await schemeNow()) === 'light,#ffffff,false', 'theme: light after a reload')
+  await shot(page, 'theme-light')
+  // A page restored on Back takes the cookie's scheme. Playwright's Chromium doesn't keep
+  // pages for Back, so this changes the cookie under the page, and restores it as browsers do.
+  await page.evaluate(() => {
+    document.cookie = 'theme=dark; path=/'
+    dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))
+  })
+  check(
+    String(await schemeNow()) === 'dark,#000000,true',
+    'theme: a restored page takes the cookie',
+  )
+  await toggle.click()
+  await toggle.click()
+  await page.reload()
+  check(String(await schemeNow()) === 'dark,#000000,true', 'theme: and back to dark')
+
+  // Contrast, in both schemes, in every component's previews and highlighted code, and the home
+  // page's dashboard.
   let index = (await (await fetch(`${site}/r/index.json`)).json()) as { name: string }[]
   let paths = [
     '/',
@@ -125,7 +156,7 @@ if (site) {
       await page.addScriptTag({ content: axe.source })
       let violations = await page.evaluate(async () => {
         let result = await (window as unknown as { axe: typeof axe }).axe.run(
-          { include: [['.preview'], ['.showcase']] } as axe.ElementContext,
+          { include: [['.preview'], ['.showcase'], ['.code pre']] } as axe.ElementContext,
           { runOnly: ['color-contrast'] },
         )
         return result.violations.flatMap((v) =>

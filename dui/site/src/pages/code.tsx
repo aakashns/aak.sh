@@ -1,15 +1,32 @@
-// A block of code with a button that copies it, using Datastar for the click.
-import type { Child, Html } from '../lib/jsx/jsx-runtime.ts'
+// A block of code, highlighted on the server, with a button that copies it, using Datastar for
+// the click.
+import { highlight } from 'sugar-high'
+
+import { escapeHtml, raw, type Child, type Html } from '../lib/jsx/jsx-runtime.ts'
 
 const COPY = `navigator.clipboard.writeText(el.closest('.code').querySelector('code').textContent); el.dataset.copied = ''; setTimeout(() => delete el.dataset.copied, 2000)`
 
-export function CodeBlock(props: { code: string; title?: Child; class?: string }): Html {
-  let { code, title, class: className } = props
+// TSX by sugar-high, its colors left to site.css's classes; shell commands get their own.
+const HIGHLIGHT = {
+  tsx: (code: string) => highlight(code).replace(/ style="color:var\(--sh-\w+\)"/g, ''),
+  sh: (code: string) =>
+    escapeHtml(code)
+      .replace(/(^|\| )([\w.-]+)/gm, '$1<span class="sh__token--entity">$2</span>')
+      .replace(/ (--?[\w-]+)/g, ' <span class="sh__token--property">$1</span>'),
+}
+
+export function CodeBlock(props: {
+  code: string
+  lang: keyof typeof HIGHLIGHT
+  title?: Child
+  class?: string
+}): Html {
+  let { code, lang, title, class: className } = props
   return (
     <div class={className ? `code ${className}` : 'code'}>
       {title ? <div class="code-title">{title}</div> : null}
       <pre>
-        <code>{code}</code>
+        <code>{raw(HIGHLIGHT[lang](code))}</code>
       </pre>
       <button type="button" class="copy" aria-label="Copy code" data-on:click={COPY}>
         <svg
