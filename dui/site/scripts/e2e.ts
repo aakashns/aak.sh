@@ -113,22 +113,34 @@ if (site) {
   )
 
   // The header's switch flips the scheme, and the next page load keeps it.
+  let toggle = page.getByRole('button', { name: 'Dark mode' })
   let schemeNow = () =>
     page.evaluate(() => [
       document.documentElement.className,
       document.querySelector<HTMLMetaElement>('meta[name=theme-color]')?.content,
+      document.querySelector('.theme-switch')?.getAttribute('aria-pressed'),
     ])
-  let toggle = page.getByRole('button', { name: 'Toggle theme' })
   await page.goto(`${site}/docs`)
-  check(String(await schemeNow()) === 'dark,#000000', 'theme: dark by default')
+  check(String(await schemeNow()) === 'dark,#000000,true', 'theme: dark by default')
   await toggle.click()
-  check(String(await schemeNow()) === 'light,#ffffff', 'theme: the switch turns it light')
+  check(String(await schemeNow()) === 'light,#ffffff,false', 'theme: the switch turns it light')
   await page.reload()
-  check(String(await schemeNow()) === 'light,#ffffff', 'theme: light after a reload')
+  check(String(await schemeNow()) === 'light,#ffffff,false', 'theme: light after a reload')
   await shot(page, 'theme-light')
+  // A page restored on Back takes the cookie's scheme. Playwright's Chromium doesn't keep
+  // pages for Back, so this changes the cookie under the page, and restores it as browsers do.
+  await page.evaluate(() => {
+    document.cookie = 'theme=dark; path=/'
+    dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))
+  })
+  check(
+    String(await schemeNow()) === 'dark,#000000,true',
+    'theme: a restored page takes the cookie',
+  )
+  await toggle.click()
   await toggle.click()
   await page.reload()
-  check(String(await schemeNow()) === 'dark,#000000', 'theme: and back to dark')
+  check(String(await schemeNow()) === 'dark,#000000,true', 'theme: and back to dark')
 
   // Contrast, in both schemes, in every component's previews and highlighted code, and the home
   // page's dashboard.
