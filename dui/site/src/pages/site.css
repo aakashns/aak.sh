@@ -1,0 +1,151 @@
+/* The site's own layout, after the theme and the components'. */
+body {
+  line-height: 1.6;
+}
+
+a {
+  color: inherit;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+
+  & nav {
+    display: flex;
+    gap: 1.25rem;
+    font-size: 0.875rem;
+  }
+  & nav a {
+    color: var(--muted-foreground);
+    text-decoration: none;
+    &:hover {
+      color: var(--foreground);
+    }
+  }
+}
+
+.logo {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.hero {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 6rem 1rem;
+  text-align: center;
+
+  & h1 {
+    margin: 0;
+    font-size: 2.5rem;
+    line-height: 1.1;
+  }
+  & .row {
+    justify-content: center;
+  }
+}
+
+.lead {
+  color: var(--muted-foreground);
+  font-size: 1.125rem;
+}
+
+.docs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2rem;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+
+  @media (min-width: 48rem) {
+    grid-template-columns: 12rem minmax(0, 1fr);
+  }
+  /* The header links to every page, so phones skip the sidebar. */
+  & aside {
+    display: none;
+
+    @media (min-width: 48rem) {
+      display: flex;
+    }
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+  }
+  & aside h4 {
+    margin: 1rem 0 0.25rem;
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+  & aside a {
+    color: var(--muted-foreground);
+    text-decoration: none;
+    &:hover,
+    &[aria-current] {
+      color: var(--foreground);
+    }
+  }
+  & main > h1 {
+    margin: 0;
+    font-size: 1.875rem;
+  }
+  & main > h2 {
+    margin-top: 2.5rem;
+    font-size: 1.25rem;
+  }
+}
+
+pre {
+  overflow-x: auto;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: oklch(0.145 0 0);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+code {
+  font-family: var(--font-mono);
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 14rem;
+  padding: 2rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stack {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 20rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: 1rem;
+  & a {
+    text-decoration: none;
+  }
+}

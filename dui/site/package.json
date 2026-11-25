@@ -1,0 +1,24 @@
+{
+  "name": "dui-site",
+  "private": true,
+  "type": "module",
+  "imports": {
+    "#jsx/*": "./src/lib/jsx/*.ts"
+  },
+  "scripts": {
+    "dev": "bun --watch src/server.ts",
+    "build": "bun scripts/build.ts",
+    "check": "bun check && bun fmt --check"
+  },
+  "dependencies": {
+    "@effect/platform-bun": "4.1.5",
+    "effect": "4.1.5"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.4"
+  },
+  "engines": {
+    "bun": ">=1.4.4"
+  },
+  "packageManager": "bun@1.4.4"
+}

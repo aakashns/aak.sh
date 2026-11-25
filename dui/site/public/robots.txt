@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://dui.aak.sh/sitemap.xml

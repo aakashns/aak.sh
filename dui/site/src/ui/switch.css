@@ -1,0 +1,40 @@
+/* The track is the <input>, with its native look removed, and the thumb is its ::before. */
+[data-slot='switch'] {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 1.15rem;
+  margin: 0;
+  padding: 1px;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  background: var(--input);
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 150ms;
+
+  &::before {
+    content: '';
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 9999px;
+    background: var(--background);
+    transition: translate 150ms;
+  }
+  &:checked {
+    background: var(--primary);
+  }
+  &:checked::before {
+    translate: 0.85rem 0;
+  }
+  &:focus-visible {
+    border-color: var(--ring);
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 50%, transparent);
+  }
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
