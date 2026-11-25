@@ -22,5 +22,5 @@ DUI_REGISTRY=http://127.0.0.1:3000/r node path/to/dui/package/cli.js add button
 ## Deploy
 
 On the web server, in `/srv/aak.sh/dui/site`: pull `main`, run `bun install --frozen-lockfile`,
-and `sudo systemctl restart dui`. The first time, copy Bun to `/usr/local/bin/bun`, install
-`dui.service` as its header says, and copy `Caddyfile`'s block into the server's Caddyfile.
+and `sudo systemctl restart dui`. The first time, install `dui.service` as its header says, and
+copy `Caddyfile`'s block into the server's Caddyfile.
