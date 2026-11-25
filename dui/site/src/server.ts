@@ -1,4 +1,4 @@
-// The site: its routes, served by Effect's HTTP router on Bun, behind Caddy (see ../dui.service).
+// The site: its routes, served by Effect's HTTP router on Bun, behind Caddy (see deploy.ts).
 // Pages are rendered once, when it starts.
 import { BunHttpServer, BunRuntime } from '@effect/platform-bun'
 import { Effect, Layer } from 'effect'
@@ -14,6 +14,7 @@ import {
   Introduction,
   NotFound,
 } from './pages/pages.tsx'
+import { PUBLIC_FILES } from './public.ts'
 import { components, registry, registryJson } from './registry.ts'
 
 const html = (page: Html, status = 200) =>
@@ -53,17 +54,15 @@ const registryItem = Effect.gen(function* () {
   }
   let item = registry.find((i) => `${i.name}.json` === file)
   if (!item) return notFound
-  return yield* HttpServerResponse.json(yield* Effect.promise(() => registryJson(item)))
+  return yield* HttpServerResponse.json(registryJson(item))
 })
 
-// Anything else is a file in public/, or not found.
-const PUBLIC = new URL('../public/', import.meta.url)
+// Anything else is one of PUBLIC_FILES, or not found.
 const publicFile = Effect.gen(function* () {
   let { url } = yield* HttpServerRequest.HttpServerRequest
-  let path = decodeURIComponent(new URL(url, 'http://localhost').pathname).slice(1)
-  if (!path || path.split('/').includes('..')) return notFound
-  let file = Bun.file(new URL(path, PUBLIC))
-  if (!(yield* Effect.promise(() => file.exists()))) return notFound
+  let path = PUBLIC_FILES[new URL(url, 'http://localhost').pathname]
+  if (!path) return notFound
+  let file = Bun.file(path)
   let bytes = yield* Effect.promise(() => file.bytes())
   return HttpServerResponse.uint8Array(bytes, { contentType: file.type })
 })
@@ -83,9 +82,8 @@ const Routes = HttpRouter.addAll([
   HttpRouter.route('GET', '*', publicFile),
 ])
 
-if (import.meta.main) {
-  let port = Number(process.env.PORT ?? 3000)
-  let hostname = process.env.HOST ?? '127.0.0.1'
+// Serves the site until it's stopped.
+export function serve(port: number, hostname: string) {
   console.log(`Serving dui at http://${hostname}:${port}`)
   BunRuntime.runMain(
     Layer.launch(

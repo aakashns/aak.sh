@@ -1,0 +1,107 @@
+# Builds the dui-site binary for Linux and checks it serves the site. Merging a PR that bumps
+# dui/site/package.json's version publishes the binaries as the dui-site-v<version> GitHub
+# release, which the server runs (see Deploy in dui/README.md).
+name: dui-site release
+
+on:
+  push:
+    branches: [main]
+    paths: [dui/site/package.json]
+  pull_request:
+    paths: [dui/site/**, .github/workflows/dui-site-release.yml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    working-directory: dui/site
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      release: ${{ steps.version.outputs.release }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: version
+        run: |
+          version=$(jq -r .version package.json)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_EVENT_NAME" = push ] &&
+            ! git ls-remote --exit-code --tags origin "refs/tags/dui-site-v$version" >/dev/null; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: version
+    if: github.event_name == 'pull_request' || needs.version.outputs.release == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: linux-x64, runner: ubuntu-24.04 }
+          - { target: linux-arm64, runner: ubuntu-24.04-arm }
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: dui/site/package.json
+      - run: bun install --frozen-lockfile
+      - run: bun run check
+      - run: bun run build
+      # From another folder, so it can only serve what's embedded in it.
+      - name: Smoke test
+        run: |
+          bin=$PWD/dist/dui-site
+          test "$($bin version)" = "${{ needs.version.outputs.version }}"
+          cd "$RUNNER_TEMP"
+          PORT=44299 "$bin" start &
+          server=$!
+          for _ in $(seq 50); do curl -fs -o /dev/null http://127.0.0.1:44299/ && break; sleep 0.2; done
+          for path in / /docs /docs/installation /docs/components /docs/components/dialog \
+            /r/index.json /r/lib.json /sitemap.xml /datastar.js /favicon.ico /social.png; do
+            curl -fsS -o /dev/null "http://127.0.0.1:44299$path"
+          done
+          curl -fsS http://127.0.0.1:44299/r/dialog.json | jq -e '.files | length == 2 and all(.content != "")'
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:44299/nope)" = 404
+          kill "$server"
+      - run: mv dist/dui-site dist/dui-site-${{ matrix.target }}
+      - uses: actions/upload-artifact@v5
+        with:
+          name: dui-site-${{ matrix.target }}
+          path: dui/site/dist/dui-site-${{ matrix.target }}
+          if-no-files-found: error
+
+  release:
+    needs: [version, build]
+    if: needs.version.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v5
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Publish
+        working-directory: dist
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: dui-site-v${{ needs.version.outputs.version }}
+        run: |
+          sha256sum -- dui-site-* > SHA256SUMS
+          previous=$(git describe --tags --abbrev=0 --match 'dui-site-v*' "$GITHUB_SHA" 2>/dev/null || true)
+          notes=(--notes "The first release of dui.aak.sh's server.")
+          [ -n "$previous" ] && notes=(--generate-notes --notes-start-tag "$previous")
+          gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" "${notes[@]}" \
+            -- dui-site-* SHA256SUMS

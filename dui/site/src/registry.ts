@@ -1,6 +1,10 @@
 // What `npx @aakashns/dui add` can copy into a project, served as JSON at /r/<name>.json, like
 // shadcn/ui's registry. Paths are relative to the project's source folder, and every file is
 // one in this folder, so the site uses the same code it hands out.
+import { readSources } from './sources.ts' with { type: 'macro' }
+
+const SOURCES = readSources()
+
 export interface RegistryItem {
   name: string
   title: string
@@ -36,12 +40,7 @@ export const components: RegistryItem[] = [
 export const registry = [lib, ...components]
 
 // An item as the CLI gets it, with each file's contents.
-export async function registryJson(item: RegistryItem) {
-  let files = await Promise.all(
-    item.files.map(async (path) => ({
-      path,
-      content: await Bun.file(new URL(path, import.meta.url)).text(),
-    })),
-  )
+export function registryJson(item: RegistryItem) {
+  let files = item.files.map((path) => ({ path, content: SOURCES[path] ?? '' }))
   return { ...item, files }
 }

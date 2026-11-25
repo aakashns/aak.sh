@@ -1,5 +1,0 @@
-# Copy this block into the server's main Caddyfile. dui.service serves the site on this port.
-dui.aak.sh {
-	encode zstd gzip
-	reverse_proxy 127.0.0.1:44200
-}

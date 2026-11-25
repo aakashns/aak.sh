@@ -1,12 +1,12 @@
 # Publishes @aakashns/dui to npm whenever main has a version (in dui/package/package.json)
 # that isn't on npm yet, so merging a PR that bumps the version releases it. It publishes with
 # npm's trusted publishing, so there's no token: npmjs.com must trust this repo and workflow.
-name: dui release
+name: dui package release
 
 on:
   push:
     branches: [main]
-    paths: [dui/package/**, .github/workflows/dui-release.yml]
+    paths: [dui/package/**, .github/workflows/dui-package-release.yml]
 
 permissions:
   contents: read
