@@ -125,6 +125,8 @@ finish() {
   local port=$1
   shift
   # rembox carried on as root with sudo, from your user.
+  setup_t3_browser "$SUDO_USER"
+  checklist_send
   add_postgres_role "$SUDO_USER"
   checklist_send
   setup_sshd no "$port"

@@ -57,6 +57,28 @@ setup_t3() {
   setup_phone
 }
 
+# setup_t3_browser USER: lets T3's shared browser start its Chromium sandbox
+# on hosts where AppArmor restricts user namespaces. Runs as root.
+setup_t3_browser() {
+  local restriction=/proc/sys/kernel/apparmor_restrict_unprivileged_userns
+  [[ -r $restriction && $(<"$restriction") == 1 ]] || return 0
+
+  local home t3 profile=t3-chrome-headless-shell
+  home=$(getent passwd "$1" | cut -d: -f6)
+  t3=$home/.local/bin/t3
+  [[ -x $t3 ]] || return 0
+
+  step "Allow T3 Code's shared browser to use its sandbox"
+  if [[ -f /etc/apparmor.d/$profile ]] && grep -q "^$profile (" /sys/kernel/security/apparmor/profiles 2>/dev/null; then
+    ok "T3 Code's browser profile is installed and loaded."
+  elif ! run "$t3" browser setup --base-dir "$home/.t3"; then
+    warn "T3 Code couldn't set up its browser sandbox. Check the error above and run rembox setup again."
+    checklist warn "T3 Code's browser sandbox setup failed"
+    return
+  fi
+  checklist ok "AppArmor allows T3 Code's browser sandbox"
+}
+
 # t3_publish T3: has T3 Code publish what your agents are doing through T3
 # Connect, which is off until you turn it on, so its phone app gets push
 # notifications and Live Activities. Runs after T3 Code connects.
