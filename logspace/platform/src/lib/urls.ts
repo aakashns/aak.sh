@@ -4,10 +4,9 @@
 
 export const urls = {
   home: () => '/',
-  // The pages of the feed after the home page's, before or after a cursor (see
+  // The pages of the feed after the home page's: the posts before a cursor (see
   // ../data/posts/post.ts).
-  olderPosts: (cursor: string) => `/?before=${encodeURIComponent(cursor)}`,
-  newerPosts: (cursor: string) => `/?after=${encodeURIComponent(cursor)}`,
+  posts: (before: string) => `/?before=${encodeURIComponent(before)}`,
   sitemap: () => '/sitemap.xml',
   rss: () => '/rss.xml',
   robots: () => '/robots.txt',

@@ -198,14 +198,8 @@ describe('the feed’s pages', () => {
     expect(ids(third)).toEqual(all.slice(100))
     expect(link(third, 'next')).toBeUndefined()
     expect(third).not.toContain('Older posts</a>')
-
-    // Back from the last page is the second again, and back from that is the home page.
-    let newer = defined(link(third, 'prev'), 'a newer page')
-    expect(newer).toMatch(/^\/\?after=/)
-    let again = await (await app.fetch(newer)).text()
-    expect(ids(again)).toEqual(all.slice(50, 100))
-    expect(link(again, 'prev')).toBe('/')
-    expect(link(again, 'next')).toBe(link(second, 'next'))
+    // Back from the last page is the second, at the same URL.
+    expect(link(third, 'prev')).toBe('/?before=20191231235945-p000000047')
   })
 
   it('has no links when every post fits on the home page', async () => {
@@ -213,17 +207,16 @@ describe('the feed’s pages', () => {
     expect(home).not.toContain('class="pagination"')
   })
 
-  it('sends pages a cursor no longer leads to home, and rejects ones that aren’t cursors', async () => {
+  it('sends pages a cursor doesn’t lead to home, and rejects ones that aren’t cursors', async () => {
     await addPosts()
-    // Nothing's older than the oldest post, and what's newer than the 50th fits on the home page.
-    let oldest = '19991231000000-0000000000'
-    expect((await app.fetch(`/?before=${oldest}`)).headers.get('Location')).toBe('/')
-    expect((await app.fetch('/?after=20191231235945-p000000047')).status).toBe(302)
-    expect((await app.fetch('/?after=20191231235945-p000000047')).headers.get('Location')).toBe('/')
-    for (let query of ['before=fc7p7vjhx6', 'after=2026']) {
-      expect((await app.fetch(`/?${query}`)).status).toBe(404)
+    // Nothing's older than the oldest post, and nothing's newer than the newest page.
+    for (let cursor of ['19991231000000-0000000000', '20991231000000-zzzzzzzzzz']) {
+      let response = await app.fetch(`/?before=${cursor}`)
+      expect(response.status).toBe(302)
+      expect(response.headers.get('Location')).toBe('/')
     }
-    let both = '20191231235945-p000000047'
-    expect((await app.fetch(`/?before=${both}&after=${both}`)).status).toBe(404)
+    for (let cursor of ['fc7p7vjhx6', '2026', '20191231235945-P000000047']) {
+      expect((await app.fetch(`/?before=${cursor}`)).status).toBe(404)
+    }
   })
 })

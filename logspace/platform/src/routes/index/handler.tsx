@@ -1,5 +1,5 @@
 // The home page: the site's introduction, and the newest posts, with links to pages of older
-// ones, which are the home page with a cursor: /?before=… or /?after=… (see PostQueries.page).
+// ones, which are the home page with a cursor: /?before=… (see PostQueries.page).
 import { Effect } from 'effect'
 import { HttpRouter } from 'effect/http'
 
@@ -19,14 +19,10 @@ import { BANNER_IMAGE_SIZES, HOME_PAGE_STYLES, HomePage } from './page.tsx'
 const home = Effect.gen(function* () {
   let { searchParams } = yield* requestUrl
   let before = searchParams.get('before')
-  let after = searchParams.get('after')
-  let cursor = before ?? after
-  let parsed = cursor === null ? undefined : parseCursor(cursor)
-  if ((before !== null && after !== null) || (cursor !== null && !parsed)) return notFound()
-  let feed = yield* (yield* PostQueries).page(
-    parsed && (before !== null ? { before: parsed } : { after: parsed }),
-  )
-  // A page the cursor no longer leads to, after posts were deleted, or that's now the newest.
+  let cursor = before === null ? undefined : parseCursor(before)
+  if (before !== null && !cursor) return notFound()
+  let feed = yield* (yield* PostQueries).page(cursor)
+  // A page the cursor no longer leads to, after posts were deleted, or that's the newest.
   if (!feed) return redirect(urls.home())
 
   let page = yield* pageContext
@@ -40,19 +36,14 @@ const home = Effect.gen(function* () {
     Effect.map(previews.forPost(post), (preview) => ({ post, preview })),
   )
   let newer =
-    feed.newer === 'newest' ? urls.home() : feed.newer && urls.newerPosts(formatCursor(feed.newer))
-  let older = feed.older && urls.olderPosts(formatCursor(feed.older))
+    feed.newer === 'newest' ? urls.home() : feed.newer && urls.posts(formatCursor(feed.newer))
+  let older = feed.older && urls.posts(formatCursor(feed.older))
   return pageResponse(
     page,
     <Document
       page={page}
       meta={
-        cursor === null
-          ? { path: urls.home() }
-          : {
-              path: before !== null ? urls.olderPosts(cursor) : urls.newerPosts(cursor),
-              title: 'Older posts',
-            }
+        before === null ? { path: urls.home() } : { path: urls.posts(before), title: 'Older posts' }
       }
       styles={HOME_PAGE_STYLES}
       // The banner, when there's one, is at the top, above the first post.
