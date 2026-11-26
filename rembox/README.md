@@ -39,7 +39,7 @@ Run `rembox setup` to begin setting up a remote server.
 - [`agents.sh`](cli/internal/remote/agents.sh): asks whether to install Claude Code, Codex, OpenCode and Pi, installs each with its own installer, and logs it in, to a subscription or with API billing.
 - [`opentunnel.sh`](cli/internal/remote/opentunnel.sh): installs opentunnel, with its own installer, for public links to dev servers, to test them from your phone, and connects its tunnel. Asks before upgrading it.
 - [`instructions.sh`](cli/internal/remote/instructions.sh): writes `~/.config/rembox/AGENTS.md`, about the server, and links each agent's global instructions to it.
-- [`t3.sh`](cli/internal/remote/t3.sh): makes ~/work for your projects, installs T3 Code, with new threads in worktrees and its cleanup on, connects it to your devices with T3 Connect, with push notifications, and shows a QR code for its phone app. On hosts that restrict user namespaces, it uses T3’s browser setup to load the AppArmor profile for the shared browser.
+- [`t3.sh`](cli/internal/remote/t3.sh): makes ~/work for your projects, installs T3 Code, with new threads in worktrees and its cleanup on, connects it to your devices with T3 Connect, with push notifications, and shows a QR code for its phone app.
 - [`fail2ban.sh`](cli/internal/remote/fail2ban.sh): bans IP addresses that keep failing to log in.
 - [`locale.sh`](cli/internal/remote/locale.sh): adds your Mac's locale, so programs on the server don't warn.
 - [`restart.sh`](cli/internal/remote/restart.sh): restarts the server, if an update needs it and you agree.
