@@ -77,3 +77,39 @@ func runUpgrade(a *App, args []string) error {
 	fmt.Fprintln(a.Stdout, a.paint(green, fmt.Sprintf("Upgraded rembox to %s.", latest)))
 	return nil
 }
+
+// offerUpgrade is setup's check for a newer rembox, before it connects to the
+// server called name. If there is one, it asks whether to upgrade first, and
+// if you say yes, says how, and how to carry on, then reports true, so setup
+// stops. It stays quiet when it can't tell, like when it's offline or this is
+// a development build, so setup carries on.
+func (a *App) offerUpgrade(name string) bool {
+	current := version.Version
+	if !version.Valid(current) || strings.Contains(current, "-") {
+		return false
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	tag, err := a.Releases.Latest(ctx)
+	if err != nil {
+		return false
+	}
+	latest := strings.TrimPrefix(tag, "v")
+	if cmp, err := version.Compare(current, latest); err != nil || cmp >= 0 {
+		return false
+	}
+
+	a.note(fmt.Sprintf("A new version of rembox is available: %s -> %s", current, latest))
+	if !a.confirm(fmt.Sprintf("Upgrade rembox before connecting to %s?", name), true) {
+		return false
+	}
+	upgrade := "rembox upgrade"
+	if exe, err := a.Executable(); err == nil {
+		if exe, err = filepath.EvalSymlinks(exe); err == nil && release.CheckWritable(filepath.Dir(exe)) != nil {
+			upgrade = "sudo rembox upgrade"
+		}
+	}
+	fmt.Fprintf(a.Stdout, "\nTo upgrade rembox, then carry on setting up %s, run:\n\n  %s\n  %s\n",
+		name, a.paint(cyan, upgrade), a.paint(cyan, "rembox setup "+name))
+	return true
+}
