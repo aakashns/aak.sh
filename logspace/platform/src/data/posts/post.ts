@@ -162,7 +162,7 @@ export function getPostFileNames(post: PostRecord): string[] {
   }
 }
 
-// Where a page of posts starts or ends: a post's date and id, which order posts (newest first,
+// Where a page of posts starts: its first post's date and id, which order posts (newest first,
 // then by id among posts from the same second, as dates are UTC and so sort as text). In a page's
 // URL it's like "20261016131200-fc7p7vjhx6", and it still works after the post is deleted.
 export interface PostCursor {

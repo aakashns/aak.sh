@@ -15,14 +15,10 @@ type ImageRow = ImageInfo & { readonly post_id: string; readonly name: string }
 // How many posts a page of the feed shows.
 export const PAGE_SIZE = 50
 
-// A page of the feed, newest first, and the cursors of the pages either side of it: every page is
-// the posts before a cursor, apart from the newest, which is the home page's. The older page's
-// cursor is this page's last post; the newer page's is the post just above that page.
+// A page of the feed, newest first, and the first posts of the pages either side of it, if
+// there are any. The newer page is the newest (the home page) when it's the newest posts.
 export interface PostsPage {
   readonly posts: readonly Post[]
-  // This page's own cursor, the post just above it, for its canonical URL: a cursor for a
-  // deleted post shows the same posts as the one for the next post up. Undefined for the newest.
-  readonly cursor?: PostCursor | undefined
   readonly newer?: PostCursor | 'newest' | undefined
   readonly older?: PostCursor | undefined
 }
@@ -32,10 +28,10 @@ export class PostQueries extends Context.Service<
   {
     // Every post, newest first.
     readonly all: Effect.Effect<readonly Post[]>
-    // The newest page of posts, or the one before a cursor. Undefined when the cursor's page
-    // isn't one of its own: nothing's before the cursor, or nothing's after it (so its page is the
-    // newest).
-    readonly page: (before?: PostCursor) => Effect.Effect<PostsPage | undefined>
+    // The newest page of posts, or the page that starts at a post: the cursor's, or the next one
+    // down if it's been deleted. Undefined when there's no such page: no posts from the cursor
+    // down, or none above them, so they're the newest page.
+    readonly page: (from?: PostCursor) => Effect.Effect<PostsPage | undefined>
     // A post, with its files at `fileUrl`: the site's own URLs, or full ones, for an email.
     readonly find: (
       id: string,
@@ -96,28 +92,35 @@ export class PostQueries extends Context.Service<
       )
 
       // Posts are in order of (date, id), which posts_by_date indexes (see db/migrations).
-      let page = Effect.fn('PostQueries.page')(function* (before?: PostCursor) {
-        // One more post than the page shows, to tell whether there are older ones.
+      let page = Effect.fn('PostQueries.page')(function* (from?: PostCursor) {
+        // The page's posts, and the next one down, which starts the older page.
         let rows = yield* sql<PostRow>`
           select ${sql.literal(POST_COLUMNS)} from posts
-          ${before ? sql`where (date, id) < (${before.date}, ${before.id})` : sql``}
+          ${from ? sql`where (date, id) <= (${from.date}, ${from.id})` : sql``}
           order by date desc, id desc limit ${PAGE_SIZE + 1}
         `
-        // The newer page's posts, and one more: the post just above them, its cursor.
-        let newer = before
+        let first = rows[0]
+        if (!first) return from ? undefined : { posts: [] }
+        // The posts above the page, nearest first. The newer page starts at the 50th of them, or
+        // is the home page if that's the newest post.
+        let newer = from
           ? yield* sql<PostCursor>`
-              select date, id from posts where (date, id) >= (${before.date}, ${before.id})
+              select date, id from posts where (date, id) > (${first.date}, ${first.id})
               order by date, id limit ${PAGE_SIZE + 1}
             `
           : []
-        if (before && (rows.length === 0 || newer.length === 0)) return undefined
+        if (from && newer.length === 0) return undefined
         let posts = rows.slice(0, PAGE_SIZE)
         let imageRows = yield* selectImages(posts.map((post) => post.id))
         return {
           posts: present(posts, imageRows),
-          cursor: newer[0],
-          newer: newer.length === 0 ? undefined : (newer[PAGE_SIZE] ?? ('newest' as const)),
-          older: rows.length > PAGE_SIZE ? posts.at(-1) : undefined,
+          newer:
+            newer.length === 0
+              ? undefined
+              : newer.length > PAGE_SIZE
+                ? newer[PAGE_SIZE - 1]
+                : ('newest' as const),
+          older: rows[PAGE_SIZE],
         }
       }, Effect.orDie)
 

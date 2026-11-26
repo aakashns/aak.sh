@@ -5,6 +5,7 @@ import { SqlClient } from 'effect/sql'
 
 import { capture, defined, makeTestApp } from '../../../test/app.ts'
 import { PostCommands } from '../../data/posts/commands.ts'
+import { formatCursor } from '../../data/posts/post.ts'
 import { PostQueries } from '../../data/posts/queries.ts'
 import { toPostRow } from '../../data/posts/rows.ts'
 import { newPostEmail } from '../admin/compose/email.tsx'
@@ -173,7 +174,18 @@ describe('the feed’s pages', () => {
   let link = (html: string, rel: 'prev' | 'next') =>
     new RegExp(`href="([^"]+)" rel="${rel}"`).exec(html)?.[1]
 
-  it('shows 50 posts a page, linking to older and newer pages by cursor', async () => {
+  let canonical = (html: string) => capture(html, /<link rel="canonical" href="([^"]+)"/)
+  let publish = (id: string, date: string) =>
+    app.run(
+      Effect.flatMap(SqlClient.SqlClient, (sql) => {
+        let row = toPostRow({ id, type: 'text', date, caption: 'New' })
+        return sql`insert into posts ${sql.insert({ ...row })}`
+      }).pipe(Effect.orDie),
+    )
+  // The 51st post, which starts the second page, shares its second with the 50th.
+  let second = '/?from=20191231235945-p000000046'
+
+  it('shows 50 posts a page, each at the URL of its first post', async () => {
     await addPosts()
     let all = (await posts()).map((post) => post.id)
     expect(all).toHaveLength(120)
@@ -181,25 +193,22 @@ describe('the feed’s pages', () => {
     let home = await (await app.fetch('/')).text()
     expect(ids(home)).toEqual(all.slice(0, 50))
     expect(link(home, 'prev')).toBeUndefined()
-    // The last post on the page shares its second with the first on the next.
-    expect(link(home, 'next')).toBe('/?before=20191231235945-p000000047')
+    expect(link(home, 'next')).toBe(second)
     expect(home).toContain('Older posts')
     expect(home).not.toContain('Newer posts')
 
-    let second = await (await app.fetch('/?before=20191231235945-p000000047')).text()
-    expect(ids(second)).toEqual(all.slice(50, 100))
-    expect(link(second, 'prev')).toBe('/')
-    expect(second).toMatch(/<title>Older posts · Test Site<\/title>/)
-    expect(second).toMatch(
-      /<link rel="canonical" href="https:\/\/example\.com\/\?before=20191231235945-p000000047"/,
-    )
+    let page2 = await (await app.fetch(second)).text()
+    expect(ids(page2)).toEqual(all.slice(50, 100))
+    expect(link(page2, 'prev')).toBe('/')
+    expect(page2).toMatch(/<title>Older posts · Test Site<\/title>/)
+    expect(canonical(page2)).toBe(`https://example.com${second}`)
 
-    let third = await (await app.fetch(defined(link(second, 'next'), 'an older page'))).text()
-    expect(ids(third)).toEqual(all.slice(100))
-    expect(link(third, 'next')).toBeUndefined()
-    expect(third).not.toContain('Older posts</a>')
+    let page3 = await (await app.fetch(defined(link(page2, 'next'), 'an older page'))).text()
+    expect(ids(page3)).toEqual(all.slice(100))
+    expect(link(page3, 'next')).toBeUndefined()
+    expect(page3).not.toContain('Older posts</a>')
     // On a feed that hasn't changed, back from the last page is the second, at the same URL.
-    expect(link(third, 'prev')).toBe('/?before=20191231235945-p000000047')
+    expect(link(page3, 'prev')).toBe(second)
   })
 
   it('has no links when every post fits on the home page', async () => {
@@ -209,69 +218,55 @@ describe('the feed’s pages', () => {
 
   it('sends pages a cursor doesn’t lead to home, and rejects ones that aren’t cursors', async () => {
     await addPosts()
-    // Nothing's older than the oldest post, and nothing's newer than the newest page.
+    // Nothing's at or below the oldest post's second, and nothing's above the newest post.
     for (let cursor of ['19991231000000-0000000000', '20991231000000-zzzzzzzzzz']) {
-      let response = await app.fetch(`/?before=${cursor}`)
+      let response = await app.fetch(`/?from=${cursor}`)
       expect(response.status).toBe(302)
       expect(response.headers.get('Location')).toBe('/')
     }
     for (let cursor of [
       'fc7p7vjhx6',
       '2026',
-      '20191231235945-P000000047',
+      '20191231235945-P000000046',
       // Times that don't exist, which would compare as text between real ones.
       '20200231000000-0000000000',
       '20260231259999-0000000000',
       '20191231240000-0000000000',
     ]) {
-      expect((await app.fetch(`/?before=${cursor}`)).status).toBe(404)
+      expect((await app.fetch(`/?from=${cursor}`)).status).toBe(404)
     }
   })
 
-  let canonical = (html: string) => capture(html, /<link rel="canonical" href="([^"]+)"/)
-  let publish = (id: string, date: string) =>
-    app.run(
-      Effect.flatMap(SqlClient.SqlClient, (sql) => {
-        let row = toPostRow({ id, type: 'text', date, caption: 'New' })
-        return sql`insert into posts ${sql.insert({ ...row })}`
-      }).pipe(Effect.orDie),
-    )
-
-  it('gives a page one canonical URL after the post at its cursor is deleted', async () => {
+  it('starts a page at the next post down once the cursor’s post is deleted, and says so', async () => {
     await addPosts()
-    let saved = '/?before=20191231235945-p000000047'
-    let before = ids(await (await app.fetch(saved)).text())
-    // A new post, then the old boundary is deleted: the home page's last post is the one that
-    // was above it, so its Older link moves up, to the same posts.
-    await publish('new0000000', '2030-01-01T00:00:00Z')
+    let before = ids(await (await app.fetch(second)).text())
     await app.run(
-      Effect.flatMap(SqlClient.SqlClient, (sql) => sql`delete from posts where id = 'p000000047'`),
+      Effect.flatMap(SqlClient.SqlClient, (sql) => sql`delete from posts where id = 'p000000046'`),
     )
-    let older = defined(link(await (await app.fetch('/')).text(), 'next'), 'an Older link')
-    expect(older).toBe('/?before=20191231235946-p000000042')
-    let fromSaved = await (await app.fetch(saved)).text()
-    let fromHome = await (await app.fetch(older)).text()
-    expect(ids(fromSaved)).toEqual(before.filter((id) => id !== 'p000000047'))
-    expect(ids(fromSaved)).toEqual(ids(fromHome))
-    expect(canonical(fromSaved)).toBe(`https://example.com${older}`)
-    expect(canonical(fromHome)).toBe(`https://example.com${older}`)
+    let saved = await (await app.fetch(second)).text()
+    expect(ids(saved)[0]).toBe('p000000045')
+    expect(ids(saved).slice(0, 49)).toEqual(before.slice(1))
+    let next = '/?from=20191231235945-p000000045'
+    expect(canonical(saved)).toBe(`https://example.com${next}`)
+    expect(ids(await (await app.fetch(next)).text())).toEqual(ids(saved))
   })
 
   it('keeps a saved page’s posts after a new post, though the home page then repeats most of the newer page', async () => {
     await addPosts()
-    let all = (await posts()).map((post) => post.id)
-    let saved = '/?before=20191231235945-p000000047'
+    let all = await posts()
+    let ids50 = all.slice(0, 50).map((post) => post.id)
     await publish('new0000000', '2030-01-01T00:00:00Z')
 
-    let second = await (await app.fetch(saved)).text()
-    expect(ids(second)).toEqual(all.slice(50, 100))
-    // Newer goes to the 50 posts above it, which no longer fit on the home page, so it's a page
-    // before the new post.
-    let first = await (await app.fetch(defined(link(second, 'prev'), 'a newer page'))).text()
-    expect(link(second, 'prev')).toBe('/?before=20300101000000-new0000000')
-    expect(ids(first)).toEqual(all.slice(0, 50))
+    let page2 = await (await app.fetch(second)).text()
+    expect(ids(page2)).toEqual(all.slice(50, 100).map((post) => post.id))
+    // Newer is the 50 posts above it, which no longer fit on the home page, so it's a page of
+    // its own.
+    let newer = defined(link(page2, 'prev'), 'a newer page')
+    expect(newer).toBe(`/?from=${formatCursor(defined(all[0], 'a post'))}`)
+    let page1 = await (await app.fetch(newer)).text()
+    expect(ids(page1)).toEqual(ids50)
     // Newer again is the home page: the new post, and 49 of those again.
-    expect(link(first, 'prev')).toBe('/')
-    expect(ids(await (await app.fetch('/')).text())).toEqual(['new0000000', ...all.slice(0, 49)])
+    expect(link(page1, 'prev')).toBe('/')
+    expect(ids(await (await app.fetch('/')).text())).toEqual(['new0000000', ...ids50.slice(0, 49)])
   })
 })

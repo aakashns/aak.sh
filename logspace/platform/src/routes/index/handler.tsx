@@ -1,5 +1,5 @@
 // The home page: the site's introduction, and the newest posts, with links to pages of older
-// ones, which are the home page with a cursor: /?before=… (see PostQueries.page).
+// ones, which are the home page from a post: /?from=<its cursor> (see PostQueries.page).
 import { Effect } from 'effect'
 import { HttpRouter } from 'effect/http'
 
@@ -18,11 +18,11 @@ import { BANNER_IMAGE_SIZES, HOME_PAGE_STYLES, HomePage } from './page.tsx'
 
 const home = Effect.gen(function* () {
   let { searchParams } = yield* requestUrl
-  let before = searchParams.get('before')
-  let cursor = before === null ? undefined : parseCursor(before)
-  if (before !== null && !cursor) return notFound()
+  let from = searchParams.get('from')
+  let cursor = from === null ? undefined : parseCursor(from)
+  if (from !== null && !cursor) return notFound()
   let feed = yield* (yield* PostQueries).page(cursor)
-  // A page the cursor no longer leads to, after posts were deleted, or that's the newest.
+  // No posts from the cursor down, after they were deleted, or they're the newest.
   if (!feed) return redirect(urls.home())
 
   let page = yield* pageContext
@@ -42,9 +42,10 @@ const home = Effect.gen(function* () {
     page,
     <Document
       page={page}
+      // A page is at its first post's URL, which is the cursor's unless that post was deleted.
       meta={
-        feed.cursor
-          ? { path: urls.posts(formatCursor(feed.cursor)), title: 'Older posts' }
+        cursor && posts[0]
+          ? { path: urls.posts(formatCursor(posts[0])), title: 'Older posts' }
           : { path: urls.home() }
       }
       styles={HOME_PAGE_STYLES}
