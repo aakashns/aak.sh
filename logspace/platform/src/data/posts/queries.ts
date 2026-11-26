@@ -20,6 +20,9 @@ export const PAGE_SIZE = 50
 // cursor is this page's last post; the newer page's is the post just above that page.
 export interface PostsPage {
   readonly posts: readonly Post[]
+  // This page's own cursor, the post just above it, for its canonical URL: a cursor for a
+  // deleted post shows the same posts as the one for the next post up. Undefined for the newest.
+  readonly cursor?: PostCursor | undefined
   readonly newer?: PostCursor | 'newest' | undefined
   readonly older?: PostCursor | undefined
 }
@@ -112,6 +115,7 @@ export class PostQueries extends Context.Service<
         let imageRows = yield* selectImages(posts.map((post) => post.id))
         return {
           posts: present(posts, imageRows),
+          cursor: newer[0],
           newer: newer.length === 0 ? undefined : (newer[PAGE_SIZE] ?? ('newest' as const)),
           older: rows.length > PAGE_SIZE ? posts.at(-1) : undefined,
         }

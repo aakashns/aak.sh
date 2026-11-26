@@ -43,7 +43,9 @@ const home = Effect.gen(function* () {
     <Document
       page={page}
       meta={
-        before === null ? { path: urls.home() } : { path: urls.posts(before), title: 'Older posts' }
+        feed.cursor
+          ? { path: urls.posts(formatCursor(feed.cursor)), title: 'Older posts' }
+          : { path: urls.home() }
       }
       styles={HOME_PAGE_STYLES}
       // The banner, when there's one, is at the top, above the first post.

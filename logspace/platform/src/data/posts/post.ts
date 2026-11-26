@@ -163,8 +163,8 @@ export function getPostFileNames(post: PostRecord): string[] {
 }
 
 // Where a page of posts starts or ends: a post's date and id, which order posts (newest first,
-// then by id among posts from the same second, as dates are UTC and so sort as text). In a page's URL it's like
-// "20261016131200-fc7p7vjhx6", and it still works after the post is deleted or edited.
+// then by id among posts from the same second, as dates are UTC and so sort as text). In a page's
+// URL it's like "20261016131200-fc7p7vjhx6", and it still works after the post is deleted.
 export interface PostCursor {
   readonly date: string
   readonly id: string
@@ -178,5 +178,12 @@ export function parseCursor(text: string): PostCursor | undefined {
   let match = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})-([0-9a-z]{10})$/.exec(text)
   if (!match) return undefined
   let [, year, month, day, hour, minute, second, id = ''] = match
-  return { date: `${year}-${month}-${day}T${hour}:${minute}:${second}Z`, id }
+  let date = `${year}-${month}-${day}T${hour}:${minute}:${second}Z`
+  // Only a real time, which comes back the same from Date, rather than moved (February 31 to
+  // March 3) or invalid.
+  let time = Date.parse(date)
+  if (Number.isNaN(time) || new Date(time).toISOString() !== date.replace('Z', '.000Z')) {
+    return undefined
+  }
+  return { date, id }
 }
