@@ -4,6 +4,9 @@
 
 export const urls = {
   home: () => '/',
+  // The pages of the feed after the home page's, which start at a post's cursor (see
+  // ../data/posts/post.ts).
+  posts: (from: string) => `/?from=${encodeURIComponent(from)}`,
   sitemap: () => '/sitemap.xml',
   rss: () => '/rss.xml',
   robots: () => '/robots.txt',

@@ -21,6 +21,8 @@ import datesInUtc from '../../db/migrations/0009_dates_in_utc.sql' with { type: 
 import dropArticles from '../../db/migrations/0010_drop_articles.sql' with { type: 'text' }
 import createUsers from '../../db/migrations/0011_create_users.sql' with { type: 'text' }
 import dropPushSubscriptions from '../../db/migrations/0013_drop_push_subscriptions.sql' with { type: 'text' }
+import indexPostsByDate from '../../db/migrations/0014_index_posts_by_date.sql' with { type: 'text' }
+import normalizePostDates from '../../db/migrations/0015_normalize_post_dates.sql' with { type: 'text' }
 import { AppConfig } from './config.ts'
 
 const MIGRATIONS = [
@@ -36,6 +38,8 @@ const MIGRATIONS = [
   { id: '0010', name: 'drop_articles', sql: dropArticles },
   { id: '0011', name: 'create_users', sql: createUsers },
   { id: '0013', name: 'drop_push_subscriptions', sql: dropPushSubscriptions },
+  { id: '0014', name: 'index_posts_by_date', sql: indexPostsByDate },
+  { id: '0015', name: 'normalize_post_dates', sql: normalizePostDates },
 ]
 
 const JOURNAL = 'data_table_migrations'

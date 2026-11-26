@@ -26,7 +26,13 @@ describe('parsePostRecord', () => {
       message: expect.stringMatching(/Expected 10 lowercase letters and digits/),
     })
     expect(issues({ ...text, id: ID.toUpperCase() })[0]?.field).toBe('id')
-    for (let date of ['2026-10-16', '2026-10-16T18:42:00+05:30']) {
+    for (let date of [
+      '2026-10-16',
+      '2026-10-16T18:42:00+05:30',
+      // Times Date would move to others.
+      '2026-02-30T12:00:00Z',
+      '2026-02-28T24:00:00Z',
+    ]) {
       expect(issues({ ...text, date })[0]).toMatchObject({
         field: 'date',
         message: expect.stringMatching(/Expected a UTC date/),

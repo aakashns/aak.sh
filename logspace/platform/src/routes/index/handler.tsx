@@ -1,34 +1,53 @@
-// The home page: the site's introduction, and every post, newest first.
+// The home page: the site's introduction, and the newest posts, with links to pages of older
+// ones, which are the home page from a post: /?from=<its cursor> (see PostQueries.page).
 import { Effect } from 'effect'
 import { HttpRouter } from 'effect/http'
 
 import { Document } from '../../components/document.tsx'
 import { LinkPreviews } from '../../data/link-previews/link-previews.ts'
+import { formatCursor, parseCursor } from '../../data/posts/post.ts'
 import { getPriorityImage } from '../../data/posts/presentation.ts'
 import { PostQueries } from '../../data/posts/queries.ts'
 import { configuredSite } from '../../data/site/queries.ts'
 import { getBannerSrcset, getSiteImageHref } from '../../data/site/site-images.ts'
 import { subscriptionsStatus } from '../../data/site/subscriptions.ts'
-import { pageContext, pageResponse } from '../../lib/http/pages.ts'
+import { pageContext, pageResponse, requestUrl } from '../../lib/http/pages.ts'
+import { notFound, redirect } from '../../lib/http/responses.ts'
 import { urls } from '../../lib/urls.ts'
 import { BANNER_IMAGE_SIZES, HOME_PAGE_STYLES, HomePage } from './page.tsx'
 
 const home = Effect.gen(function* () {
+  let { searchParams } = yield* requestUrl
+  let from = searchParams.get('from')
+  let cursor = from === null ? undefined : parseCursor(from)
+  if (from !== null && !cursor) return notFound()
+  let feed = yield* (yield* PostQueries).page(cursor)
+  // No posts from the cursor down, after they were deleted, or they're the newest.
+  if (!feed) return redirect(urls.home())
+
   let page = yield* pageContext
   let site = yield* configuredSite
-  let posts = yield* (yield* PostQueries).all
   let previews = yield* LinkPreviews
   let subscriptions = yield* subscriptionsStatus
+  let { posts } = feed
   let { bannerImage } = site
   let bannerSrcset = bannerImage && getBannerSrcset(bannerImage)
   let items = yield* Effect.forEach(posts, (post) =>
     Effect.map(previews.forPost(post), (preview) => ({ post, preview })),
   )
+  let newer =
+    feed.newer === 'newest' ? urls.home() : feed.newer && urls.posts(formatCursor(feed.newer))
+  let older = feed.older && urls.posts(formatCursor(feed.older))
   return pageResponse(
     page,
     <Document
       page={page}
-      meta={{ path: urls.home() }}
+      // A page is at its first post's URL, which is the cursor's unless that post was deleted.
+      meta={
+        cursor && posts[0]
+          ? { path: urls.posts(formatCursor(posts[0])), title: 'Older posts' }
+          : { path: urls.home() }
+      }
       styles={HOME_PAGE_STYLES}
       // The banner, when there's one, is at the top, above the first post.
       preloadImage={
@@ -41,7 +60,13 @@ const home = Effect.gen(function* () {
           : posts[0] && getPriorityImage(posts[0])
       }
     >
-      <HomePage site={site} items={items} subscribe={subscriptions._tag === 'Open'} />
+      <HomePage
+        site={site}
+        items={items}
+        subscribe={subscriptions._tag === 'Open'}
+        newer={newer}
+        older={older}
+      />
     </Document>,
   )
 })
