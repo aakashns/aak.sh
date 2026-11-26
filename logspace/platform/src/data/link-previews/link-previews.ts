@@ -1,8 +1,9 @@
 // The preview card for the first link in a text post. Pages never wait on other sites: the first
 // time a link is seen, its title, description, and image are fetched in the background and saved
 // to a cache file, and until then (or if the site doesn't share them) the card shows just the
-// domain. Deleting the cache file just means previews are fetched again, and so does a cache file
-// that can't be read.
+// domain. The composer's preview is the exception: it waits for the fetch, or the card would
+// only show up when the next preview is asked for. Deleting the cache file just means previews
+// are fetched again, and so does a cache file that can't be read.
 //
 // The image is fetched with the rest, and saved to media storage as WebP copies at the widths
 // pages show photos at, so the card loads from this site, at the size it's shown, and readers'
@@ -13,6 +14,7 @@ import * as path from 'node:path'
 import {
   Clock,
   Context,
+  Deferred,
   Effect,
   FileSystem,
   Layer,
@@ -70,8 +72,12 @@ const LINK_IMAGE_NAME = /^[0-9a-f]{12}-\d+\.webp$/
 export class LinkPreviews extends Context.Service<
   LinkPreviews,
   {
-    // Text posts get a preview card for the first link in their caption.
-    readonly forPost: (post: Post) => Effect.Effect<LinkPreview | undefined>
+    // Text posts get a preview card for the first link in their caption. With `wait`, a link
+    // that's being fetched is waited for (the fetches time out), instead of shown as its domain.
+    readonly forPost: (
+      post: Post,
+      options?: { readonly wait?: boolean },
+    ) => Effect.Effect<LinkPreview | undefined>
     // A saved link image's file, by the name in its URL.
     readonly image: (name: string) => Effect.Effect<StoredFile | undefined>
   }
@@ -101,7 +107,8 @@ export class LinkPreviews extends Context.Service<
           ),
         ),
       )
-      let inFlight = new Set<string>()
+      // Each fetch in flight, done when its entry is saved, or it fails or is interrupted.
+      let inFlight = new Map<string, Deferred.Deferred<void>>()
       let scope = yield* Effect.scope
       let cacheWrites = yield* Semaphore.make(1)
 
@@ -183,10 +190,13 @@ export class LinkPreviews extends Context.Service<
           })
         })
 
+      // The link's fetch, started unless it already is, or none if too many are in flight.
       let refresh = Effect.fnUntraced(function* (url: string) {
+        let fetching = inFlight.get(url)
         // No unbounded task queue: a later page request retries work skipped while saturated.
-        if (inFlight.has(url) || inFlight.size >= 4) return
-        inFlight.add(url)
+        if (fetching || inFlight.size >= 4) return fetching
+        let done = yield* Deferred.make<void>()
+        inFlight.set(url, done)
         yield* Effect.gen(function* () {
           // Names the site, so the sites whose links are previewed can see who's asking.
           let { siteUrl = '' } = yield* siteConfig.saved
@@ -198,13 +208,19 @@ export class LinkPreviews extends Context.Service<
           Effect.catchCause((cause) =>
             Effect.logError(`Couldn't save the link preview for ${url}`, cause),
           ),
-          Effect.ensuring(Effect.sync(() => inFlight.delete(url))),
+          Effect.ensuring(
+            Effect.andThen(
+              Effect.sync(() => inFlight.delete(url)),
+              Deferred.succeed(done, undefined),
+            ),
+          ),
           Effect.forkIn(scope),
         )
+        return done
       })
 
       return LinkPreviews.of({
-        forPost: Effect.fnUntraced(function* (post) {
+        forPost: Effect.fnUntraced(function* (post, options) {
           let url = post.type === 'text' ? getFirstLink(post.caption) : undefined
           if (!url) return undefined
           let entry = entries.get(url)
@@ -212,7 +228,13 @@ export class LinkPreviews extends Context.Service<
           let stale = entry?.failed
             ? now - entry.fetchedAt > RETRY_FAILED_AFTER
             : entry?.metadata?.image !== undefined && !entry.image
-          if (!entry || stale) yield* refresh(url)
+          if (!entry || stale) {
+            let fetching = yield* refresh(url)
+            if (fetching && options?.wait) {
+              yield* Deferred.await(fetching)
+              entry = entries.get(url)
+            }
+          }
           return {
             url,
             domain: getDomain(url),

@@ -1,5 +1,8 @@
 // The composer, where posts are written, edited, and deleted.
 import { afterAll, beforeEach, describe, expect, it } from 'bun:test'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { Effect } from 'effect'
 
 import { capture, defined, makeTestApp } from '../../../../test/app.ts'
@@ -10,7 +13,21 @@ import { PostQueries } from '../../../data/posts/queries.ts'
 import { MediaStorage, mediaKeys } from '../../../lib/media-storage.ts'
 import { newPostEmail } from './email.tsx'
 
-const app = makeTestApp()
+// Links in captions are previewed from this page, not the internet, and cached apart from other
+// tests' previews.
+const cacheDir = mkdtempSync(join(tmpdir(), 'logspace-compose-'))
+const app = makeTestApp(
+  { cacheDir },
+  {
+    network: {
+      resolve: async () => ['1.1.1.1'],
+      fetch: async () =>
+        new Response('<title>Remix</title><meta name="description" content="Build better.">', {
+          headers: { 'content-type': 'text/html' },
+        }),
+    },
+  },
+)
 const posts = () => app.run(Effect.flatMap(PostQueries, (queries) => queries.all))
 const findPost = async (id: string) => (await posts()).find((post) => post.id === id)
 const firstPost = async () => defined((await posts())[0], 'a post')
@@ -29,7 +46,10 @@ beforeEach(async () => {
   await app.seedDatabase()
   await app.seedMedia()
 })
-afterAll(app.dispose)
+afterAll(async () => {
+  await app.dispose()
+  rmSync(cacheDir, { recursive: true, force: true })
+})
 
 describe('the composer', () => {
   let photo = (name: string) =>
@@ -184,6 +204,9 @@ describe('the composer', () => {
     ).text()
     expect(events).toContain('data: selector #composer-preview\ndata: mode inner\n')
     expect(events).toContain('Hello <a target="_blank" rel="noopener" href="https://remix.run">')
+    // A link's card is shown the first time it's previewed, once its page is fetched.
+    expect(events).toContain('Remix')
+    expect(events).toContain('Build better.')
     // An edit's preview keeps the post's date.
     expect(events).toContain(`datetime="${post.date}"`)
     expect((await findPost(post.id))?.caption).toBe(post.caption)

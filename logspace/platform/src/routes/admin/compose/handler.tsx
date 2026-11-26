@@ -80,16 +80,20 @@ const composed = (values: ComposeValues, published: PostRecord | undefined) =>
     composePost(values, DateTime.formatIso(now).slice(0, 19) + 'Z', published),
   )
 
-// The composer for `values`, with its post as it'd be saved now.
+// The composer for `values`, with its post as it'd be saved now. The preview as you type waits
+// for a new link's card, which is shown once, when the preview is asked for.
 const composerProps = (
   values: ComposeValues,
   published: PostRecord | undefined,
   issues?: readonly PostIssue[],
+  options?: { waitForLink?: boolean },
 ) =>
   Effect.gen(function* () {
     let post = yield* (yield* PostQueries).preview(yield* composed(values, published))
     let { siteUrl = '' } = yield* (yield* SiteConfigQueries).saved
-    let linkPreview = yield* (yield* LinkPreviews).forPost(post)
+    let linkPreview = yield* (yield* LinkPreviews).forPost(post, {
+      wait: options?.waitForLink === true,
+    })
     return { values, post, linkPreview, siteUrl, issues, published: published !== undefined }
   })
 
@@ -166,7 +170,9 @@ const previewComposer = adminOnly(() =>
     let { values, published } = yield* readComposer
     return patch([
       COMPOSER_IDS.preview,
-      <ComposerPreview {...yield* composerProps(values, published)} />,
+      <ComposerPreview
+        {...yield* composerProps(values, published, undefined, { waitForLink: true })}
+      />,
       'inner',
     ])
   }),

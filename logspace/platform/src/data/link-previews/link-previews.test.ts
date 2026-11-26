@@ -281,6 +281,33 @@ describe('public destination policy', () => {
     }
   })
 
+  it('waits for a link being fetched when asked, so its first preview has its card', async () => {
+    let bytes = await Bun.file(`${TEST_CONTENT_DIR}/posts/t83tytis1i/cover.jpg`).bytes()
+    let page = Promise.withResolvers<void>()
+    let h = await harness({
+      resolve: async () => ['1.1.1.1'],
+      fetch: async (url) => {
+        if (url.pathname === '/photo.jpg') {
+          return new Response(bytes, { headers: { 'content-type': 'image/jpeg' } })
+        }
+        await page.promise
+        return html('<title>Waited</title><meta property="og:image" content="/photo.jpg">')
+      },
+    })
+    try {
+      let url = 'https://public.example/waited'
+      expect((await h.start(url))?.title).toBeUndefined()
+      // A second preview waits for the fetch the first started.
+      let waited = h.app.run(h.previews.forPost(post(url), { wait: true }))
+      page.resolve()
+      let result = await waited
+      expect(result?.title).toBe('Waited')
+      expect(result?.image?.src).toBeDefined()
+    } finally {
+      await h.dispose()
+    }
+  })
+
   it('caps redirect chains and HTML bytes', async () => {
     let calls = 0
     let h = await harness({
