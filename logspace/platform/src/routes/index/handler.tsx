@@ -1,34 +1,59 @@
-// The home page: the site's introduction, and every post, newest first.
+// The home page: the site's introduction, and the newest posts, with links to pages of older
+// ones, which are the home page with a cursor: /?before=… or /?after=… (see PostQueries.page).
 import { Effect } from 'effect'
 import { HttpRouter } from 'effect/http'
 
 import { Document } from '../../components/document.tsx'
 import { LinkPreviews } from '../../data/link-previews/link-previews.ts'
+import { formatCursor, parseCursor } from '../../data/posts/post.ts'
 import { getPriorityImage } from '../../data/posts/presentation.ts'
 import { PostQueries } from '../../data/posts/queries.ts'
 import { configuredSite } from '../../data/site/queries.ts'
 import { getBannerSrcset, getSiteImageHref } from '../../data/site/site-images.ts'
 import { subscriptionsStatus } from '../../data/site/subscriptions.ts'
-import { pageContext, pageResponse } from '../../lib/http/pages.ts'
+import { pageContext, pageResponse, requestUrl } from '../../lib/http/pages.ts'
+import { notFound, redirect } from '../../lib/http/responses.ts'
 import { urls } from '../../lib/urls.ts'
 import { BANNER_IMAGE_SIZES, HOME_PAGE_STYLES, HomePage } from './page.tsx'
 
 const home = Effect.gen(function* () {
+  let { searchParams } = yield* requestUrl
+  let before = searchParams.get('before')
+  let after = searchParams.get('after')
+  let cursor = before ?? after
+  let parsed = cursor === null ? undefined : parseCursor(cursor)
+  if ((before !== null && after !== null) || (cursor !== null && !parsed)) return notFound()
+  let feed = yield* (yield* PostQueries).page(
+    parsed && (before !== null ? { before: parsed } : { after: parsed }),
+  )
+  // A page the cursor no longer leads to, after posts were deleted, or that's now the newest.
+  if (!feed) return redirect(urls.home())
+
   let page = yield* pageContext
   let site = yield* configuredSite
-  let posts = yield* (yield* PostQueries).all
   let previews = yield* LinkPreviews
   let subscriptions = yield* subscriptionsStatus
+  let { posts } = feed
   let { bannerImage } = site
   let bannerSrcset = bannerImage && getBannerSrcset(bannerImage)
   let items = yield* Effect.forEach(posts, (post) =>
     Effect.map(previews.forPost(post), (preview) => ({ post, preview })),
   )
+  let newer =
+    feed.newer === 'newest' ? urls.home() : feed.newer && urls.newerPosts(formatCursor(feed.newer))
+  let older = feed.older && urls.olderPosts(formatCursor(feed.older))
   return pageResponse(
     page,
     <Document
       page={page}
-      meta={{ path: urls.home() }}
+      meta={
+        cursor === null
+          ? { path: urls.home() }
+          : {
+              path: before !== null ? urls.olderPosts(cursor) : urls.newerPosts(cursor),
+              title: 'Older posts',
+            }
+      }
       styles={HOME_PAGE_STYLES}
       // The banner, when there's one, is at the top, above the first post.
       preloadImage={
@@ -41,7 +66,13 @@ const home = Effect.gen(function* () {
           : posts[0] && getPriorityImage(posts[0])
       }
     >
-      <HomePage site={site} items={items} subscribe={subscriptions._tag === 'Open'} />
+      <HomePage
+        site={site}
+        items={items}
+        subscribe={subscriptions._tag === 'Open'}
+        newer={newer}
+        older={older}
+      />
     </Document>,
   )
 })

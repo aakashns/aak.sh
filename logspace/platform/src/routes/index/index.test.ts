@@ -1,10 +1,12 @@
 // The home page, and what every page has.
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'bun:test'
 import { Effect } from 'effect'
+import { SqlClient } from 'effect/sql'
 
-import { capture, makeTestApp } from '../../../test/app.ts'
+import { capture, defined, makeTestApp } from '../../../test/app.ts'
 import { PostCommands } from '../../data/posts/commands.ts'
 import { PostQueries } from '../../data/posts/queries.ts'
+import { toPostRow } from '../../data/posts/rows.ts'
 import { newPostEmail } from '../admin/compose/email.tsx'
 
 const app = makeTestApp()
@@ -143,5 +145,85 @@ describe('the home page', () => {
       '<div class="caption" data-ignore><p>Hi &lt;b data-on:click="alert(1)"&gt;there&lt;/b&gt;',
     )
     expect(html).not.toMatch(/<b data-on/)
+  })
+})
+
+describe('the feed’s pages', () => {
+  // 116 text posts older than the 4 samples, so 120 in all: pages of 50, 50, and 20. They're
+  // posted three to a second, so the first page ends partway through a second's posts.
+  let addPosts = () =>
+    app.run(
+      Effect.gen(function* () {
+        let sql = yield* SqlClient.SqlClient
+        let rows = Array.from({ length: 116 }, (_, index) =>
+          toPostRow({
+            id: `p${String(index).padStart(9, '0')}`,
+            type: 'text',
+            date: new Date(Date.UTC(2020, 0, 1) - Math.floor(index / 3) * 1000)
+              .toISOString()
+              .replace('.000', ''),
+            caption: `Post ${index}`,
+          }),
+        )
+        yield* sql`insert into posts ${sql.insert(rows.map((row) => ({ ...row })))}`
+      }).pipe(Effect.orDie),
+    )
+  let ids = (html: string) =>
+    [...html.matchAll(/<a href="\/posts\/(\w+)" aria-hidden="true"/g)].map(([, id = '']) => id)
+  let link = (html: string, rel: 'prev' | 'next') =>
+    new RegExp(`href="([^"]+)" rel="${rel}"`).exec(html)?.[1]
+
+  it('shows 50 posts a page, linking to older and newer pages by cursor', async () => {
+    await addPosts()
+    let all = (await posts()).map((post) => post.id)
+    expect(all).toHaveLength(120)
+
+    let home = await (await app.fetch('/')).text()
+    expect(ids(home)).toEqual(all.slice(0, 50))
+    expect(link(home, 'prev')).toBeUndefined()
+    // The last post on the page shares its second with the first on the next.
+    expect(link(home, 'next')).toBe('/?before=20191231235945-p000000047')
+    expect(home).toContain('Older posts')
+    expect(home).not.toContain('Newer posts')
+
+    let second = await (await app.fetch('/?before=20191231235945-p000000047')).text()
+    expect(ids(second)).toEqual(all.slice(50, 100))
+    expect(link(second, 'prev')).toBe('/')
+    expect(second).toMatch(/<title>Older posts · Test Site<\/title>/)
+    expect(second).toMatch(
+      /<link rel="canonical" href="https:\/\/example\.com\/\?before=20191231235945-p000000047"/,
+    )
+
+    let third = await (await app.fetch(defined(link(second, 'next'), 'an older page'))).text()
+    expect(ids(third)).toEqual(all.slice(100))
+    expect(link(third, 'next')).toBeUndefined()
+    expect(third).not.toContain('Older posts</a>')
+
+    // Back from the last page is the second again, and back from that is the home page.
+    let newer = defined(link(third, 'prev'), 'a newer page')
+    expect(newer).toMatch(/^\/\?after=/)
+    let again = await (await app.fetch(newer)).text()
+    expect(ids(again)).toEqual(all.slice(50, 100))
+    expect(link(again, 'prev')).toBe('/')
+    expect(link(again, 'next')).toBe(link(second, 'next'))
+  })
+
+  it('has no links when every post fits on the home page', async () => {
+    let home = await (await app.fetch('/')).text()
+    expect(home).not.toContain('class="pagination"')
+  })
+
+  it('sends pages a cursor no longer leads to home, and rejects ones that aren’t cursors', async () => {
+    await addPosts()
+    // Nothing's older than the oldest post, and what's newer than the 50th fits on the home page.
+    let oldest = '19991231000000-0000000000'
+    expect((await app.fetch(`/?before=${oldest}`)).headers.get('Location')).toBe('/')
+    expect((await app.fetch('/?after=20191231235945-p000000047')).status).toBe(302)
+    expect((await app.fetch('/?after=20191231235945-p000000047')).headers.get('Location')).toBe('/')
+    for (let query of ['before=fc7p7vjhx6', 'after=2026']) {
+      expect((await app.fetch(`/?${query}`)).status).toBe(404)
+    }
+    let both = '20191231235945-p000000047'
+    expect((await app.fetch(`/?before=${both}&after=${both}`)).status).toBe(404)
   })
 })

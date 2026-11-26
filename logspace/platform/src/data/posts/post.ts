@@ -162,6 +162,21 @@ export function getPostFileNames(post: PostRecord): string[] {
   }
 }
 
-export function sortNewestFirst<T extends { readonly date: string }>(posts: readonly T[]): T[] {
-  return posts.toSorted((a, b) => Date.parse(b.date) - Date.parse(a.date))
+// Where a page of posts starts or ends: a post's date and id, which order posts (newest first,
+// then by id among posts from the same second, as dates are UTC and so sort as text). In a page's URL it's like
+// "20261016131200-fc7p7vjhx6", and it still works after the post is deleted or edited.
+export interface PostCursor {
+  readonly date: string
+  readonly id: string
+}
+
+export function formatCursor({ date, id }: PostCursor): string {
+  return `${date.replace(/\D/g, '')}-${id}`
+}
+
+export function parseCursor(text: string): PostCursor | undefined {
+  let match = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})-([0-9a-z]{10})$/.exec(text)
+  if (!match) return undefined
+  let [, year, month, day, hour, minute, second, id = ''] = match
+  return { date: `${year}-${month}-${day}T${hour}:${minute}:${second}Z`, id }
 }

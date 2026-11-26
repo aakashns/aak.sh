@@ -1,5 +1,5 @@
 import type { Html } from '#jsx/jsx-runtime'
-import { RssIcon } from '../../components/icons.tsx'
+import { CaretLeftIcon, CaretRightIcon, RssIcon } from '../../components/icons.tsx'
 import { POST_STYLES } from '../../components/post.tsx'
 import { stylesheet } from '../../components/stylesheet.ts'
 
@@ -17,12 +17,14 @@ export const HOME_PAGE_STYLES = POST_STYLES + stylesheet(css)
 export const BANNER_IMAGE_SIZES = '(min-width: 38rem) 38rem, 100vw'
 
 // The banner and introduction set at /admin/branding, with a Subscribe button while subscribing
-// is open and a link to the RSS feed, then the feed. The banner, heading, and subheading can be
-// left out.
+// is open and a link to the RSS feed, then the feed, then links to the pages of newer and older
+// posts, if there are any. The banner, heading, and subheading can be left out.
 export function HomePage(props: {
   site: SiteConfig
   items: readonly FeedItem[]
   subscribe: boolean
+  newer?: string | undefined
+  older?: string | undefined
 }): Html {
   let { bannerImage, bannerImageAlt, heroHeading, heroSubheading, siteUrl } = props.site
   let srcset = bannerImage && getBannerSrcset(bannerImage)
@@ -52,6 +54,22 @@ export function HomePage(props: {
         </div>
       </section>
       <Feed items={props.items} siteUrl={siteUrl} />
+      {props.newer || props.older ? (
+        <nav aria-label="More posts" class="pagination">
+          {props.newer ? (
+            <Button href={props.newer} variant="outline" rel="prev">
+              <CaretLeftIcon />
+              Newer posts
+            </Button>
+          ) : null}
+          {props.older ? (
+            <Button href={props.older} variant="outline" rel="next" class="older">
+              Older posts
+              <CaretRightIcon />
+            </Button>
+          ) : null}
+        </nav>
+      ) : null}
     </>
   )
 }
