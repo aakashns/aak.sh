@@ -33,7 +33,8 @@ class Application {
         cwd: this.directory,
         // No developer credentials, proxy settings, database paths, or dotenv files.
         env: { PATH: process.env.PATH, NODE_ENV: 'test' },
-        stdio: ['ignore', 'pipe', 'pipe'],
+        // Its stdin releases held pages (see server.ts).
+        stdio: ['pipe', 'pipe', 'pipe'],
       },
     )
     this.child = child
@@ -73,6 +74,14 @@ class Application {
       // readline.close() pauses its input even when the log listener still needs it.
       child.stdout.resume()
     }
+  }
+
+  // Other sites' pages, faked by server.ts: one was asked for, and one under /held/ is sent.
+  async fetched(path: string) {
+    await expect.poll(() => this.logs.includes(`FETCH ${path}\n`)).toBe(true)
+  }
+  release(path: string) {
+    this.child?.stdin?.write(`release ${path}\n`)
   }
 
   async stop() {

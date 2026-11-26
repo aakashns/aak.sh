@@ -281,6 +281,87 @@ describe('public destination policy', () => {
     }
   })
 
+  it('shows a link as loading until its card is fetched, which `card` waits for', async () => {
+    let bytes = await Bun.file(`${TEST_CONTENT_DIR}/posts/t83tytis1i/cover.jpg`).bytes()
+    let page = Promise.withResolvers<void>()
+    let h = await harness({
+      resolve: async () => ['1.1.1.1'],
+      fetch: async (url) => {
+        if (url.pathname === '/photo.jpg') {
+          return new Response(bytes, { headers: { 'content-type': 'image/jpeg' } })
+        }
+        await page.promise
+        return html('<title>Waited</title><meta property="og:image" content="/photo.jpg">')
+      },
+    })
+    try {
+      let url = 'https://public.example/waited'
+      let loading = await h.start(url)
+      expect(loading).toMatchObject({ domain: 'public.example', loading: true })
+      expect(loading?.title).toBeUndefined()
+      // The card joins the fetch the preview started.
+      let card = h.app.run(h.previews.card(url))
+      page.resolve()
+      let result = await card
+      expect(result).toMatchObject({ title: 'Waited', loading: false })
+      expect(result.image?.src).toBeDefined()
+      expect(await h.read(url)).toMatchObject({ title: 'Waited', loading: false })
+    } finally {
+      await h.dispose()
+    }
+  })
+
+  it('makes a card wait for a free fetch, and gives up on it at its deadline', async () => {
+    let held = new Map<string, PromiseWithResolvers<void>>()
+    let started = Promise.withResolvers<void>()
+    let h = await harness({
+      resolve: async () => ['1.1.1.1'],
+      fetch: async (url, options) => {
+        if (!url.pathname.startsWith('/held/')) return html(`<title>${url.pathname}</title>`)
+        let release = Promise.withResolvers<void>()
+        held.set(url.pathname, release)
+        if (held.size === 4) started.resolve()
+        options.signal?.addEventListener('abort', () => release.reject(new Error('aborted')))
+        await release.promise
+        return html(`<title>${url.pathname}</title>`)
+      },
+    })
+    let deadline = Promise.withResolvers<void>()
+    let clock = Effect.runSync(Clock.Clock)
+    let cardClock: Clock.Clock = {
+      ...clock,
+      currentTimeMillisUnsafe: () => clock.currentTimeMillisUnsafe(),
+      currentTimeNanosUnsafe: () => clock.currentTimeNanosUnsafe(),
+      monotonicTimeNanosUnsafe: () => clock.monotonicTimeNanosUnsafe(),
+      sleep: (duration) =>
+        Duration.toMillis(duration) === 15_000
+          ? Effect.promise(() => deadline.promise)
+          : clock.sleep(duration),
+    }
+    try {
+      for (let i = 0; i < 4; i++) await h.start(`https://public.example/held/${i}`)
+      await started.promise
+      // All four fetches are busy: the fifth link waits for one, and is fetched when it's free.
+      expect(await h.start('https://public.example/fifth')).toMatchObject({ loading: true })
+      let fifth = h.app.run(h.previews.card('https://public.example/fifth'))
+      held.get('/held/0')?.resolve()
+      expect(await fifth).toMatchObject({ title: '/fifth', loading: false })
+      // Busy again, until the deadline: the card is just the link's domain.
+      await h.start('https://public.example/held/4')
+      let sixth = h.app.run(
+        h.previews
+          .card('https://public.example/sixth')
+          .pipe(Effect.provideService(Clock.Clock, cardClock)),
+      )
+      deadline.resolve()
+      let expired = await sixth
+      expect(expired).toMatchObject({ domain: 'public.example', loading: false })
+      expect(expired.title).toBeUndefined()
+    } finally {
+      await h.dispose()
+    }
+  })
+
   it('caps redirect chains and HTML bytes', async () => {
     let calls = 0
     let h = await harness({

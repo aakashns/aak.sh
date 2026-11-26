@@ -51,6 +51,61 @@ test('a text post, previewed as it’s typed', async ({ page }) => {
   await expect(page.locator('main')).toContainText('A text post from the browser')
 })
 
+// The fixture's fake sites hold a page under /held/ until it's released.
+const LOADING = 'Loading link preview…'
+const linkCard = (page: Page) => page.locator('#composer-preview .link-preview')
+// One input event, like a paste. (Links show without their scheme, so caption() can't check.)
+const paste = (page: Page, text: string) => page.getByLabel('Caption', { exact: true }).fill(text)
+
+// Once a link's card is fetched and saved, any request still waiting for it has been answered.
+async function cardSaved(page: Page, url: string) {
+  let query = new URLSearchParams({ id: `link-card-${crypto.randomUUID()}`, url })
+  let response = await page.request.get(`/admin/posts/link-card?${query}`)
+  expect(await response.text()).toContain(`Page ${new URL(url).pathname}`)
+}
+
+test('a pasted link previews right away, then its card loads without typing again', async ({
+  page,
+  app,
+}) => {
+  await openComposer(page)
+  await paste(page, 'Worth reading https://links.example/held/one')
+  await expect(linkCard(page)).toContainText('links.example')
+  await expect(linkCard(page)).toContainText(LOADING)
+  await app.fetched('/held/one')
+  app.release('/held/one')
+  await expect(linkCard(page)).toContainText('Page /held/one')
+  await expect(linkCard(page)).not.toContainText(LOADING)
+  await expect(page.locator('#composer-preview')).toContainText('Worth reading')
+})
+
+test('a link’s late card doesn’t replace a newer link’s', async ({ page, app }) => {
+  await openComposer(page)
+  await paste(page, 'https://links.example/held/old')
+  await expect(linkCard(page)).toContainText(LOADING)
+  await app.fetched('/held/old')
+  await paste(page, 'https://links.example/new')
+  await expect(linkCard(page)).toContainText('Page /new')
+  app.release('/held/old')
+  await cardSaved(page, 'https://links.example/held/old')
+  await expect(linkCard(page)).toHaveCount(1)
+  await expect(linkCard(page)).toContainText('Page /new')
+})
+
+test('a link’s late card doesn’t replace photos added since', async ({ page, app }) => {
+  await openComposer(page)
+  await paste(page, 'https://links.example/held/photo')
+  await expect(linkCard(page)).toContainText(LOADING)
+  await app.fetched('/held/photo')
+  await upload(page, 'Add photos', photo)
+  await loadedImages(page, '#composer-preview .carousel-inline img', 1)
+  await expect(linkCard(page)).toHaveCount(0)
+  app.release('/held/photo')
+  await cardSaved(page, 'https://links.example/held/photo')
+  await expect(linkCard(page)).toHaveCount(0)
+  await expect(page.locator('#composer-preview .carousel-inline img')).toHaveCount(1)
+})
+
 test('photos upload as they’re chosen, and one can be taken out', async ({ page }) => {
   await openComposer(page)
   await caption(page, 'Two photos, then one')

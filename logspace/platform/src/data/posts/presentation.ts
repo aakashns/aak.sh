@@ -76,6 +76,8 @@ export interface LinkPreview {
   // The saved copy of the link's image.
   readonly image?: Photo | undefined
   readonly smallImage?: boolean | undefined
+  // The link's page hasn't been fetched yet, so this is just its domain for now.
+  readonly loading?: boolean | undefined
 }
 
 // The size and version of one of a post's images, by file name.

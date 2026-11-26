@@ -9,13 +9,19 @@
 // whatever is uploading; while it is, Post is off and the preview waits, since a preview posts the
 // whole form, chosen files and all. Posting is the form's own submission, so without Datastar
 // it's a plain form, whose files are uploaded when it's posted.
+//
+// A link whose page hasn't been fetched shows a loading card, which asks for the finished one on
+// its own, so the rest of the preview needn't wait. Each loading card has an id of its own, which
+// its finished card replaces. The preview posts the id back, so it's kept while the link is (and
+// the card's request with it); a new link, or photos, take the card out, which cancels its
+// request, and anything still on its way for it has nothing to replace.
 import type { Array as Arr } from 'effect'
 
 import type { Child, Html } from '#jsx/jsx-runtime'
 
 import { Tooltip } from '../../../components/controls.tsx'
 import { CloseIcon, ImageIcon, VideoIcon } from '../../../components/icons.tsx'
-import { Caption, POST_STYLES, PostMedia, PostMeta } from '../../../components/post.tsx'
+import { Caption, LinkCard, POST_STYLES, PostMedia, PostMeta } from '../../../components/post.tsx'
 import { stylesheet } from '../../../components/stylesheet.ts'
 import { Button } from '../../../components/ui/button.tsx'
 import {
@@ -52,6 +58,8 @@ export interface ComposerProps {
   // The post as it'd be posted now, its files served from /admin.
   readonly post: Post
   readonly linkPreview?: LinkPreview | undefined
+  // The loading link card's id, while it's loading.
+  readonly linkCardId?: string | undefined
   readonly siteUrl: string
   readonly issues?: readonly PostIssue[] | undefined
   // Whether the post is published, so this is an edit.
@@ -60,6 +68,7 @@ export interface ComposerProps {
 
 const UPDATE_MEDIA = `@post('${urls.admin.postMedia()}', {contentType: 'form'})`
 const PREVIEW = `@post('${urls.admin.postPreview()}', {contentType: 'form'})`
+const LOAD_LINK_CARD = `@get(el.dataset.src, {requestCancellation: 'cleanup'})`
 // Files pasted or dropped are put in the photo button's input and uploaded as if chosen with it,
 // unless something is uploading. Text pasted or dropped has no files, so it's left alone, but a
 // file dropped is kept from opening in the tab.
@@ -356,7 +365,7 @@ function MediaPicker(props: {
 
 // The post as the feed will show it.
 export function ComposerPreview(props: ComposerProps): Html {
-  let { post, linkPreview, siteUrl } = props
+  let { post, linkPreview, linkCardId, siteUrl } = props
   if (post.type === 'text' && !post.captionHtml) {
     return <p class="muted composer-empty">Your post shows here as you write it.</p>
   }
@@ -364,8 +373,33 @@ export function ComposerPreview(props: ComposerProps): Html {
     <article class="feed-post">
       <PostMeta post={post} siteUrl={siteUrl} />
       {post.captionHtml ? <Caption html={post.captionHtml} /> : null}
-      <PostMedia post={post} preview={linkPreview} />
+      {linkPreview && linkCardId ? (
+        <LoadingLinkCard id={linkCardId} preview={linkPreview} />
+      ) : (
+        <PostMedia post={post} preview={linkPreview} />
+      )}
     </article>
+  )
+}
+
+// The link's domain, until its finished card replaces it. Its id and link are posted with the
+// form, outside which it is.
+function LoadingLinkCard(props: { id: string; preview: LinkPreview }): Html {
+  let { id, preview } = props
+  return (
+    <LinkCard
+      preview={preview}
+      attributes={{
+        id,
+        'aria-busy': 'true',
+        'data-src': urls.admin.linkCard(id, preview.url),
+        'data-init': LOAD_LINK_CARD,
+      }}
+    >
+      <input type="hidden" form={COMPOSER_FORM} name="link_card" value={id} />
+      <input type="hidden" form={COMPOSER_FORM} name="link_card_url" value={preview.url} />
+      <p>Loading link preview…</p>
+    </LinkCard>
   )
 }
 

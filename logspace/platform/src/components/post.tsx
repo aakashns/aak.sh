@@ -1,7 +1,7 @@
 // Pieces of a post shared by the feed and the post page.
 import type { Array as Arr } from 'effect'
 
-import { raw, type Html } from '#jsx/jsx-runtime'
+import { raw, type Child, type Html } from '#jsx/jsx-runtime'
 
 import { formatPostDate } from '../data/posts/format.ts'
 import {
@@ -218,14 +218,20 @@ function VideoPlayer(props: { video: Video }): Html {
   )
 }
 
-function LinkCard(props: { preview: LinkPreview }): Html {
-  let { preview } = props
+// A link's card, with more attributes and what goes after its text for the composer's loading one.
+export function LinkCard(props: {
+  preview: LinkPreview
+  attributes?: Record<string, string> | undefined
+  children?: Child
+}): Html {
+  let { preview, attributes, children } = props
   return (
     <a
       href={preview.url}
       target="_blank"
       rel="noopener"
       class={`media-frame link-preview${preview.smallImage ? ' small-card' : ''}`}
+      {...attributes}
     >
       {preview.image ? (
         <PostImage
@@ -238,6 +244,7 @@ function LinkCard(props: { preview: LinkPreview }): Html {
         <span class="link-domain">{preview.domain}</span>
         {preview.title ? <h2>{preview.title}</h2> : null}
         {preview.description ? <p>{preview.description}</p> : null}
+        {children}
       </div>
     </a>
   )
