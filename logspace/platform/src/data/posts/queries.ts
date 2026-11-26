@@ -16,8 +16,8 @@ type ImageRow = ImageInfo & { readonly post_id: string; readonly name: string }
 export const PAGE_SIZE = 50
 
 // A page of the feed, newest first, and the cursors of the pages either side of it: every page is
-// the posts before a cursor, apart from the newest, which is the home page's. Older posts are the
-// ones before this page's last post; the newer page is the one before the post just above it.
+// the posts before a cursor, apart from the newest, which is the home page's. The older page's
+// cursor is this page's last post; the newer page's is the post just above that page.
 export interface PostsPage {
   readonly posts: readonly Post[]
   readonly newer?: PostCursor | 'newest' | undefined
@@ -30,7 +30,8 @@ export class PostQueries extends Context.Service<
     // Every post, newest first.
     readonly all: Effect.Effect<readonly Post[]>
     // The newest page of posts, or the one before a cursor. Undefined when the cursor's page
-    // isn't one of its own: nothing's before it, or nothing's newer than what is (the newest page).
+    // isn't one of its own: nothing's before the cursor, or nothing's after it (so its page is the
+    // newest).
     readonly page: (before?: PostCursor) => Effect.Effect<PostsPage | undefined>
     // A post, with its files at `fileUrl`: the site's own URLs, or full ones, for an email.
     readonly find: (
@@ -55,9 +56,10 @@ export class PostQueries extends Context.Service<
       let sql = yield* SqlClient.SqlClient
       let storage = yield* MediaStorage
 
-      let selectImages = (id?: string) =>
+      // The images of these posts, or of every post.
+      let selectImages = (ids?: readonly string[]) =>
         sql<ImageRow>`select post_id, name, width, height, version from post_images ${
-          id === undefined ? sql`` : sql`where post_id = ${id}`
+          ids === undefined ? sql`` : sql`where ${sql.in('post_id', ids)}`
         }`
 
       // Posts presented with their images' sizes and versions.
@@ -92,45 +94,26 @@ export class PostQueries extends Context.Service<
 
       // Posts are in order of (date, id), which posts_by_date indexes (see db/migrations).
       let page = Effect.fn('PostQueries.page')(function* (before?: PostCursor) {
+        // One more post than the page shows, to tell whether there are older ones.
         let rows = yield* sql<PostRow>`
           select ${sql.literal(POST_COLUMNS)} from posts
           ${before ? sql`where (date, id) < (${before.date}, ${before.id})` : sql``}
-          order by date desc, id desc limit ${PAGE_SIZE}
+          order by date desc, id desc limit ${PAGE_SIZE + 1}
         `
-        let first = rows[0]
-        let last = rows.at(-1)
-        if (!first || !last) return before ? undefined : { posts: [], newer: undefined }
-
-        let [imageRows, newer, older] = yield* Effect.all(
-          [
-            sql<ImageRow>`
-              select post_id, name, width, height, version from post_images
-              where ${sql.in(
-                'post_id',
-                rows.map((row) => row.id),
-              )}
-            `,
-            // The page of newer posts, and the one just above it, which is its cursor.
-            sql<PostCursor>`
-              select date, id from posts where (date, id) > (${first.date}, ${first.id})
+        // The newer page's posts, and one more: the post just above them, its cursor.
+        let newer = before
+          ? yield* sql<PostCursor>`
+              select date, id from posts where (date, id) >= (${before.date}, ${before.id})
               order by date, id limit ${PAGE_SIZE + 1}
-            `,
-            sql`select 1 from posts where (date, id) < (${last.date}, ${last.id}) limit 1`,
-          ],
-          { concurrency: 'unbounded' },
-        )
-        // Nothing newer: this is the newest page, which is the home page's.
-        if (before && newer.length === 0) return undefined
-        let above = newer[PAGE_SIZE]
+            `
+          : []
+        if (before && (rows.length === 0 || newer.length === 0)) return undefined
+        let posts = rows.slice(0, PAGE_SIZE)
+        let imageRows = yield* selectImages(posts.map((post) => post.id))
         return {
-          posts: present(rows, imageRows),
-          newer:
-            newer.length === 0
-              ? undefined
-              : above
-                ? { date: above.date, id: above.id }
-                : ('newest' as const),
-          older: older.length > 0 ? { date: last.date, id: last.id } : undefined,
+          posts: present(posts, imageRows),
+          newer: newer.length === 0 ? undefined : (newer[PAGE_SIZE] ?? ('newest' as const)),
+          older: rows.length > PAGE_SIZE ? posts.at(-1) : undefined,
         }
       }, Effect.orDie)
 
@@ -141,7 +124,7 @@ export class PostQueries extends Context.Service<
         id: string,
         fileUrl?: (id: string, file: string) => string,
       ) {
-        let [rows, imageRows] = yield* Effect.all([selectPost(id), selectImages(id)], {
+        let [rows, imageRows] = yield* Effect.all([selectPost(id), selectImages([id])], {
           concurrency: 'unbounded',
         }).pipe(Effect.orDie)
         return present(rows, imageRows, fileUrl)[0]
@@ -160,7 +143,7 @@ export class PostQueries extends Context.Service<
       })
 
       let preview = Effect.fn('PostQueries.preview')(function* (record: PostRecord) {
-        let imageRows = yield* Effect.orDie(selectImages(record.id))
+        let imageRows = yield* Effect.orDie(selectImages([record.id]))
         let images = new Map(imageRows.map((row) => [row.name, row]))
         return toPost(record, (file) => images.get(file), urls.admin.postFile)
       })
