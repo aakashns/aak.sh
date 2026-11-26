@@ -82,6 +82,10 @@ you can edit. Once the server is set up, it asks to include that at the top of
 ~/.ssh/config, so 'ssh NAME', and ssh to the server's address, log in on the
 new port as your user, as rembox does.
 
+Once it saves the server's details, setup checks for a newer rembox. If
+there is one, it asks whether to upgrade first; if you say yes, it stops and
+tells you how to upgrade, then carry on with 'rembox setup NAME'.
+
 Give the NAME of a server you've added to set it up again: its address, port,
 user, key and name are the defaults, and any you change replace them. Run it any
 time, as often as you like: setup.sh looks at the server as it is now and
@@ -125,6 +129,9 @@ func runSetup(a *App, args []string) error {
 		if err := a.removeServer(saved.Name); err != nil {
 			return err
 		}
+	}
+	if a.offerUpgrade(s.Name) {
+		return nil
 	}
 
 	// Two sessions, each doing all it can, so ssh and sudo ask for a password

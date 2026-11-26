@@ -696,3 +696,73 @@ func TestCompletePath(t *testing.T) {
 		}
 	}
 }
+
+func TestSetupOffersUpgrade(t *testing.T) {
+	ta := newTestApp(t, "0.1.0")
+	ta.withKey(t, "id_ed25519")
+	ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+	ta.typing("203.0.113.10", "", "", "", "box1", "") // the default: upgrade first
+
+	ta.mustRun(t, "setup")
+	out := ta.stdout.String()
+	for _, want := range []string{"Saved box1 (root@203.0.113.10, port 22)",
+		"A new version of rembox is available: 0.1.0 -> 0.2.0",
+		"Upgrade rembox before connecting to box1? [Y/n]",
+		"\n  rembox upgrade\n  rembox setup box1\n"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output missing %q:\n%s", want, out)
+		}
+	}
+	if len(ta.commands) != 0 || ta.srv.Downloads() != 0 {
+		t.Errorf("connected or upgraded: %q", ta.commands)
+	}
+	if got := ta.servers(t); len(got) != 1 || got[0].Name != "box1" {
+		t.Errorf("saved %+v", got)
+	}
+}
+
+func TestSetupOffersUpgradeWithSudo(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("root can write anywhere")
+	}
+	ta := newTestApp(t, "0.1.0")
+	ta.withKey(t, "id_ed25519")
+	ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+	dir := filepath.Dir(ta.exe)
+	if err := os.Chmod(dir, 0o555); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(dir, 0o755) })
+	ta.typing("203.0.113.10", "", "", "", "box1", "y")
+
+	ta.mustRun(t, "setup")
+	if !strings.Contains(ta.stdout.String(), "\n  sudo rembox upgrade\n  rembox setup box1\n") {
+		t.Errorf("doesn't suggest sudo:\n%s", ta.stdout)
+	}
+}
+
+func TestSetupUpgradeDeclined(t *testing.T) {
+	ta := newTestApp(t, "0.1.0")
+	ta.withKey(t, "id_ed25519")
+	ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+	ta.typing("203.0.113.10", "", "", "", "box1", "n", "n")
+
+	ta.mustRun(t, "setup")
+	if len(ta.sessions()) != 2 || !strings.Contains(ta.stdout.String(), "box1 is set up") {
+		t.Errorf("didn't carry on after declining:\n%s", ta.stdout)
+	}
+}
+
+func TestSetupNoUpgradeOffered(t *testing.T) {
+	for _, current := range []string{"0.2.0", "0.3.0", "0.2.0-dev", "dev"} {
+		ta := newTestApp(t, current)
+		ta.withKey(t, "id_ed25519")
+		ta.srv.AddRelease("v0.2.0", "linux", "amd64", []byte("new binary"))
+		ta.typing("203.0.113.10", "", "", "", "box1", "n")
+
+		ta.mustRun(t, "setup")
+		if strings.Contains(ta.stdout.String(), "Upgrade rembox") || len(ta.sessions()) != 2 {
+			t.Errorf("%s: offered an upgrade, or didn't connect:\n%s", current, ta.stdout)
+		}
+	}
+}
