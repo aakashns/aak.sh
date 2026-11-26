@@ -10,6 +10,15 @@ export type PostType = (typeof POST_TYPES)[number]
 // A problem with a post. `field` is the path to the value, like "photos.0.file".
 export type PostIssue = Issue
 
+// Whether `date` is a UTC time to the second, like "2026-10-16T13:12:00Z", and one that exists:
+// it reads back from Date the same, rather than moved (February 30 to March 2, 24:00 to the next
+// day). Posts' dates are all like this, so they sort as text, and cursors can name them.
+export function isUtcDate(date: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(date)) return false
+  let time = Date.parse(date)
+  return !Number.isNaN(time) && new Date(time).toISOString() === date.replace('Z', '.000Z')
+}
+
 // Post ids are 10 lowercase letters and digits (see newPostId).
 export function isPostId(id: unknown): id is string {
   return typeof id === 'string' && /^[0-9a-z]{10}$/.test(id)
@@ -87,13 +96,7 @@ const basePost = {
     valid(isPostId, 'Expected 10 lowercase letters and digits, like "fc7p7vjhx6"'),
   ),
   // When it was posted, in UTC, to the second.
-  date: Schema.String.check(
-    valid(
-      (date: string) =>
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(date) && !Number.isNaN(Date.parse(date)),
-      'Expected a UTC date like "2026-10-16T13:12:00Z"',
-    ),
-  ),
+  date: Schema.String.check(valid(isUtcDate, 'Expected a UTC date like "2026-10-16T13:12:00Z"')),
   city: Schema.optionalKey(Schema.String),
   caption: Schema.optionalKey(Schema.String),
 }
@@ -179,11 +182,6 @@ export function parseCursor(text: string): PostCursor | undefined {
   if (!match) return undefined
   let [, year, month, day, hour, minute, second, id = ''] = match
   let date = `${year}-${month}-${day}T${hour}:${minute}:${second}Z`
-  // Only a real time, which comes back the same from Date, rather than moved (February 31 to
-  // March 3) or invalid.
-  let time = Date.parse(date)
-  if (Number.isNaN(time) || new Date(time).toISOString() !== date.replace('Z', '.000Z')) {
-    return undefined
-  }
+  if (!isUtcDate(date)) return undefined
   return { date, id }
 }

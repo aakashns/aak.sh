@@ -6,7 +6,9 @@ import { BunFileSystem } from '@effect/platform-bun'
 import { Effect, Layer, Redacted, Schema } from 'effect'
 import { SqlClient } from 'effect/sql'
 
-import { makeTestApp, TEST_CONFIG } from '../../test/app.ts'
+import { capture, makeTestApp, TEST_CONFIG } from '../../test/app.ts'
+import { TEST_SITE_CONFIG } from '../../test/seed.ts'
+import { SiteConfigCommands } from '../data/site/commands.ts'
 import { AppConfig } from './config.ts'
 import { DatabaseLive, runMigrations } from './database.ts'
 
@@ -67,8 +69,9 @@ describe('migrations', () => {
       '0011_create_users',
       '0013_drop_push_subscriptions',
       '0014_index_posts_by_date',
+      '0015_normalize_post_dates',
     ])
-    expect(await migrate(file)).toHaveLength(13)
+    expect(await migrate(file)).toHaveLength(14)
     expect(await migrate(file)).toEqual([])
 
     let db = new Database(file, { readonly: true })
@@ -153,6 +156,12 @@ describe('migrations', () => {
         checksum: 'dcd8fa4092d140444fd90d08594b517ba32028268ee5de67fedf2705cf9fa1b5',
         batch: 1,
       },
+      {
+        id: '0015',
+        name: 'normalize_post_dates',
+        checksum: '247e9d0bff168a1f12673f6436b37e080617bedd4ee2bdf5789f4679a404f47e',
+        batch: 1,
+      },
     ])
     let columns = Schema.decodeUnknownSync(Schema.Array(Schema.Struct({ name: Schema.String })))(
       db.query("select name from pragma_table_info('posts')").all(),
@@ -213,5 +222,55 @@ describe('migrations', () => {
       { id: 'offset0003', date: '2026-10-16T18:42:05Z' },
     ])
     db.close()
+  })
+
+  it('moves post dates that don’t exist to the times they meant, so cursors can name them', async () => {
+    let file = `/tmp/logspace2-migrations-dates-${process.pid}.sqlite`
+    for (let suffix of ['', '-wal', '-shm'])
+      await Bun.file(file + suffix)
+        .delete()
+        .catch(() => {})
+    await migrate(file)
+    // A database from before 0015, with posts saved when dates like these passed: one that starts
+    // the second page of the feed, under 50 newer ones.
+    let db = new Database(file)
+    db.run("delete from data_table_migrations where id = '0015'")
+    let insert = db.prepare(
+      "insert into posts (id, type, date, caption) values (?, 'text', ?, 'Hi')",
+    )
+    insert.run('midnight00', '2026-02-28T24:00:00Z')
+    insert.run('february30', '2026-02-30T12:00:00Z')
+    for (let index = 0; index < 50; index++) {
+      insert.run(
+        `newer${String(index).padStart(5, '0')}`,
+        `2026-04-01T00:${String(index).padStart(2, '0')}:00Z`,
+      )
+    }
+    db.close()
+
+    expect(await migrate(file)).toEqual(['0015_normalize_post_dates'])
+    db = new Database(file, { readonly: true })
+    expect(
+      db.query("select id, date from posts where id not like 'newer%' order by id").all(),
+    ).toEqual([
+      { id: 'february30', date: '2026-03-02T12:00:00Z' },
+      { id: 'midnight00', date: '2026-03-01T00:00:00Z' },
+    ])
+    db.close()
+
+    // The home page's Older link names the post, and leads to its page.
+    let app = makeTestApp({ databasePath: file })
+    try {
+      await app.run(
+        Effect.flatMap(SiteConfigCommands, (commands) => commands.save(TEST_SITE_CONFIG)),
+      )
+      let older = capture(await (await app.fetch('/')).text(), /href="([^"]+)" rel="next"/)
+      expect(older).toBe('/?from=20260302120000-february30')
+      let page = await app.fetch(older)
+      expect(page.status).toBe(200)
+      expect(await page.text()).toContain('href="/posts/midnight00"')
+    } finally {
+      await app.dispose()
+    }
   })
 })
