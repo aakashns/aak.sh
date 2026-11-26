@@ -1,5 +1,8 @@
 // The composer, where posts are written, edited, and deleted.
 import { afterAll, beforeEach, describe, expect, it } from 'bun:test'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { Effect } from 'effect'
 
 import { capture, defined, makeTestApp } from '../../../../test/app.ts'
@@ -10,7 +13,20 @@ import { PostQueries } from '../../../data/posts/queries.ts'
 import { MediaStorage, mediaKeys } from '../../../lib/media-storage.ts'
 import { newPostEmail } from './email.tsx'
 
-const app = makeTestApp()
+// Links in captions are previewed from here, not the internet, and cached apart from other tests'.
+const cacheDir = mkdtempSync(join(tmpdir(), 'logspace-compose-'))
+const app = makeTestApp(
+  { cacheDir },
+  {
+    network: {
+      resolve: async () => ['93.184.215.14'],
+      fetch: async (url) =>
+        new Response(`<title>Page ${url.pathname}</title>`, {
+          headers: { 'content-type': 'text/html' },
+        }),
+    },
+  },
+)
 const posts = () => app.run(Effect.flatMap(PostQueries, (queries) => queries.all))
 const findPost = async (id: string) => (await posts()).find((post) => post.id === id)
 const firstPost = async () => defined((await posts())[0], 'a post')
@@ -29,7 +45,10 @@ beforeEach(async () => {
   await app.seedDatabase()
   await app.seedMedia()
 })
-afterAll(app.dispose)
+afterAll(async () => {
+  await app.dispose()
+  rmSync(cacheDir, { recursive: true, force: true })
+})
 
 describe('the composer', () => {
   let photo = (name: string) =>
@@ -187,6 +206,66 @@ describe('the composer', () => {
     // An edit's preview keeps the post's date.
     expect(events).toContain(`datetime="${post.date}"`)
     expect((await findPost(post.id))?.caption).toBe(post.caption)
+  })
+
+  it('previews a new link as loading right away, and keeps its card while the link stays', async () => {
+    let preview = (caption: string, card?: [id: string, url: string]) => {
+      let fields: [string, string][] = [
+        ['post_id', 'composer10'],
+        ['caption', caption],
+      ]
+      if (card) fields.push(['link_card', card[0]], ['link_card_url', card[1]])
+      return composerPost('/admin/posts/preview', fields).then((response) => response.text())
+    }
+    let cardId = (events: string) => events.match(/id="(link-card-[0-9a-f-]{36})"/)?.[1]
+    let first = await preview('Read https://links.example/one')
+    expect(first).toContain(
+      'Read <a target="_blank" rel="noopener" href="https://links.example/one">',
+    )
+    expect(first).toContain('Loading link preview…')
+    expect(first).toContain(`data-init="@get(el.dataset.src, {requestCancellation: 'cleanup'})"`)
+    let id = defined(cardId(first), 'a loading card id')
+    expect(first).toContain(
+      `data-src="/admin/posts/link-card?id=${id}&amp;url=https%3A%2F%2Flinks.example%2Fone"`,
+    )
+    // Typing more with the same link keeps the card; another link gets a new one.
+    let same = await preview('Read https://links.example/one now', [
+      id,
+      'https://links.example/one',
+    ])
+    expect(cardId(same)).toBe(id)
+    let other = await preview('Read https://links.example/two', [id, 'https://links.example/one'])
+    expect(cardId(other)).toBeDefined()
+    expect(cardId(other)).not.toBe(id)
+  })
+
+  it('sends a link’s finished card to replace its loading one, by its id', async () => {
+    let id = `link-card-${crypto.randomUUID()}`
+    let card = (query: string) => app.adminFetch(`/admin/posts/link-card?${query}`)
+    let url = 'https://links.example/card'
+    let response = await card(new URLSearchParams({ id, url }).toString())
+    let events = await response.text()
+    expect(events).toContain(`data: selector #${id}\ndata: mode replace\n`)
+    expect(events).toContain('Page /card')
+    expect(events).not.toContain('Loading link preview…')
+    // Once it's fetched, previews show the card without loading.
+    let preview = await (
+      await composerPost('/admin/posts/preview', [
+        ['post_id', 'composer11'],
+        ['caption', url],
+      ])
+    ).text()
+    expect(preview).toContain('Page /card')
+    expect(preview).not.toContain('Loading link preview…')
+    for (let query of [
+      new URLSearchParams({ id: 'x, body', url }),
+      new URLSearchParams({ id, url: 'javascript:alert(1)' }),
+    ]) {
+      expect((await card(query.toString())).status).toBe(400)
+    }
+    expect(
+      (await app.fetch(`/admin/posts/link-card?${new URLSearchParams({ id, url })}`)).status,
+    ).toBe(302)
   })
 
   it('publishes a photos post dated now, in UTC, with file names as alt text', async () => {

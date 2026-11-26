@@ -70,6 +70,9 @@ export const urls = {
     discardPost: () => '/admin/posts/discard',
     postMedia: () => '/admin/posts/media',
     postPreview: () => '/admin/posts/preview',
+    // A link's finished card, for the composer's loading one with this id.
+    linkCard: (id: string, url: string) =>
+      `/admin/posts/link-card?${new URLSearchParams({ id, url })}`,
     // One of a post's files, published or not, for the composer.
     postFile: (id: string, file: string) =>
       `/admin/posts/${encodeURIComponent(id)}/files/${encodeURIComponent(file)}`,

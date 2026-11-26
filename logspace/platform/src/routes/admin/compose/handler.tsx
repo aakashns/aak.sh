@@ -3,7 +3,8 @@
 //
 // The composer works the same for both: the page holds the post, by its id, and nothing about it
 // is saved until it's posted. As you write, Datastar posts the form, and gets HTML for parts of
-// the page: the media when files are added or removed, and the preview as you type. Files chosen
+// the page: the media when files are added or removed, the preview as you type, and a link's
+// card once its page is fetched (see page.tsx for how it's kept to its link). Files chosen
 // are saved under the post's id right away, with names of their own, so a published post's files
 // don't change until it's saved. Posting is a plain form submission, which saves the post, new or
 // published, and goes to it.
@@ -11,7 +12,9 @@ import { DateTime, Effect } from 'effect'
 import { HttpRouter, HttpServerResponse } from 'effect/http'
 
 import type { Html } from '#jsx/jsx-runtime'
+import { LinkCard } from '../../../components/post.tsx'
 import { LinkPreviews } from '../../../data/link-previews/link-previews.ts'
+import { getFirstLink } from '../../../data/posts/caption.ts'
 import { PostCommands } from '../../../data/posts/commands.ts'
 import { PostMedia } from '../../../data/posts/media.ts'
 import { newPostId, type PostIssue, type PostRecord } from '../../../data/posts/post.ts'
@@ -24,7 +27,7 @@ import {
   readForm,
 } from '../../../lib/http/forms.ts'
 import { param, requestUrl } from '../../../lib/http/pages.ts'
-import { fileResponse, notFound, redirect } from '../../../lib/http/responses.ts'
+import { fileResponse, notFound, redirect, textResponse } from '../../../lib/http/responses.ts'
 import { urls } from '../../../lib/urls.ts'
 import { adminOnly, adminPage, message } from '../admin.tsx'
 import { newPostEmail } from './email.tsx'
@@ -65,14 +68,24 @@ const patch = (...patches: [id: string, html: Html, mode?: 'inner'][]) =>
     { contentType: 'text/event-stream' },
   )
 
-// A submitted composer, and its post as it's published, if it is.
+// A submitted composer, its post as it's published, if it is, and its loading link card, if any.
 const readComposer = Effect.gen(function* () {
   let formData = yield* readForm()
   let id = String(formData.get('post_id') ?? '').trim()
   let posts = yield* PostQueries
   let published = yield* posts.findRecord(id)
-  return { ...readComposeForm(formData, id, yield* posts.fileNames(id)), published }
+  let cardId = formData.get('link_card')
+  let cardUrl = formData.get('link_card_url')
+  let linkCard =
+    typeof cardId === 'string' && LINK_CARD_ID.test(cardId) && typeof cardUrl === 'string'
+      ? { id: cardId, url: cardUrl }
+      : undefined
+  return { ...readComposeForm(formData, id, yield* posts.fileNames(id)), published, linkCard }
 })
+
+// Loading link cards' ids, which are put in a CSS selector, so nothing else is taken.
+const LINK_CARD_ID = /^link-card-[0-9a-f-]{36}$/
+type LinkCardRef = { id: string; url: string }
 
 // The post the composer makes: published now, in UTC, to the second, or an edit.
 const composed = (values: ComposeValues, published: PostRecord | undefined) =>
@@ -80,17 +93,32 @@ const composed = (values: ComposeValues, published: PostRecord | undefined) =>
     composePost(values, DateTime.formatIso(now).slice(0, 19) + 'Z', published),
   )
 
-// The composer for `values`, with its post as it'd be saved now.
+// The composer for `values`, with its post as it'd be saved now. A link still loading keeps the
+// card it had, if it's the same link.
 const composerProps = (
   values: ComposeValues,
   published: PostRecord | undefined,
   issues?: readonly PostIssue[],
+  linkCard?: LinkCardRef,
 ) =>
   Effect.gen(function* () {
     let post = yield* (yield* PostQueries).preview(yield* composed(values, published))
     let { siteUrl = '' } = yield* (yield* SiteConfigQueries).saved
     let linkPreview = yield* (yield* LinkPreviews).forPost(post)
-    return { values, post, linkPreview, siteUrl, issues, published: published !== undefined }
+    let linkCardId = !linkPreview?.loading
+      ? undefined
+      : linkCard?.url === linkPreview.url
+        ? linkCard.id
+        : `link-card-${crypto.randomUUID()}`
+    return {
+      values,
+      post,
+      linkPreview,
+      linkCardId,
+      siteUrl,
+      issues,
+      published: published !== undefined,
+    }
   })
 
 const composePage = (
@@ -122,7 +150,7 @@ const editPost = adminOnly(() =>
 // form: saving the post removes it, and so does closing the composer (discardComposer).
 const updateComposerMedia = adminOnly(() =>
   Effect.gen(function* () {
-    let { values, uploads, issues, published } = yield* readComposer
+    let { values, uploads, issues, published, linkCard } = yield* readComposer
     let rejected = yield* (yield* PostCommands).upload(values.id, uploads).pipe(
       Effect.as([]),
       Effect.catchTag('PostRejected', (error) => Effect.succeed(error.issues)),
@@ -137,7 +165,7 @@ const updateComposerMedia = adminOnly(() =>
         poster: saved(values.poster),
       }
     }
-    let props = yield* composerProps(values, published, [...issues, ...rejected])
+    let props = yield* composerProps(values, published, [...issues, ...rejected], linkCard)
     return patch(
       [COMPOSER_IDS.issues, <ComposerIssues issues={props.issues} />],
       [COMPOSER_IDS.media, <ComposerMedia {...props} />],
@@ -163,12 +191,26 @@ const COMPOSER_TOO_LARGE =
 // The preview, for what's typed. The composer doesn't ask for one while files are uploading.
 const previewComposer = adminOnly(() =>
   Effect.gen(function* () {
-    let { values, published } = yield* readComposer
+    let { values, published, linkCard } = yield* readComposer
     return patch([
       COMPOSER_IDS.preview,
-      <ComposerPreview {...yield* composerProps(values, published)} />,
+      <ComposerPreview {...yield* composerProps(values, published, undefined, linkCard)} />,
       'inner',
     ])
+  }),
+)
+
+// A loading link card's finished card, which replaces it, if it's still there.
+const linkCard = adminOnly(() =>
+  Effect.gen(function* () {
+    let { searchParams } = yield* requestUrl
+    let id = searchParams.get('id') ?? ''
+    let url = searchParams.get('url') ?? ''
+    if (!LINK_CARD_ID.test(id) || getFirstLink(url) !== url) {
+      return textResponse('Bad Request', 400)
+    }
+    let card = yield* (yield* LinkPreviews).card(url)
+    return patch([id, <LinkCard preview={card} />])
   }),
 )
 
@@ -235,6 +277,7 @@ export const ComposeRoutes = HttpRouter.addAll([
   HttpRouter.route('POST', '/admin/posts/discard', discardComposer),
   HttpRouter.route('POST', '/admin/posts/media', updateComposerMedia),
   HttpRouter.route('POST', '/admin/posts/preview', previewComposer),
+  HttpRouter.route('GET', '/admin/posts/link-card', linkCard),
   HttpRouter.route('GET', '/admin/posts/:id/files/:file', postFile),
   HttpRouter.route('POST', '/admin/posts/:id/delete', deletePost),
 ])

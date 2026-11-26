@@ -1,7 +1,8 @@
 // The preview card for the first link in a text post. Pages never wait on other sites: the first
 // time a link is seen, its title, description, and image are fetched in the background and saved
 // to a cache file, and until then (or if the site doesn't share them) the card shows just the
-// domain. Deleting the cache file just means previews are fetched again, and so does a cache file
+// domain. The composer shows that card as loading, and asks for the finished one (`card`)
+// separately, so what's typed is previewed right away. Deleting the cache file just means previews are fetched again, and so does a cache file
 // that can't be read.
 //
 // The image is fetched with the rest, and saved to media storage as WebP copies at the widths
@@ -13,6 +14,7 @@ import * as path from 'node:path'
 import {
   Clock,
   Context,
+  Deferred,
   Effect,
   FileSystem,
   Layer,
@@ -59,6 +61,10 @@ class ImageRefused extends Schema.TaggedError<ImageRefused>()('ImageRefused', {
 
 const RETRY_FAILED_AFTER = 24 * 60 * 60 * 1000
 const FETCH_TIMEOUT = '5 seconds'
+// A card asked for waits this long in all, for a fetch to be free and then for the page and its
+// image (each up to FETCH_TIMEOUT).
+const CARD_DEADLINE = '15 seconds'
+const MAX_FETCHES = 4
 const MAX_HTML_BYTES = 512 * 1024
 // Link images are usually about 1200 × 630 and well under 1 MB. The pixel limit is checked from
 // the image's header, before it's decoded, so a small file can't claim a huge canvas.
@@ -70,8 +76,12 @@ const LINK_IMAGE_NAME = /^[0-9a-f]{12}-\d+\.webp$/
 export class LinkPreviews extends Context.Service<
   LinkPreviews,
   {
-    // Text posts get a preview card for the first link in their caption.
+    // Text posts get a preview card for the first link in their caption, `loading` until its
+    // page is fetched.
     readonly forPost: (post: Post) => Effect.Effect<LinkPreview | undefined>
+    // The link's finished card, once its page is fetched (or that failed), or by CARD_DEADLINE,
+    // just its domain.
+    readonly card: (url: string) => Effect.Effect<LinkPreview>
     // A saved link image's file, by the name in its URL.
     readonly image: (name: string) => Effect.Effect<StoredFile | undefined>
   }
@@ -101,7 +111,10 @@ export class LinkPreviews extends Context.Service<
           ),
         ),
       )
-      let inFlight = new Set<string>()
+      // Each fetch in flight, done when it's saved, failed, or interrupted.
+      let inFlight = new Map<string, Deferred.Deferred<void>>()
+      // Done when the next fetch ends, so a card waiting for a free fetch can try again.
+      let fetchEnded = yield* Deferred.make<void>()
       let scope = yield* Effect.scope
       let cacheWrites = yield* Semaphore.make(1)
 
@@ -183,10 +196,13 @@ export class LinkPreviews extends Context.Service<
           })
         })
 
+      // The link's fetch, started unless it already is, or none while MAX_FETCHES are in flight.
       let refresh = Effect.fnUntraced(function* (url: string) {
+        let fetching = inFlight.get(url)
         // No unbounded task queue: a later page request retries work skipped while saturated.
-        if (inFlight.has(url) || inFlight.size >= 4) return
-        inFlight.add(url)
+        if (fetching || inFlight.size >= MAX_FETCHES) return fetching
+        let done = yield* Deferred.make<void>()
+        inFlight.set(url, done)
         yield* Effect.gen(function* () {
           // Names the site, so the sites whose links are previewed can see who's asking.
           let { siteUrl = '' } = yield* siteConfig.saved
@@ -198,29 +214,60 @@ export class LinkPreviews extends Context.Service<
           Effect.catchCause((cause) =>
             Effect.logError(`Couldn't save the link preview for ${url}`, cause),
           ),
-          Effect.ensuring(Effect.sync(() => inFlight.delete(url))),
+          Effect.ensuring(
+            Effect.gen(function* () {
+              inFlight.delete(url)
+              yield* Deferred.succeed(done, undefined)
+              let ended = fetchEnded
+              fetchEnded = yield* Deferred.make<void>()
+              yield* Deferred.succeed(ended, undefined)
+            }),
+          ),
           Effect.forkIn(scope),
         )
+        return done
+      })
+
+      // The link's saved entry, unless it's missing or due to be fetched again.
+      let current = Effect.fnUntraced(function* (url: string) {
+        let entry = entries.get(url)
+        let now = yield* Clock.currentTimeMillis
+        let stale = entry?.failed
+          ? now - entry.fetchedAt > RETRY_FAILED_AFTER
+          : entry?.metadata?.image !== undefined && !entry.image
+        return entry && !stale ? entry : undefined
+      })
+
+      let preview = (url: string, entry: CacheEntry | undefined, loading: boolean) => ({
+        url,
+        domain: getDomain(url),
+        title: entry?.metadata?.title,
+        description: entry?.metadata?.description,
+        image: entry?.image && linkImage(entry.image),
+        smallImage: entry?.metadata?.smallImage,
+        loading,
       })
 
       return LinkPreviews.of({
         forPost: Effect.fnUntraced(function* (post) {
           let url = post.type === 'text' ? getFirstLink(post.caption) : undefined
           if (!url) return undefined
-          let entry = entries.get(url)
-          let now = yield* Clock.currentTimeMillis
-          let stale = entry?.failed
-            ? now - entry.fetchedAt > RETRY_FAILED_AFTER
-            : entry?.metadata?.image !== undefined && !entry.image
-          if (!entry || stale) yield* refresh(url)
-          return {
-            url,
-            domain: getDomain(url),
-            title: entry?.metadata?.title,
-            description: entry?.metadata?.description,
-            image: entry?.image && linkImage(entry.image),
-            smallImage: entry?.metadata?.smallImage,
-          }
+          let entry = yield* current(url)
+          if (!entry) yield* refresh(url)
+          // A stale entry is still shown while it's fetched again.
+          return preview(url, entry ?? entries.get(url), !entry)
+        }),
+        // Joins the link's fetch, or starts it, waiting for a free one if need be.
+        card: Effect.fnUntraced(function* (url) {
+          yield* Effect.gen(function* () {
+            while (!(yield* current(url))) {
+              let ended = fetchEnded
+              let fetching = yield* refresh(url)
+              if (fetching) return yield* Deferred.await(fetching)
+              yield* Deferred.await(ended)
+            }
+          }).pipe(Effect.timeoutOption(CARD_DEADLINE))
+          return preview(url, entries.get(url), false)
         }),
         image: (name) =>
           LINK_IMAGE_NAME.test(name)

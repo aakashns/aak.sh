@@ -165,22 +165,27 @@ export const AppRoutes = Layer.mergeAll(
 )
 
 // The app on AppConfig's port. Retains the app services and listener for startup logging and the
-// browser fixture's address.
-export const ServerLive = Layer.unwrap(
-  Effect.gen(function* () {
-    let { port, hostname } = yield* AppConfig
-    return HttpRouter.serve(AppRoutes, { disableLogger: true }).pipe(
-      Layer.provideMerge(AppLive),
-      Layer.provideMerge(
-        BunHttpServer.layer({
-          port,
-          hostname,
-          // Bun closes a connection after 10 seconds without sending or receiving anything by
-          // default, even while a response is being made, like a big photo's first resize.
-          // 255 seconds is its longest.
-          idleTimeout: 255,
-        }),
-      ),
-    )
-  }),
-)
+// browser fixture's address. The browser fixture supplies a fake network, for other sites' pages.
+export const makeServer = (
+  network: Layer.Layer<PublicNetwork, never, AppConfig> = PublicNetwork.layer,
+) =>
+  Layer.unwrap(
+    Effect.gen(function* () {
+      let { port, hostname } = yield* AppConfig
+      return HttpRouter.serve(AppRoutes, { disableLogger: true }).pipe(
+        Layer.provideMerge(AppServices.pipe(Layer.provide(network))),
+        Layer.provideMerge(
+          BunHttpServer.layer({
+            port,
+            hostname,
+            // Bun closes a connection after 10 seconds without sending or receiving anything by
+            // default, even while a response is being made, like a big photo's first resize.
+            // 255 seconds is its longest.
+            idleTimeout: 255,
+          }),
+        ),
+      )
+    }),
+  )
+
+export const ServerLive = makeServer()
