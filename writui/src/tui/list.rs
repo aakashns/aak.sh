@@ -31,6 +31,11 @@ const MAX_FILTER: usize = 80;
 const SEARCH_ICON: &str = "🔎 ";
 const NERD_SEARCH_ICON: &str = "\u{f002} ";
 
+/// A pinned post, just left of its time: a star, or with a Nerd Font, a
+/// thumbtack (nf-fa-thumb-tack), which takes the terminal's own colour.
+const PIN_ICON: &str = "★";
+const NERD_PIN_ICON: &str = "\u{f08d}";
+
 /// Before the way of sorting, on the right of the search field.
 const SORT_PREFIX: &str = "Sort: ";
 
@@ -180,6 +185,8 @@ pub struct List {
     dialog: Option<(usize, Dialog<Cmd>)>,
     /// `SEARCH_ICON`, or `NERD_SEARCH_ICON`.
     search_icon: &'static str,
+    /// `PIN_ICON`, or `NERD_PIN_ICON`.
+    pin_icon: &'static str,
     /// The import dialog, open.
     importing: Option<Box<FileDialog>>,
     /// Where the import dialog starts.
@@ -210,6 +217,7 @@ impl List {
             matches: None,
             dialog: None,
             search_icon: SEARCH_ICON,
+            pin_icon: PIN_ICON,
             importing: None,
             import_folder: String::new(),
             reimport: None,
@@ -378,6 +386,7 @@ impl List {
     /// The terminal's font is a Nerd Font: use its icons.
     pub fn with_nerd_font(mut self, nerd_font: bool) -> Self {
         self.search_icon = if nerd_font { NERD_SEARCH_ICON } else { SEARCH_ICON };
+        self.pin_icon = if nerd_font { NERD_PIN_ICON } else { PIN_ICON };
         self
     }
 
@@ -550,7 +559,7 @@ impl List {
                         None => when(post.updated_at, now, &tz),
                     };
                     let pinned = !trash && post.pinned_at.is_some();
-                    ListItem::new(post_line(&post.title, &right, width, pinned))
+                    ListItem::new(post_line(&post.title, &right, width, pinned, self.pin_icon))
                 }
             })
             .collect();
@@ -1079,10 +1088,15 @@ pub fn display_title(title: &str) -> &str {
 }
 
 /// A post row: title on the left, `right` (a time) right-aligned and dim.
-/// A pinned post says so, in bold, just left of the time.
-fn post_line(title: &str, right: &str, width: usize, pinned: bool) -> Line<'static> {
-    let mark = "pinned";
-    let mark_width = if pinned { mark.width() + 2 } else { 0 };
+/// A pinned post has `pin_icon`, in bold, just left of the time.
+fn post_line(
+    title: &str,
+    right: &str,
+    width: usize,
+    pinned: bool,
+    pin_icon: &str,
+) -> Line<'static> {
+    let mark_width = if pinned { pin_icon.width() + 1 } else { 0 };
     let right_width = right.chars().count() + mark_width;
     let title_width = width.saturating_sub(right_width + 2);
     let title = if title.is_empty() {
@@ -1093,8 +1107,8 @@ fn post_line(title: &str, right: &str, width: usize, pinned: bool) -> Line<'stat
     let pad = width.saturating_sub(title.width() + right_width);
     let mut spans = vec![title, Span::raw(" ".repeat(pad))];
     if pinned {
-        spans.push(Span::raw(mark).bold());
-        spans.push(Span::raw("  "));
+        spans.push(Span::raw(pin_icon.to_string()).bold());
+        spans.push(Span::raw(" "));
     }
     spans.push(Span::raw(right.to_string()).dim());
     Line::from(spans)
@@ -1491,7 +1505,8 @@ mod tests {
         assert_eq!(titles(&mut list), ["Three", "One", "Two"]);
         assert_eq!(list.selected_post(), Some(2));
         let text = screen(&mut list);
-        assert!(text.contains("pinned") && text.contains("p unpin"), "{text}");
+        assert!(text.contains("★") && text.contains("p unpin"), "{text}");
+        assert!(!text.contains("pinned"));
         // Sorting doesn't pull it down. The others follow the sort.
         list.set_sort(Sort { by: SortBy::Title, descending: false });
         assert_eq!(titles(&mut list), ["Three", "One", "Two"]);
@@ -1516,9 +1531,17 @@ mod tests {
             press(&mut list, KeyCode::Char('p'), KeyModifiers::NONE),
             Action::Search(f) if f == "p"
         ));
-        let mut trash = List::new(Mode::Trash, vec![post(1, "One")], None);
+        let mut trashed = post(1, "One");
+        trashed.pinned_at = Some(Timestamp::now());
+        let mut trash = List::new(Mode::Trash, vec![trashed], None);
         assert!(matches!(press(&mut trash, KeyCode::Char('p'), KeyModifiers::NONE), Action::None));
-        assert!(!screen(&mut trash).contains("pinned"));
+        assert!(!screen(&mut trash).contains("★"));
+        // A Nerd Font draws a thumbtack instead of the star.
+        let mut nerd = List::new(Mode::Posts { deleted_count: 0 }, vec![post(1, "One")], Some(1))
+            .with_nerd_font(true);
+        nerd.apply_pin(1, true);
+        let text = screen(&mut nerd);
+        assert!(text.contains(NERD_PIN_ICON) && !text.contains("★"), "{text}");
     }
 
     #[test]

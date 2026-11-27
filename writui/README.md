@@ -151,10 +151,11 @@ new password on its own.
   either way round: click "Sort" on the right of the search and pick one,
   or press Tab (Shift+Tab) to go through them.
 - **Pin** a post with `p` (or click "pin"). It stays at the top of the
-  list, including in search results and whichever way you sort, until you
-  press `p` again. The one you pinned last is first. Pinning is remembered.
-  Moving a pinned post to the Trash doesn't forget it, so restoring it
-  puts it back at the top.
+  list, marked with a ★, including in search results and whichever way you
+  sort, until you press `p` again. The one you pinned last is first. With
+  a Nerd Font switched on in Settings, the mark is a thumbtack. Pinning is
+  remembered. Moving a pinned post to the Trash doesn't forget it, so
+  restoring it puts it back at the top.
 - **Lock** with Ctrl+O, wherever you are: writui asks for the password
   (or your fingerprint) again, then takes you back to where you were.
 - **Zen writing:** the editor shows only your words. Hold Ctrl to see the
