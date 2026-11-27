@@ -9,3 +9,5 @@ A monorepo for my open source projects, listed at [aak.sh](https://aak.sh) (from
 - [rembox](rembox) - Set up and manage remote development machines
 - [screentimer](screentimer) - A macOS menu bar app that shows how long the screen has been on today
 - [writui](writui) - A writing app for the terminal. No nonsense. Markdown. Local. Encrypted.
+
+_AI Disclosure: All the code in this repository is written by AI._
