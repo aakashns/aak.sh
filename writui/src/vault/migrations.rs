@@ -50,6 +50,9 @@ const MIGRATIONS: &[&str] = &[
         key   TEXT PRIMARY KEY,
         value TEXT NOT NULL
     );",
+    // 8: pinning a post to the top of the list. NULL means not pinned.
+    // The time is when it was pinned, so the latest pin is listed first.
+    "ALTER TABLE posts ADD COLUMN pinned_at INTEGER;",
 ];
 
 /// Bring the vault's schema up to date. If the vault already holds data, it's

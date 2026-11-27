@@ -1,6 +1,6 @@
 //! The first screen: all posts, most recently updated first, under "New",
 //! "Import" and a field that searches them, with "Sort" on its right.
-//! The same screen also shows the Trash.
+//! Pinned posts stay above that. The same screen also shows the Trash.
 
 use jiff::Timestamp;
 use jiff::tz::TimeZone;
@@ -30,6 +30,11 @@ const MAX_FILTER: usize = 80;
 /// (nf-fa-search), which takes the terminal's own colour.
 const SEARCH_ICON: &str = "🔎 ";
 const NERD_SEARCH_ICON: &str = "\u{f002} ";
+
+/// A pinned post, just left of its time: a star, or with a Nerd Font, a
+/// thumbtack (nf-fa-thumb-tack), which takes the terminal's own colour.
+const PIN_ICON: &str = "★";
+const NERD_PIN_ICON: &str = "\u{f08d}";
 
 /// Before the way of sorting, on the right of the search field.
 const SORT_PREFIX: &str = "Sort: ";
@@ -130,6 +135,8 @@ enum Cmd {
     UpdateImported,
     ImportAsNew,
     Delete,
+    /// Pin the highlighted post, or unpin it.
+    Pin,
     Quit,
     Back,
     ConfirmDelete,
@@ -178,6 +185,8 @@ pub struct List {
     dialog: Option<(usize, Dialog<Cmd>)>,
     /// `SEARCH_ICON`, or `NERD_SEARCH_ICON`.
     search_icon: &'static str,
+    /// `PIN_ICON`, or `NERD_PIN_ICON`.
+    pin_icon: &'static str,
     /// The import dialog, open.
     importing: Option<Box<FileDialog>>,
     /// Where the import dialog starts.
@@ -208,6 +217,7 @@ impl List {
             matches: None,
             dialog: None,
             search_icon: SEARCH_ICON,
+            pin_icon: PIN_ICON,
             importing: None,
             import_folder: String::new(),
             reimport: None,
@@ -260,7 +270,36 @@ impl List {
         if self.sort.descending == (self.sort.by == SortBy::Title) {
             order.reverse();
         }
+        // Pinned posts stay at the top, the one pinned last first. The
+        // Trash keeps its own order.
+        if !self.trash_view() {
+            order.sort_by(|&a, &b| pin_order(&self.posts[a], &self.posts[b]));
+        }
         order
+    }
+
+    /// Pin (or unpin) post `id` and list it with the other pins. A new pin
+    /// is stored just after the latest one, so it comes first even when two
+    /// pins land in the same millisecond.
+    pub fn apply_pin(&mut self, id: i64, pinned: bool) {
+        let pinned_at = pinned.then(|| {
+            let now = Timestamp::now();
+            let latest = self.posts.iter().filter(|p| p.id != id).filter_map(|p| p.pinned_at).max();
+            match latest {
+                Some(latest) if latest >= now => {
+                    latest.checked_add(jiff::SignedDuration::from_millis(1)).unwrap_or(latest)
+                }
+                _ => now,
+            }
+        });
+        if let Some(post) = self.posts.iter_mut().find(|p| p.id == id) {
+            post.pinned_at = pinned_at;
+        }
+        self.rebuild_rows();
+    }
+
+    pub fn set_notice(&mut self, notice: String) {
+        self.notice = Some(notice);
     }
 
     /// The rows for the posts shown (all of them, or the search's matches),
@@ -347,6 +386,7 @@ impl List {
     /// The terminal's font is a Nerd Font: use its icons.
     pub fn with_nerd_font(mut self, nerd_font: bool) -> Self {
         self.search_icon = if nerd_font { NERD_SEARCH_ICON } else { SEARCH_ICON };
+        self.pin_icon = if nerd_font { NERD_PIN_ICON } else { PIN_ICON };
         self
     }
 
@@ -474,6 +514,7 @@ impl List {
         let field_width = width.saturating_sub(SORT_PREFIX.width() + longest_sort + 2);
         let sort_width = (SORT_PREFIX.width() + self.sort.label().width()).min(width);
         let in_search = self.in_search();
+        let trash = self.trash_view();
         let items: Vec<ListItem> = self
             .rows
             .iter()
@@ -517,7 +558,8 @@ impl List {
                         Some(deleted_at) => days_left(deleted_at, now),
                         None => when(post.updated_at, now, &tz),
                     };
-                    ListItem::new(post_line(&post.title, &right, width))
+                    let pinned = !trash && post.pinned_at.is_some();
+                    ListItem::new(post_line(&post.title, &right, width, pinned, self.pin_icon))
                 }
             })
             .collect();
@@ -627,6 +669,9 @@ impl List {
                 vec![hint("Enter", "open", Cmd::Open), hint("/", "filter", Cmd::Search)];
             if has_post {
                 hints.push(hint("d", "delete", Cmd::Delete));
+                let pinned =
+                    self.selected_post().is_some_and(|i| self.posts[i].pinned_at.is_some());
+                hints.push(hint("p", if pinned { "unpin" } else { "pin" }, Cmd::Pin));
             }
             hints.push(hint("s", "settings", Cmd::Settings));
             if self.searching() {
@@ -697,6 +742,7 @@ impl List {
                     KeyCode::Char('n') if plain => self.run(Cmd::New),
                     KeyCode::Char('i') if plain => self.run(Cmd::Import),
                     KeyCode::Char('d') if plain => self.run(Cmd::Delete),
+                    KeyCode::Char('p') if plain => self.run(Cmd::Pin),
                     KeyCode::Char('s') if plain => self.run(Cmd::Settings),
                     KeyCode::Char('/') if plain => self.run(Cmd::Search),
                     KeyCode::Delete => self.run(Cmd::Delete),
@@ -935,6 +981,16 @@ impl List {
                 }
                 Action::None
             }
+            Cmd::Pin if !self.trash_view() => {
+                let Some(index) = self.selected_post() else {
+                    return Action::None;
+                };
+                let id = self.posts[index].id;
+                let pinned = self.posts[index].pinned_at.is_none();
+                self.apply_pin(id, pinned);
+                Action::PinPost { id, pinned }
+            }
+            Cmd::Pin => Action::None,
             Cmd::ConfirmDelete => match self.dialog.take() {
                 Some((index, _)) => {
                     let id = self.posts[index].id;
@@ -1032,8 +1088,16 @@ pub fn display_title(title: &str) -> &str {
 }
 
 /// A post row: title on the left, `right` (a time) right-aligned and dim.
-fn post_line(title: &str, right: &str, width: usize) -> Line<'static> {
-    let right_width = right.chars().count();
+/// A pinned post has `pin_icon`, in bold, just left of the time.
+fn post_line(
+    title: &str,
+    right: &str,
+    width: usize,
+    pinned: bool,
+    pin_icon: &str,
+) -> Line<'static> {
+    let mark_width = if pinned { pin_icon.width() + 1 } else { 0 };
+    let right_width = right.chars().count() + mark_width;
     let title_width = width.saturating_sub(right_width + 2);
     let title = if title.is_empty() {
         Span::raw("Untitled").dim().italic()
@@ -1041,7 +1105,23 @@ fn post_line(title: &str, right: &str, width: usize) -> Line<'static> {
         Span::raw(truncate(title, title_width))
     };
     let pad = width.saturating_sub(title.width() + right_width);
-    Line::from(vec![title, Span::raw(" ".repeat(pad)), Span::raw(right.to_string()).dim()])
+    let mut spans = vec![title, Span::raw(" ".repeat(pad))];
+    if pinned {
+        spans.push(Span::raw(pin_icon.to_string()).bold());
+        spans.push(Span::raw(" "));
+    }
+    spans.push(Span::raw(right.to_string()).dim());
+    Line::from(spans)
+}
+
+/// Pinned posts before the rest; among pins, the latest pin first.
+fn pin_order(a: &PostSummary, b: &PostSummary) -> std::cmp::Ordering {
+    match (a.pinned_at, b.pinned_at) {
+        (Some(a_at), Some(b_at)) => b_at.cmp(&a_at),
+        (Some(_), None) => std::cmp::Ordering::Less,
+        (None, Some(_)) => std::cmp::Ordering::Greater,
+        (None, None) => std::cmp::Ordering::Equal,
+    }
 }
 
 /// Short, human "last updated" text: "just now", "5 min ago", "2:05 PM",
@@ -1169,6 +1249,7 @@ mod tests {
             created_at: at(&format!("2026-01-0{id}T00:00:00Z")),
             updated_at: Timestamp::now(),
             deleted_at: None,
+            pinned_at: None,
         }
     }
 
@@ -1390,6 +1471,77 @@ mod tests {
         assert_eq!(Sort::from_name("title"), title);
         assert_eq!(Sort::from_name("created"), by(SortBy::Created, true));
         assert_eq!(Sort::from_name("nonsense"), Sort::DEFAULT);
+    }
+
+    #[test]
+    fn p_pins_the_highlighted_post_to_the_top() {
+        let posts = vec![post(1, "One"), post(2, "Two"), post(3, "Three")];
+        let titles = |list: &mut List| -> Vec<String> {
+            list.rows
+                .iter()
+                .filter_map(|r| {
+                    if let Row::Post(i) = r {
+                        Some(display_title(&list.posts[*i].title).to_string())
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        };
+        let mut list = List::new(Mode::Posts { deleted_count: 0 }, posts, None);
+        assert!(matches!(press(&mut list, KeyCode::Char('p'), KeyModifiers::NONE), Action::None));
+        assert!(!screen(&mut list).contains("p pin"));
+        // Down to "Three" (past New, Import and the search field).
+        press(&mut list, KeyCode::Down, KeyModifiers::NONE);
+        press(&mut list, KeyCode::Down, KeyModifiers::NONE);
+        press(&mut list, KeyCode::Down, KeyModifiers::NONE);
+        press(&mut list, KeyCode::Down, KeyModifiers::NONE);
+        press(&mut list, KeyCode::Down, KeyModifiers::NONE);
+        assert_eq!(list.selected_post(), Some(2));
+        assert!(matches!(
+            press(&mut list, KeyCode::Char('p'), KeyModifiers::NONE),
+            Action::PinPost { id: 3, pinned: true }
+        ));
+        assert_eq!(titles(&mut list), ["Three", "One", "Two"]);
+        assert_eq!(list.selected_post(), Some(2));
+        let text = screen(&mut list);
+        assert!(text.contains("★") && text.contains("p unpin"), "{text}");
+        assert!(!text.contains("pinned"));
+        // Sorting doesn't pull it down. The others follow the sort.
+        list.set_sort(Sort { by: SortBy::Title, descending: false });
+        assert_eq!(titles(&mut list), ["Three", "One", "Two"]);
+        // A second pin goes above the first, even in the same instant.
+        press(&mut list, KeyCode::Down, KeyModifiers::NONE);
+        assert!(matches!(
+            press(&mut list, KeyCode::Char('p'), KeyModifiers::NONE),
+            Action::PinPost { id: 1, pinned: true }
+        ));
+        assert_eq!(titles(&mut list), ["One", "Three", "Two"]);
+        // p again unpins, and the post falls back into the sort.
+        assert_eq!(list.selected_post(), Some(0));
+        assert!(matches!(
+            press(&mut list, KeyCode::Char('p'), KeyModifiers::NONE),
+            Action::PinPost { id: 1, pinned: false }
+        ));
+        assert_eq!(titles(&mut list), ["Three", "One", "Two"]);
+        assert!(!screen(&mut list).contains("p unpin"));
+        // In the search field, p is typed. The Trash has no pin.
+        press(&mut list, KeyCode::Char('/'), KeyModifiers::NONE);
+        assert!(matches!(
+            press(&mut list, KeyCode::Char('p'), KeyModifiers::NONE),
+            Action::Search(f) if f == "p"
+        ));
+        let mut trashed = post(1, "One");
+        trashed.pinned_at = Some(Timestamp::now());
+        let mut trash = List::new(Mode::Trash, vec![trashed], None);
+        assert!(matches!(press(&mut trash, KeyCode::Char('p'), KeyModifiers::NONE), Action::None));
+        assert!(!screen(&mut trash).contains("★"));
+        // A Nerd Font draws a thumbtack instead of the star.
+        let mut nerd = List::new(Mode::Posts { deleted_count: 0 }, vec![post(1, "One")], Some(1))
+            .with_nerd_font(true);
+        nerd.apply_pin(1, true);
+        let text = screen(&mut nerd);
+        assert!(text.contains(NERD_PIN_ICON) && !text.contains("★"), "{text}");
     }
 
     #[test]

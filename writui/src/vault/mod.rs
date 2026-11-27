@@ -101,6 +101,8 @@ pub struct PostSummary {
     pub updated_at: Timestamp,
     /// Set for posts in the Trash.
     pub deleted_at: Option<Timestamp>,
+    /// Set when the post is pinned to the top of the list.
+    pub pinned_at: Option<Timestamp>,
 }
 
 /// A named version of a post, saved with Ctrl+S. (Stored in the `saves`
@@ -337,8 +339,33 @@ impl Vault {
     }
 
     /// All posts (not counting the Trash), most recently updated first.
+    /// Pinning is on each post (`pinned_at`); the list puts those first.
     pub fn list_posts(&self) -> Result<Vec<PostSummary>> {
         self.summaries("deleted_at IS NULL ORDER BY updated_at DESC, id DESC")
+    }
+
+    /// Pin a post to the top of the list, or unpin it. Doesn't count as an
+    /// update. Two pins in the same millisecond stay in the order they were
+    /// pinned: the later one is stored a millisecond later.
+    pub fn set_pinned(&self, id: i64, pinned: bool) -> Result<()> {
+        let pinned_at = if pinned {
+            let now = now_millis();
+            let latest: Option<i64> = self.conn.query_row(
+                "SELECT max(pinned_at) FROM posts WHERE id != ?1",
+                [id],
+                |row| row.get(0),
+            )?;
+            Some(latest.map_or(now, |latest| now.max(latest.saturating_add(1))))
+        } else {
+            None
+        };
+        let changed = self
+            .conn
+            .execute("UPDATE posts SET pinned_at = ?1 WHERE id = ?2", params![pinned_at, id])?;
+        if changed == 0 {
+            bail!("post {id} doesn't exist");
+        }
+        Ok(())
     }
 
     /// Posts in the Trash, most recently deleted first.
@@ -358,22 +385,24 @@ impl Vault {
     fn summaries(&self, filter_and_order: &str) -> Result<Vec<PostSummary>> {
         let mut stmt = self.conn.prepare(&format!(
             "SELECT id, substr(body, 1, instr(body || char(10), char(10)) - 1),
-                    updated_at, deleted_at, created_at
+                    updated_at, deleted_at, created_at, pinned_at
              FROM posts WHERE {filter_and_order}"
         ))?;
         let rows = stmt.query_map([], |row| {
             let first_line: String = row.get(1)?;
             let deleted_at: Option<i64> = row.get(3)?;
-            Ok((row.get(0)?, first_line, row.get(2)?, deleted_at, row.get::<_, i64>(4)?))
+            let pinned_at: Option<i64> = row.get(5)?;
+            Ok((row.get(0)?, first_line, row.get(2)?, deleted_at, row.get::<_, i64>(4)?, pinned_at))
         })?;
         rows.map(|row| {
-            let (id, first_line, updated_at, deleted_at, created_at) = row?;
+            let (id, first_line, updated_at, deleted_at, created_at, pinned_at) = row?;
             Ok(PostSummary {
                 id,
                 title: title_from_first_line(&first_line),
                 created_at: from_millis(created_at)?,
                 updated_at: from_millis(updated_at)?,
                 deleted_at: deleted_at.map(from_millis).transpose()?,
+                pinned_at: pinned_at.map(from_millis).transpose()?,
             })
         })
         .collect()
@@ -947,6 +976,68 @@ mod tests {
         std::thread::sleep(std::time::Duration::from_millis(2));
         vault.update_post_body(first, "# First, edited later").unwrap();
         assert_eq!(ids(vault.list_posts().unwrap()), [first, second]);
+    }
+
+    #[test]
+    fn pinning_is_remembered_and_does_not_count_as_an_update() {
+        let (_dir, path) = temp_vault();
+        let vault = Vault::create(&path, "pw").unwrap();
+        let first = vault.create_post().unwrap();
+        let second = vault.create_post().unwrap();
+        vault.update_post_body(first, "# First").unwrap();
+        vault.update_post_body(second, "# Second").unwrap();
+        let updated = vault.list_posts().unwrap();
+        assert!(updated.iter().all(|post| post.pinned_at.is_none()));
+
+        vault.set_pinned(first, true).unwrap();
+        // Still most recently updated first: pinning isn't an edit.
+        let posts = vault.list_posts().unwrap();
+        assert_eq!(ids(posts.clone()), [second, first]);
+        assert!(posts.iter().find(|post| post.id == first).unwrap().pinned_at.is_some());
+        assert!(posts.iter().find(|post| post.id == second).unwrap().pinned_at.is_none());
+
+        vault.set_pinned(second, true).unwrap();
+        let posts = vault.list_posts().unwrap();
+        let first_pin = posts.iter().find(|post| post.id == first).unwrap().pinned_at.unwrap();
+        let second_pin = posts.iter().find(|post| post.id == second).unwrap().pinned_at.unwrap();
+        assert!(second_pin > first_pin);
+
+        drop(vault);
+        let vault = Vault::open(&path, "pw").unwrap();
+        assert!(
+            vault
+                .list_posts()
+                .unwrap()
+                .iter()
+                .any(|post| post.id == first && post.pinned_at.is_some())
+        );
+        vault.set_pinned(first, false).unwrap();
+        assert!(
+            vault
+                .list_posts()
+                .unwrap()
+                .iter()
+                .any(|post| post.id == first && post.pinned_at.is_none())
+        );
+        assert!(vault.set_pinned(99, true).is_err());
+        // The Trash keeps the pin, so restoring the post puts it back on top.
+        vault.set_pinned(second, true).unwrap();
+        vault.delete_post(second).unwrap();
+        assert!(
+            vault
+                .list_deleted()
+                .unwrap()
+                .iter()
+                .any(|post| post.id == second && post.pinned_at.is_some())
+        );
+        vault.restore_post(second).unwrap();
+        assert!(
+            vault
+                .list_posts()
+                .unwrap()
+                .iter()
+                .any(|post| post.id == second && post.pinned_at.is_some())
+        );
     }
 
     #[test]

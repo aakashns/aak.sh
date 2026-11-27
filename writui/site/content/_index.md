@@ -11,7 +11,8 @@
 - **Try another draft. Keep the first.** Save a named version before you
   make changes. Read or restore it whenever you want.
 - **Use the controls you know.** Click, scroll and select, or use keyboard
-  shortcuts. Search your posts or find a command in the menu.
+  shortcuts. Search your posts, pin one so it stays at the top, or find a
+  command in the menu.
 - **Take your words with you.** Import Markdown or text files. Copy or
   export your writing as Markdown, ready for your blog or another editor.
 
