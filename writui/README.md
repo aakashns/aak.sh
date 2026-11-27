@@ -137,7 +137,8 @@ reopened with the new password and passed its checks; if anything goes
 wrong, the old password keeps working. Touch ID is set up again for the
 new password on its own.
 
-- **Posts** are listed with the most recently changed first. Open one with
+- **Posts** are listed with the most recently changed first, except posts
+  you've pinned, which stay above that. Open one with
   Enter or a click, start a new one with `n` (or Enter: "New" is
   highlighted when the list opens). The list's shortcuts are single keys,
   shown next to "New" and "Import" and at the bottom. Esc quits. writui opens
@@ -149,6 +150,11 @@ new password on its own.
 - **Sort** the list by when posts were updated or created, or by title,
   either way round: click "Sort" on the right of the search and pick one,
   or press Tab (Shift+Tab) to go through them.
+- **Pin** a post with `p` (or click "pin"). It stays at the top of the
+  list, including in search results and whichever way you sort, until you
+  press `p` again. The one you pinned last is first. Pinning is remembered.
+  Moving a pinned post to the Trash doesn't forget it, so restoring it
+  puts it back at the top.
 - **Lock** with Ctrl+O, wherever you are: writui asks for the password
   (or your fingerprint) again, then takes you back to where you were.
 - **Zen writing:** the editor shows only your words. Hold Ctrl to see the

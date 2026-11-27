@@ -89,6 +89,11 @@ pub enum Action {
     SaveSettings(Settings),
     /// Remember how the list is sorted.
     SortBy(list::Sort),
+    /// Pin a post to the top of the list, or unpin it.
+    PinPost {
+        id: i64,
+        pinned: bool,
+    },
     /// Lock writui: back to the password, then to the same screen.
     Lock,
     /// Turn unlocking with Touch ID on or off.
@@ -542,6 +547,17 @@ impl App {
             // Only a convenience: not worth an error.
             Action::SortBy(sort) => {
                 let _ = self.vault()?.set_list_sort(&sort.name());
+            }
+            Action::PinPost { id, pinned } => {
+                if let Err(err) = self.vault()?.set_pinned(id, pinned)
+                    && let Screen::List(list) = &mut self.screen
+                {
+                    list.apply_pin(id, !pinned);
+                    list.set_notice(format!(
+                        "Couldn't {} the post: {err:#}",
+                        if pinned { "pin" } else { "unpin" }
+                    ));
+                }
             }
             Action::SaveSettings(settings) => {
                 if let Err(err) = self.vault()?.set_settings(&settings)
