@@ -10,4 +10,4 @@ A monorepo for my open source projects, listed at [aak.sh](https://aak.sh) (from
 - [screentimer](screentimer) - A macOS menu bar app that shows how long the screen has been on today
 - [writui](writui) - A writing app for the terminal. No nonsense. Markdown. Local. Encrypted.
 
-_AI Disclosure: All the code in this repository is written by AI._
+_Disclosure: All the code here is written by AI. Although I [don't read the code](https://aakashns.com/posts/z0ebzdi1ei), I use these tools almost every day and improve them regularly._
